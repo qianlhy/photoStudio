@@ -45,9 +45,11 @@
 					</view>
 				</view>
 				<button class="btn-primary" @tap="phoneLogin">登 录</button>
-				<view class="tip">未注册的手机号验证后将自动创建账号</view>
+				<view class="tip">未注册请先提交申请，审核通过后可登录</view>
 			</view>
 		</view>
+
+		<view class="apply-link" @tap="goApply">没有账号？提交注册申请</view>
 
 		<!-- 开发体验挡板：一键登录，免校验 -->
 		<view class="dev-login" @tap="devLogin">一键体验登录（开发用）</view>
@@ -87,8 +89,16 @@
 							const res = await http.get('yonghu/wxlogin', {
 								code: r.code
 							})
+							if (res && res.needApply) {
+								uni.navigateTo({ url: '../apply/apply?openid=' + (res.openid || '') });
+								return;
+							}
 							await this.afterLogin(res)
-						} catch (e) {}
+						} catch (e) {
+							if (e && e.needApply) {
+								uni.navigateTo({ url: '../apply/apply' });
+							}
+						}
 					},
 					fail: () => {
 						this.$utils.msg('微信登录失败，请重试')
@@ -128,8 +138,15 @@
 						phone: this.phone,
 						code: this.smsCode
 					})
+					if (res && res.needApply) {
+						uni.navigateTo({ url: '../apply/apply' });
+						return;
+					}
 					await this.afterLogin(res)
 				} catch (e) {}
+			},
+			goApply() {
+				uni.navigateTo({ url: '../apply/apply' });
 			},
 			// 开发体验挡板：固定手机号 + 模拟验证码 123456 一键登录
 			async devLogin() {
@@ -144,7 +161,13 @@
 				}
 			},
 			async afterLogin(res) {
-				if (!res || !res.token) return
+				if (!res || !res.token) {
+					if (res && res.sfsh) {
+						if (res.sfsh === '否') uni.navigateTo({ url: '../apply/apply?pending=1' });
+						if (res.sfsh === '驳回') uni.navigateTo({ url: '../apply/apply?rejected=1' });
+					}
+					return;
+				}
 				uni.removeStorageSync('useridTag')
 				uni.setStorageSync('token', res.token)
 				uni.setStorageSync('nowTable', 'yonghu')
@@ -349,8 +372,15 @@
 		color: $brand-ink-3;
 	}
 
+	.apply-link {
+		margin: 24rpx auto 0;
+		text-align: center;
+		font-size: 26rpx;
+		color: $brand-primary-deep;
+	}
+
 	.dev-login {
-		margin: 40rpx auto 0;
+		margin: 20rpx auto 0;
 		text-align: center;
 		font-size: 26rpx;
 		color: $brand-primary-deep;

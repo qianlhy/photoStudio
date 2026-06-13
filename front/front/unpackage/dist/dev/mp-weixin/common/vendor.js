@@ -227,7 +227,22 @@ module.exports = _toConsumableArray, module.exports.__esModule = true, module.ex
 
 /***/ }),
 
-/***/ 183:
+/***/ 19:
+/*!******************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/arrayWithoutHoles.js ***!
+  \******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayLikeToArray = __webpack_require__(/*! ./arrayLikeToArray.js */ 9);
+function _arrayWithoutHoles(arr) {
+  if (Array.isArray(arr)) return arrayLikeToArray(arr);
+}
+module.exports = _arrayWithoutHoles, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 199:
 /*!*********************************************************************************************************************************************!*\
   !*** C:/Users/Administrator/Desktop/2026年1月7日/卡歌/照相馆小程序（重要）/参照模板/muban/springbooterxt1/front/front/components/mescroll-uni/mescroll-uni.js ***!
   \*********************************************************************************************************************************************/
@@ -985,81 +1000,6 @@ MeScroll.prototype.preventDefault = function (e) {
 
 /* 是否允许下拉回弹(橡皮筋效果); true或null为允许; false禁止bounce */
 MeScroll.prototype.setBounce = function (isBounce) {};
-
-/***/ }),
-
-/***/ 184:
-/*!****************************************************************************************************************************************************!*\
-  !*** C:/Users/Administrator/Desktop/2026年1月7日/卡歌/照相馆小程序（重要）/参照模板/muban/springbooterxt1/front/front/components/mescroll-uni/mescroll-uni-option.js ***!
-  \****************************************************************************************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-// mescroll 全局配置
-var GlobalOption = {
-  down: {
-    // 其他down的配置参数也可以写,这里只展示了常用的配置:
-    textInOffset: '下拉刷新',
-    // 下拉的距离在offset范围内的提示文本
-    textOutOffset: '释放更新',
-    // 下拉的距离大于offset范围的提示文本
-    textLoading: '加载中 ...',
-    // 加载中的提示文本
-    offset: 80 // 在列表顶部,下拉大于80upx,松手即可触发下拉刷新的回调
-  },
-
-  up: {
-    // 其他up的配置参数也可以写,这里只展示了常用的配置:
-    textLoading: '加载中 ...',
-    // 加载中的提示文本
-    textNoMore: '-- END --',
-    // 没有更多数据的提示文本
-    offset: 80,
-    // 距底部多远时,触发upCallback
-    isBounce: false,
-    // 默认禁止橡皮筋的回弹效果, 必读事项: http://www.mescroll.com/qa.html?v=190725#q25
-    toTop: {
-      // 回到顶部按钮,需配置src才显示
-      src: "http://www.mescroll.com/img/mescroll-totop.png?v=1",
-      // 图片路径 (建议放入static目录, 如 /static/img/mescroll-totop.png )
-      offset: 1000,
-      // 列表滚动多少距离才显示回到顶部按钮,默认1000
-      duration: 300 // 回到顶部的动画时长,默认300ms
-    },
-
-    empty: {
-      use: true,
-      // 是否显示空布局
-      icon: "http://www.mescroll.com/img/mescroll-empty.png?v=1",
-      // 图标路径 (建议放入static目录, 如 /static/img/mescroll-empty.png )
-      tip: '~ 暂无相关数据 ~' // 提示
-    }
-  }
-};
-var _default = GlobalOption;
-exports.default = _default;
-
-/***/ }),
-
-/***/ 19:
-/*!******************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/arrayWithoutHoles.js ***!
-  \******************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayLikeToArray = __webpack_require__(/*! ./arrayLikeToArray.js */ 9);
-function _arrayWithoutHoles(arr) {
-  if (Array.isArray(arr)) return arrayLikeToArray(arr);
-}
-module.exports = _arrayWithoutHoles, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
 /***/ }),
 
@@ -3565,6 +3505,66 @@ function _iterableToArray(iter) {
   if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
 }
 module.exports = _iterableToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
+/***/ 200:
+/*!****************************************************************************************************************************************************!*\
+  !*** C:/Users/Administrator/Desktop/2026年1月7日/卡歌/照相馆小程序（重要）/参照模板/muban/springbooterxt1/front/front/components/mescroll-uni/mescroll-uni-option.js ***!
+  \****************************************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+// mescroll 全局配置
+var GlobalOption = {
+  down: {
+    // 其他down的配置参数也可以写,这里只展示了常用的配置:
+    textInOffset: '下拉刷新',
+    // 下拉的距离在offset范围内的提示文本
+    textOutOffset: '释放更新',
+    // 下拉的距离大于offset范围的提示文本
+    textLoading: '加载中 ...',
+    // 加载中的提示文本
+    offset: 80 // 在列表顶部,下拉大于80upx,松手即可触发下拉刷新的回调
+  },
+
+  up: {
+    // 其他up的配置参数也可以写,这里只展示了常用的配置:
+    textLoading: '加载中 ...',
+    // 加载中的提示文本
+    textNoMore: '-- END --',
+    // 没有更多数据的提示文本
+    offset: 80,
+    // 距底部多远时,触发upCallback
+    isBounce: false,
+    // 默认禁止橡皮筋的回弹效果, 必读事项: http://www.mescroll.com/qa.html?v=190725#q25
+    toTop: {
+      // 回到顶部按钮,需配置src才显示
+      src: "http://www.mescroll.com/img/mescroll-totop.png?v=1",
+      // 图片路径 (建议放入static目录, 如 /static/img/mescroll-totop.png )
+      offset: 1000,
+      // 列表滚动多少距离才显示回到顶部按钮,默认1000
+      duration: 300 // 回到顶部的动画时长,默认300ms
+    },
+
+    empty: {
+      use: true,
+      // 是否显示空布局
+      icon: "http://www.mescroll.com/img/mescroll-empty.png?v=1",
+      // 图标路径 (建议放入static目录, 如 /static/img/mescroll-empty.png )
+      tip: '~ 暂无相关数据 ~' // 提示
+    }
+  }
+};
+var _default = GlobalOption;
+exports.default = _default;
 
 /***/ }),
 

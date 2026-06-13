@@ -5,6 +5,7 @@
 			<view class="store-row"><text class="lbl">地址</text><text class="val">{{ cfg.storeAddress }}</text></view>
 			<view class="store-row"><text class="lbl">营业时间</text><text class="val">{{ cfg.storeBusinessHours }}</text></view>
 			<view class="store-row"><text class="lbl">联系电话</text><text class="val phone" @tap="call">{{ cfg.storePhone }}</text></view>
+			<button class="nav-btn" v-if="cfg.storeLng && cfg.storeLat" @tap="openMap">导航到店</button>
 		</view>
 
 		<view class="card">
@@ -44,6 +45,14 @@
 						phoneNumber: this.cfg.storePhone
 					});
 				}
+			},
+			openMap() {
+				uni.openLocation({
+					latitude: parseFloat(this.cfg.storeLat),
+					longitude: parseFloat(this.cfg.storeLng),
+					name: this.cfg.storeName || '照相馆',
+					address: this.cfg.storeAddress || ''
+				});
 			}
 		}
 	};
@@ -92,6 +101,17 @@
 
 	.phone {
 		color: $brand-primary-deep;
+	}
+
+	.nav-btn {
+		margin-top: 24rpx;
+		height: 80rpx;
+		line-height: 80rpx;
+		background: linear-gradient(135deg, #C4AB7C, #B49A6B);
+		color: #fff;
+		font-size: 28rpx;
+		border-radius: 40rpx;
+		border: none;
 	}
 
 	.sec-title {

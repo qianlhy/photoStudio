@@ -10,17 +10,24 @@ import com.entity.EIException;
 import com.entity.view.DingdanView;
 import com.entity.vo.DingdanVO;
 import com.service.DingdanService;
+import com.service.MessageNotifyService;
 import com.utils.OrderStatus;
 import com.utils.PageUtils;
 import com.utils.Query;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 @Service("dingdanService")
 public class DingdanServiceImpl extends ServiceImpl<DingdanDao, DingdanEntity> implements DingdanService {
+
+    @Autowired
+    private MessageNotifyService messageNotifyService;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -61,9 +68,13 @@ public class DingdanServiceImpl extends ServiceImpl<DingdanDao, DingdanEntity> i
     @Override
     @Transactional
     public DingdanEntity createOrder(DingdanEntity dingdan) {
-        int activeCount = this.selectCount(new EntityWrapper<DingdanEntity>()
-                .notIn("zhuangtai", OrderStatus.INACTIVE));
-        dingdan.setPaiduixuhao(activeCount + 1);
+        int paidCount = this.selectCount(new EntityWrapper<DingdanEntity>()
+                .notIn("zhuangtai", OrderStatus.INACTIVE)
+                .in("jiaofeisuoding", Arrays.asList("是", "已缴费锁定档期")));
+        int normalCount = this.selectCount(new EntityWrapper<DingdanEntity>()
+                .notIn("zhuangtai", OrderStatus.INACTIVE)
+                .notIn("jiaofeisuoding", Arrays.asList("是", "已缴费锁定档期")));
+        dingdan.setPaiduixuhao(paidCount + normalCount + 1);
         this.insert(dingdan);
         return dingdan;
     }
@@ -94,6 +105,30 @@ public class DingdanServiceImpl extends ServiceImpl<DingdanDao, DingdanEntity> i
             throw new EIException("非法状态流转：" + old.getZhuangtai() + " → " + dingdan.getZhuangtai());
         }
         this.updateById(dingdan);
+        // 档期变更通知
+        if (dingdan.getYugudangqi() != null && old.getYugudangqi() != null
+                && !dingdan.getYugudangqi().equals(old.getYugudangqi())) {
+            String dateStr = new SimpleDateFormat("yyyy-MM-dd").format(dingdan.getYugudangqi());
+            messageNotifyService.sendSchedule(old.getUserid(), old.getDingdanbianhao(), dateStr);
+        } else if (dingdan.getYugudangqi() != null && old.getYugudangqi() == null) {
+            String dateStr = new SimpleDateFormat("yyyy-MM-dd").format(dingdan.getYugudangqi());
+            messageNotifyService.sendSchedule(old.getUserid(), old.getDingdanbianhao(), dateStr);
+        }
+        // 缴费锁档后调整到已缴费队列末尾（优先于未缴费）
+        if (isPaidLock(dingdan.getJiaofeisuoding()) && !isPaidLock(old.getJiaofeisuoding())) {
+            int paidMax = this.selectCount(new EntityWrapper<DingdanEntity>()
+                    .notIn("zhuangtai", OrderStatus.INACTIVE)
+                    .in("jiaofeisuoding", Arrays.asList("是", "已缴费锁定档期")));
+            DingdanEntity patch = new DingdanEntity();
+            patch.setId(dingdan.getId());
+            patch.setPaiduixuhao(Math.max(1, paidMax));
+            patch.setJiaofeisuoding("已缴费锁定档期");
+            this.updateById(patch);
+        }
+    }
+
+    private boolean isPaidLock(String v) {
+        return "是".equals(v) || "已缴费锁定档期".equals(v);
     }
 
     @Override

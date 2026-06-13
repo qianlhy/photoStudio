@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.entity.YonghuEntity;
 import com.entity.view.YonghuView;
+import com.service.MessageNotifyService;
 import com.service.TokenService;
 import com.service.YonghuService;
 import com.utils.MPUtil;
@@ -46,6 +47,9 @@ public class YonghuController {
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private MessageNotifyService messageNotifyService;
+
     @Value("${wx.appid:}")
     private String wxAppid;
 
@@ -73,7 +77,11 @@ public class YonghuController {
         if (user == null || !PasswordUtil.matches(password, user.getMima())) {
             return R.error("账号或密码不正确");
         }
-        if ("否".equals(user.getSfsh())) return R.error("账号已锁定，请联系管理员审核。");
+        if ("否".equals(user.getSfsh())) return R.error("账号审核中，请等待商家审核通过后再登录");
+        if ("驳回".equals(user.getSfsh())) {
+            String reason = user.getShhf() == null ? "" : user.getShhf();
+            return R.error("账号审核未通过：" + reason);
+        }
         // 老明文密码登录成功后自动升级为加盐密文
         if (!PasswordUtil.isEncoded(user.getMima())) {
             user.setMima(PasswordUtil.encode(password));
@@ -110,21 +118,64 @@ public class YonghuController {
             return R.error("微信登录失败：" + errmsg);
         }
         YonghuEntity user = yonghuService.selectOne(new EntityWrapper<YonghuEntity>().eq("openid", openid));
-        boolean isNew = false;
         if (user == null) {
-            user = new YonghuEntity();
-            user.setId(new Date().getTime());
-            user.setOpenid(openid);
-            user.setZhanghao("wx_" + openid);
-            user.setMima(PasswordUtil.encode(UUID.randomUUID().toString().substring(0, 8)));
-            user.setXingming("微信用户");
-            user.setSfsh("是");
-            yonghuService.insert(user);
-            isNew = true;
+            return R.error(1001, "未找到账号，请先提交注册申请").put("needApply", true).put("openid", openid);
         }
+        R audit = auditGate(user);
+        if (audit != null) return audit;
         String token = tokenService.generateToken(user.getId(), user.getZhanghao(), "yonghu", "用户");
-        boolean needPreference = isNew || user.getPianhao() == null || user.getPianhao().isEmpty();
+        boolean needPreference = user.getPianhao() == null || user.getPianhao().isEmpty();
         return R.ok().put("token", token).put("needPreference", needPreference);
+    }
+
+    /**
+     * 注册申请（人工审核，提交后账号冻结）
+     */
+    @IgnoreAuth
+    @RequestMapping(value = "/apply")
+    public R apply(@RequestBody YonghuEntity yonghu) {
+        if (yonghu.getShoujihaoma() == null || yonghu.getShoujihaoma().trim().isEmpty()) {
+            return R.error("请填写手机号");
+        }
+        if (yonghu.getXingming() == null || yonghu.getXingming().trim().isEmpty()) {
+            return R.error("请填写姓名");
+        }
+        String phone = yonghu.getShoujihaoma().trim();
+        YonghuEntity exist = yonghuService.selectOne(new EntityWrapper<YonghuEntity>()
+                .eq("shoujihaoma", phone).or().eq("zhanghao", phone));
+        if (exist != null) {
+            if ("是".equals(exist.getSfsh())) {
+                return R.error("该手机号已注册，请直接登录");
+            }
+            if ("驳回".equals(exist.getSfsh())) {
+                exist.setXingming(yonghu.getXingming());
+                exist.setYixiangpinlei(yonghu.getYixiangpinlei());
+                exist.setBeizhu(yonghu.getBeizhu());
+                exist.setSfsh("否");
+                exist.setShhf("");
+                if (yonghu.getOpenid() != null) exist.setOpenid(yonghu.getOpenid());
+                yonghuService.updateById(exist);
+                return R.ok("已重新提交申请，请等待审核");
+            }
+            return R.error("该手机号申请审核中，请耐心等待");
+        }
+        yonghu.setId(new Date().getTime());
+        yonghu.setZhanghao(phone);
+        yonghu.setShoujihaoma(phone);
+        yonghu.setMima(PasswordUtil.encode(UUID.randomUUID().toString().substring(0, 8)));
+        yonghu.setSfsh("否");
+        yonghuService.insert(yonghu);
+        return R.ok("申请已提交，审核通过后将短信/消息通知您");
+    }
+
+    /** 审核状态拦截：未通过则返回错误 R，通过返回 null */
+    private R auditGate(YonghuEntity user) {
+        if (user == null) return R.error("用户不存在");
+        if ("是".equals(user.getSfsh())) return null;
+        if ("驳回".equals(user.getSfsh())) {
+            return R.error("账号审核未通过：" + (user.getShhf() == null ? "" : user.getShhf())).put("sfsh", "驳回");
+        }
+        return R.error("账号审核中，请等待商家审核").put("sfsh", "否");
     }
 
     /**
@@ -176,20 +227,16 @@ public class YonghuController {
             return R.error("验证码错误或已过期");
         }
         YonghuEntity user = yonghuService.selectOne(new EntityWrapper<YonghuEntity>().eq("shoujihaoma", phone));
-        boolean isNew = false;
         if (user == null) {
-            user = new YonghuEntity();
-            user.setId(new Date().getTime());
-            user.setZhanghao(phone);
-            user.setShoujihaoma(phone);
-            user.setMima(PasswordUtil.encode(UUID.randomUUID().toString().substring(0, 8)));
-            user.setXingming("用户" + phone.substring(Math.max(0, phone.length() - 4)));
-            user.setSfsh("是");
-            yonghuService.insert(user);
-            isNew = true;
+            user = yonghuService.selectOne(new EntityWrapper<YonghuEntity>().eq("zhanghao", phone));
         }
+        if (user == null) {
+            return R.error(1001, "未找到账号，请先提交注册申请").put("needApply", true);
+        }
+        R audit = auditGate(user);
+        if (audit != null) return audit;
         String token = tokenService.generateToken(user.getId(), user.getZhanghao(), "yonghu", "用户");
-        boolean needPreference = isNew || user.getPianhao() == null || user.getPianhao().isEmpty();
+        boolean needPreference = user.getPianhao() == null || user.getPianhao().isEmpty();
         return R.ok().put("token", token).put("needPreference", needPreference);
     }
 
@@ -359,8 +406,15 @@ public class YonghuController {
      */
     @RequestMapping("/update")
     public R update(@RequestBody YonghuEntity yonghu, HttpServletRequest request) {
-        //ValidatorUtils.validateEntity(yonghu);
-        yonghuService.updateById(yonghu);//全部更新
+        YonghuEntity old = yonghuService.selectById(yonghu.getId());
+        yonghuService.updateById(yonghu);
+        if (old != null && yonghu.getSfsh() != null && !yonghu.getSfsh().equals(old.getSfsh())) {
+            if ("是".equals(yonghu.getSfsh())) {
+                messageNotifyService.sendAudit(yonghu.getId(), "审核通过", yonghu.getShhf());
+            } else if ("驳回".equals(yonghu.getSfsh())) {
+                messageNotifyService.sendAudit(yonghu.getId(), "审核未通过", yonghu.getShhf());
+            }
+        }
         return R.ok();
     }
 

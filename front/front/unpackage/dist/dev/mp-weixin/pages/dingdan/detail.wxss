@@ -161,3 +161,8 @@ page.data-v-22dd1a46 {
   background: linear-gradient(135deg, #B0C293, #9BB07C);
   color: #fff;
 }
+.btn.ghost.data-v-22dd1a46 {
+  background: #fff;
+  color: #8C7853;
+  border: 2rpx solid #B49A6B;
+}

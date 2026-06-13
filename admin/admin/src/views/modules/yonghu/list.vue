@@ -23,9 +23,9 @@
           </el-form-item>
           <el-form-item label="审核状态">
             <el-select v-model="searchForm.sfsh" placeholder="全部" clearable>
-              <el-option label="待审核" value="待审核"></el-option>
-              <el-option label="通过" value="是"></el-option>
-              <el-option label="未通过" value="否"></el-option>
+              <el-option label="待审核" value="否"></el-option>
+              <el-option label="已通过" value="是"></el-option>
+              <el-option label="已驳回" value="驳回"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -83,7 +83,13 @@
                 @click="deleteHandler()"
             >{{ contents.btnAdAllFont == 1 ? '删除' : '' }}
             </el-button>
-
+            <el-button
+                v-if="isAuth('yonghu','审核') && dataListSelections.length > 0"
+                type="warning"
+                icon="el-icon-s-check"
+                @click="batchShDialog()"
+            >批量审核
+            </el-button>
 
           </el-form-item>
         </el-row>
@@ -159,6 +165,23 @@
             </template>
           </el-table-column>
           <el-table-column :sortable="contents.tableSortable" :align="contents.tableAlign"
+                           prop="yixiangpinlei"
+                           :header-align="contents.tableAlign"
+                           label="意向品类">
+            <template slot-scope="scope">
+              {{ scope.row.yixiangpinlei || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column :sortable="contents.tableSortable" :align="contents.tableAlign"
+                           prop="beizhu"
+                           :header-align="contents.tableAlign"
+                           label="申请备注"
+                           show-overflow-tooltip>
+            <template slot-scope="scope">
+              {{ scope.row.beizhu || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column :sortable="contents.tableSortable" :align="contents.tableAlign"
                            prop="shhf"
                            :header-align="contents.tableAlign"
                            label="审核回复">
@@ -168,7 +191,7 @@
                            :header-align="contents.tableAlign"
                            label="审核状态">
             <template slot-scope="scope">
-              <span style="margin-right:10px">{{ scope.row.sfsh == '是' ? '通过' : '未通过' }}</span>
+              <span style="margin-right:10px">{{ scope.row.sfsh == '是' ? '已通过' : (scope.row.sfsh == '驳回' ? '已驳回' : '待审核') }}</span>
             </template>
           </el-table-column>
           <el-table-column :sortable="contents.tableSortable" :align="contents.tableAlign"
@@ -253,7 +276,7 @@
         <el-form-item label="审核状态">
           <el-select v-model="shForm.sfsh" placeholder="审核状态">
             <el-option label="通过" value="是"></el-option>
-            <el-option label="不通过" value="否"></el-option>
+            <el-option label="驳回" value="驳回"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="内容">
@@ -263,6 +286,25 @@
       <span slot="footer" class="dialog-footer">
         <el-button @click="shDialog">取 消</el-button>
         <el-button type="primary" @click="shHandler">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <el-dialog title="批量审核" :visible.sync="batchShVisible" width="50%">
+      <p style="margin-bottom:12px;color:#666">已选 {{ dataListSelections.length }} 位用户</p>
+      <el-form :model="batchShForm" label-width="80px">
+        <el-form-item label="审核状态">
+          <el-select v-model="batchShForm.sfsh" placeholder="审核状态">
+            <el-option label="通过" value="是"></el-option>
+            <el-option label="驳回" value="驳回"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="回复内容">
+          <el-input type="textarea" :rows="4" v-model="batchShForm.shhf"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="batchShVisible = false">取 消</el-button>
+        <el-button type="primary" @click="batchShHandler">确 定</el-button>
       </span>
     </el-dialog>
 
@@ -288,6 +330,8 @@ export default {
       dataListSelections: [],
       showFlag: true,
       sfshVisiable: false,
+      batchShVisible: false,
+      batchShForm: {sfsh: '是', shhf: ''},
       shForm: {},
       chartVisiable: false,
       addOrUpdateFlag: false,
@@ -708,6 +752,43 @@ export default {
           } else {
             this.$message.error(data.msg);
           }
+        });
+      });
+    },
+    batchShDialog() {
+      this.batchShForm = {sfsh: '是', shhf: ''};
+      this.batchShVisible = true;
+    },
+    batchShHandler() {
+      if (!this.batchShForm.sfsh) {
+        this.$message.warning("请选择审核状态");
+        return;
+      }
+      this.$confirm(`确定批量审核 ${this.dataListSelections.length} 位用户?`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      }).then(() => {
+        let done = 0;
+        let fail = 0;
+        const tasks = this.dataListSelections.map(row => {
+          return this.$http({
+            url: "yonghu/update",
+            method: "post",
+            data: {
+              id: row.id,
+              sfsh: this.batchShForm.sfsh,
+              shhf: this.batchShForm.shhf
+            }
+          }).then(({data}) => {
+            if (data && data.code === 0) done++;
+            else fail++;
+          });
+        });
+        Promise.all(tasks).then(() => {
+          this.$message.success(`批量审核完成：成功 ${done}，失败 ${fail}`);
+          this.batchShVisible = false;
+          this.getDataList();
         });
       });
     },

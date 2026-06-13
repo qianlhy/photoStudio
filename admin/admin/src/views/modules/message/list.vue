@@ -19,6 +19,7 @@
       </el-row>
       <el-row class="ad">
         <el-form-item>
+          <el-button type="primary" icon="el-icon-s-promotion" @click="pushDialog">活动推送</el-button>
           <el-button v-if="isAuth('message','删除')" :disabled="dataListSelections.length <= 0" type="danger"
                      icon="el-icon-delete" @click="deleteHandler()">删除
           </el-button>
@@ -51,6 +52,30 @@
                      :current-page="pageIndex" :page-sizes="[10, 20, 50]" :page-size="pageSize"
                      :total="totalPage" layout="total, sizes, prev, pager, next, jumper"></el-pagination>
     </div>
+
+    <el-dialog title="活动推送" :visible.sync="pushVisible" width="520px">
+      <el-form :model="pushForm" label-width="100px">
+        <el-form-item label="推送范围">
+          <el-radio-group v-model="pushForm.scope">
+            <el-radio label="all">全部已通过用户</el-radio>
+            <el-radio label="one">指定用户ID</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="用户ID" v-if="pushForm.scope === 'one'">
+          <el-input v-model="pushForm.userid" placeholder="输入用户 id"></el-input>
+        </el-form-item>
+        <el-form-item label="标题">
+          <el-input v-model="pushForm.title" placeholder="活动标题"></el-input>
+        </el-form-item>
+        <el-form-item label="内容">
+          <el-input type="textarea" :rows="4" v-model="pushForm.content" placeholder="活动详情"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="pushVisible = false">取消</el-button>
+        <el-button type="primary" :loading="pushing" @click="submitPush">发送</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -64,7 +89,10 @@ export default {
       pageSize: 10,
       totalPage: 0,
       dataListLoading: false,
-      dataListSelections: []
+      dataListSelections: [],
+      pushVisible: false,
+      pushing: false,
+      pushForm: {scope: 'all', userid: '', title: '', content: ''}
     };
   },
   created() {
@@ -102,6 +130,40 @@ export default {
     },
     selectionChangeHandler(val) {
       this.dataListSelections = val;
+    },
+    pushDialog() {
+      this.pushForm = {scope: 'all', userid: '', title: '', content: ''};
+      this.pushVisible = true;
+    },
+    submitPush() {
+      if (!this.pushForm.title || !this.pushForm.content) {
+        this.$message.warning("请填写标题和内容");
+        return;
+      }
+      if (this.pushForm.scope === 'one' && !this.pushForm.userid) {
+        this.$message.warning("请填写用户ID");
+        return;
+      }
+      this.pushing = true;
+      let params = {
+        title: this.pushForm.title,
+        content: this.pushForm.content,
+        leixing: '活动'
+      };
+      if (this.pushForm.scope === 'one') params.userid = this.pushForm.userid;
+      this.$http({url: "message/push", method: "post", params}).then(({data}) => {
+        this.pushing = false;
+        if (data && data.code === 0) {
+          this.$message.success("推送成功");
+          this.pushVisible = false;
+          this.search();
+        } else {
+          this.$message.error(data.msg);
+        }
+      }).catch(() => {
+        this.pushing = false;
+        this.$message.error("推送失败");
+      });
     },
     deleteHandler(id) {
       var ids = id ? [Number(id)] : this.dataListSelections.map(item => Number(item.id));

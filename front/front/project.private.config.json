@@ -1,0 +1,8 @@
+{
+  "description": "微信开发者工具私有配置",
+  "projectname": "app02",
+  "setting": {
+    "compileHotReLoad": true,
+    "urlCheck": false
+  }
+}

@@ -1,0 +1,122 @@
+@charset "UTF-8";
+/**
+ * 这里是uni-app内置的常用样式变量
+ *
+ * uni-app 官方扩展插件及插件市场（https://ext.dcloud.net.cn）上很多三方插件均使用了这些样式变量
+ * 如果你是插件开发者，建议你使用scss预处理，并在插件代码中直接使用这些变量（无需 import 这个文件），方便用户通过搭积木的方式开发整体风格一致的App
+ *
+ */
+/**
+ * 如果你是App开发者（插件使用者），你可以通过修改这些变量来定制自己的插件主题，实现自定义主题功能
+ *
+ * 如果你的项目同样使用了 scss预处理，你也可以直接在你的 scss 代码中使用如下变量，同时无需 import 这个文件
+ */
+/* 颜色变量 */
+/* 行为相关颜色 */
+/* 文字基本颜色 */
+/* 背景颜色 */
+/* 边框颜色 */
+/* 尺寸变量 */
+/* 文字尺寸 */
+/* 图片尺寸 */
+/* Border Radius */
+/* 水平间距 */
+/* 垂直间距 */
+/* 透明度 */
+/* 文章场景相关 */
+/* ===================================================== */
+/* 照相馆 · 商用品牌设计 Token（高级摄影质感：白底留白 + 香槟驼金 + 橄榄绿 CTA） */
+/* ===================================================== */
+/* 品牌色 */
+/* 中性色 */
+/* 圆角 */
+/* 阴影 */
+/* 间距 */
+page.data-v-769a7324 {
+  background: #F7F7F7;
+}
+.page.data-v-769a7324 {
+  padding: 30rpx 24rpx;
+}
+.hd.data-v-769a7324 {
+  padding: 20rpx 10rpx 30rpx;
+}
+.hd-title.data-v-769a7324 {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #222222;
+}
+.hd-sub.data-v-769a7324 {
+  display: block;
+  font-size: 26rpx;
+  color: #999999;
+  margin-top: 12rpx;
+  line-height: 1.6;
+}
+.reject-reason.data-v-769a7324 {
+  color: #E8423F;
+}
+.card.data-v-769a7324 {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 10rpx 24rpx;
+  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.05);
+}
+.field.data-v-769a7324 {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #EEEEEE;
+}
+.field.col.data-v-769a7324 {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.label.data-v-769a7324 {
+  width: 160rpx;
+  font-size: 28rpx;
+  color: #666666;
+  flex-shrink: 0;
+}
+input.data-v-769a7324, textarea.data-v-769a7324 {
+  flex: 1;
+  font-size: 28rpx;
+  width: 100%;
+}
+textarea.data-v-769a7324 {
+  min-height: 160rpx;
+  margin-top: 12rpx;
+}
+.chips.data-v-769a7324 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+.chip.data-v-769a7324 {
+  padding: 10rpx 24rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  background: #F7F7F7;
+  color: #666666;
+}
+.chip.active.data-v-769a7324 {
+  background: #F3EEE4;
+  color: #8C7853;
+}
+.submit.data-v-769a7324 {
+  margin-top: 40rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  background: linear-gradient(135deg, #B49A6B, #8C7853);
+  color: #fff;
+  border-radius: 24rpx;
+  font-size: 30rpx;
+  border: none;
+}
+.back.data-v-769a7324 {
+  text-align: center;
+  margin-top: 30rpx;
+  font-size: 26rpx;
+  color: #8C7853;
+}

@@ -10,6 +10,7 @@
 				<view class="name-row">
 					<text class="name">{{ displayName }}</text>
 					<text v-if="user.vip && user.vip == '是'" class="vip">VIP</text>
+					<text v-if="auditBadge" class="audit-badge" :class="auditClass">{{ auditBadge }}</text>
 				</view>
 				<text class="sub">{{ subInfo }}</text>
 			</view>
@@ -31,6 +32,10 @@
 				<text class="quick-label">消息</text>
 				<text v-if="unread > 0" class="badge">{{ unread }}</text>
 			</view>
+			<view class="quick-item" @tap="goPage('../storeup/list')">
+				<text class="cuIcon-favor quick-icon"></text>
+				<text class="quick-label">我的收藏</text>
+			</view>
 			<view class="quick-item" @tap="goPage('../store/notice')">
 				<text class="cuIcon-shop quick-icon"></text>
 				<text class="quick-label">门店</text>
@@ -43,6 +48,11 @@
 				<view class="row" hover-class="row-hover" @tap="goPage('../preference/preference')">
 					<text class="cuIcon-newshot row-icon"></text>
 					<text class="row-text">拍摄偏好</text>
+					<text class="cuIcon-right row-arrow"></text>
+				</view>
+				<view class="row" hover-class="row-hover" @tap="goPage('../storeup/list')">
+					<text class="cuIcon-favor row-icon"></text>
+					<text class="row-text">我的收藏</text>
 					<text class="cuIcon-right row-arrow"></text>
 				</view>
 				<view class="row" hover-class="row-hover" @tap="goPage('../message/list')">
@@ -98,9 +108,21 @@
 				return this.user.xingming || this.user.zhanghao || '未登录';
 			},
 			subInfo() {
+				if (this.user.sfsh === '否') return '账号审核中';
+				if (this.user.sfsh === '驳回') return '审核未通过，点击查看';
 				if (this.user.shoujihaoma) return this.user.shoujihaoma;
 				if (this.user.yixiangpinlei) return '意向：' + this.user.yixiangpinlei;
 				return '点击完善个人资料';
+			},
+			auditBadge() {
+				if (this.user.sfsh === '否') return '审核中';
+				if (this.user.sfsh === '驳回') return '未通过';
+				if (this.user.sfsh === '是') return '';
+				return '';
+			},
+			auditClass() {
+				if (this.user.sfsh === '驳回') return 'reject';
+				return 'pending';
 			}
 		},
 		async onShow() {
@@ -298,6 +320,29 @@
 		color: #fff;
 		font-size: 20rpx;
 		border-radius: 30rpx;
+	}
+
+	.name-row {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+
+	.audit-badge {
+		font-size: 20rpx;
+		padding: 2rpx 12rpx;
+		border-radius: 20rpx;
+		margin-left: 12rpx;
+	}
+
+	.audit-badge.pending {
+		background: #FFF3E0;
+		color: #E6A23C;
+	}
+
+	.audit-badge.rejected {
+		background: #FDE2E2;
+		color: #F56C6C;
 	}
 
 	/* 菜单 */

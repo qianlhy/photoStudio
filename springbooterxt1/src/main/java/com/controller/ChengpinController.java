@@ -7,6 +7,7 @@ import com.entity.DingdanEntity;
 import com.entity.MessageEntity;
 import com.service.ChengpinService;
 import com.service.DingdanService;
+import com.service.MessageNotifyService;
 import com.service.MessageService;
 import com.utils.MPUtil;
 import com.utils.PageUtils;
@@ -34,6 +35,9 @@ public class ChengpinController {
 
     @Autowired
     private MessageService messageService;
+
+    @Autowired
+    private MessageNotifyService messageNotifyService;
 
     /**
      * 后端列表
@@ -118,15 +122,7 @@ public class ChengpinController {
             }
         }
         if (chengpin.getUserid() != null) {
-            MessageEntity msg = new MessageEntity();
-            msg.setId(new Date().getTime() + new Double(Math.floor(Math.random() * 1000)).longValue());
-            msg.setUserid(chengpin.getUserid());
-            msg.setBiaoti("成品已上线");
-            msg.setNeirong("您的订单 " + (chengpin.getDingdanbianhao() == null ? "" : chengpin.getDingdanbianhao())
-                    + " 成品已上线，请前往“成品专区”在线预览或下载。");
-            msg.setLeixing("成品");
-            msg.setIsread("否");
-            messageService.insert(msg);
+            messageNotifyService.sendFinish(chengpin.getUserid(), chengpin.getDingdanbianhao());
         }
     }
 }

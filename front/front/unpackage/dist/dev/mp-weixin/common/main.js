@@ -30,12 +30,12 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 wx.__webpack_require_UNI_MP_PLUGIN__ = __webpack_require__;
 var uniPopup = function uniPopup() {
   __webpack_require__.e(/*! require.ensure | components/uni-popup/uni-popup */ "components/uni-popup/uni-popup").then((function () {
-    return resolve(__webpack_require__(/*! ./components/uni-popup/uni-popup.vue */ 171));
+    return resolve(__webpack_require__(/*! ./components/uni-popup/uni-popup.vue */ 187));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 var MescrollUni = function MescrollUni() {
   Promise.all(/*! require.ensure | components/mescroll-uni/mescroll-uni */[__webpack_require__.e("common/vendor"), __webpack_require__.e("components/mescroll-uni/mescroll-uni")]).then((function () {
-    return resolve(__webpack_require__(/*! ./components/mescroll-uni/mescroll-uni.vue */ 178));
+    return resolve(__webpack_require__(/*! ./components/mescroll-uni/mescroll-uni.vue */ 194));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 _vue.default.use(_vueJsonp.VueJsonp);

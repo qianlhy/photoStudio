@@ -10,6 +10,19 @@
     >
       <el-row>
         <el-col :span="12">
+          <el-form-item class="input" v-if="type!='info'" label="所属品类" prop="pinlei">
+            <el-select v-model="ruleForm.pinlei" placeholder="请选择品类" clearable>
+              <el-option label="写真" value="写真"></el-option>
+              <el-option label="宣传片" value="宣传片"></el-option>
+            </el-select>
+          </el-form-item>
+          <div v-else>
+            <el-form-item class="input" label="所属品类" prop="pinlei">
+              <el-input v-model="ruleForm.pinlei" readonly></el-input>
+            </el-form-item>
+          </div>
+        </el-col>
+        <el-col :span="12">
           <el-form-item class="input" v-if="type!='info'" label="类型" prop="leixing">
             <el-input v-model="ruleForm.leixing"
                       placeholder="类型" clearable :readonly="ro.leixing"></el-input>
@@ -185,6 +198,7 @@ export default {
       },
       ruleForm: {
         leixing: '',
+        pinlei: '',
       },
       rules: {
         leixing: [

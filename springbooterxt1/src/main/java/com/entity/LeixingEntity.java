@@ -48,6 +48,11 @@ public class LeixingEntity<T> implements Serializable {
 
     private String leixing;
 
+    /**
+     * 所属品类(写真/宣传片)
+     */
+    private String pinlei;
+
 
     @JsonFormat(locale = "zh", timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     @DateTimeFormat
@@ -81,6 +86,14 @@ public class LeixingEntity<T> implements Serializable {
      */
     public String getLeixing() {
         return leixing;
+    }
+
+    public String getPinlei() {
+        return pinlei;
+    }
+
+    public void setPinlei(String pinlei) {
+        this.pinlei = pinlei;
     }
 
 }

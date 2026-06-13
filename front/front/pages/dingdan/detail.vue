@@ -33,7 +33,8 @@
 
 		<view class="rule-tip">缴费即锁定档期；取消/排队规则以门店须知为准。</view>
 
-		<view class="footbar" v-if="canCancel(detail.zhuangtai) || detail.zhuangtai === '成品已上线'">
+		<view class="footbar" v-if="canCancel(detail.zhuangtai) || detail.zhuangtai === '成品已上线' || canReschedule(detail.zhuangtai)">
+			<button class="btn ghost" v-if="canReschedule(detail.zhuangtai)" @tap="contactReschedule">联系客服改期</button>
 			<button class="btn cancel" v-if="canCancel(detail.zhuangtai)" @tap="cancelOrder">取消预约</button>
 			<button class="btn primary" v-if="detail.zhuangtai === '成品已上线'" @tap="goChengpin">查看成品</button>
 		</view>
@@ -86,6 +87,9 @@
 			canCancel(s) {
 				return ['待排队', '已排期'].indexOf(s) > -1;
 			},
+			canReschedule(s) {
+				return ['待排队', '已排期', '待拍摄'].indexOf(s) > -1;
+			},
 			statusClass(s) {
 				if (s === '已取消') return 'gray';
 				if (s === '成品已上线') return 'green';
@@ -111,6 +115,24 @@
 							_this.$utils.msg('已取消');
 							_this.loadDetail();
 						}
+					}
+				});
+			},
+			contactReschedule() {
+				uni.showModal({
+					title: '联系客服改期',
+					editable: true,
+					placeholderText: '请说明希望调整到的日期/时段',
+					success: async (r) => {
+						if (!r.confirm) return;
+						try {
+							await http.get('message/feedback', {
+								content: r.content || '申请改期',
+								orderNo: this.detail.dingdanbianhao,
+								leixing: '档期'
+							});
+							this.$utils.msg('改期申请已提交');
+						} catch (e) {}
 					}
 				});
 			}
@@ -272,5 +294,11 @@
 	.btn.primary {
 		background: linear-gradient(135deg, #B0C293, #9BB07C);
 		color: #fff;
+	}
+
+	.btn.ghost {
+		background: #fff;
+		color: $brand-primary-deep;
+		border: 2rpx solid $brand-primary;
 	}
 </style>

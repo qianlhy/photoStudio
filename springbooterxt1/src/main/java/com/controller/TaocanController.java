@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.entity.StoreupEntity;
 import com.entity.TaocanEntity;
+import com.entity.YonghuEntity;
 import com.entity.view.TaocanView;
 import com.service.StoreupService;
 import com.service.TaocanService;
+import com.service.YonghuService;
 import com.utils.MPUtil;
 import com.utils.PageUtils;
 import com.utils.R;
@@ -33,6 +35,9 @@ public class TaocanController {
 
     @Autowired
     private StoreupService storeupService;
+
+    @Autowired
+    private YonghuService yonghuService;
 
     /**
      * 后端列表
@@ -96,7 +101,30 @@ public class TaocanController {
         }
         ew.orderBy("paixu", true).orderBy("clicknum", false);
         List<TaocanView> list = taocanService.selectListView(ew);
+        // 登录用户按偏好风格/品类加权排序（匹配项靠前）
+        if (userId != null) {
+            YonghuEntity u = yonghuService.selectById((Long) userId);
+            if (u != null) {
+                final String prefPinlei = u.getYixiangpinlei();
+                final java.util.Set<String> prefStyles = new java.util.HashSet<>();
+                if (u.getPianhao() != null && !u.getPianhao().isEmpty()) {
+                    for (String s : u.getPianhao().split(",")) {
+                        if (s != null && !s.trim().isEmpty()) prefStyles.add(s.trim());
+                    }
+                }
+                list.sort((a, b) -> Integer.compare(score(b, prefPinlei, prefStyles), score(a, prefPinlei, prefStyles)));
+            }
+        }
         return R.ok().put("data", list);
+    }
+
+    private int score(TaocanView t, String prefPinlei, java.util.Set<String> prefStyles) {
+        int s = 0;
+        if (prefPinlei != null && !prefPinlei.isEmpty() && !"都看看".equals(prefPinlei)) {
+            if (prefPinlei.equals(t.getPinlei())) s += 10;
+        }
+        if (prefStyles != null && t.getFengge() != null && prefStyles.contains(t.getFengge())) s += 5;
+        return s;
     }
 
     /**

@@ -2,5 +2,7 @@
   "navigationBarBackgroundColor": "#FFFFFF",
   "navigationBarTextStyle": "black",
   "navigationBarTitleText": "首页",
-  "usingComponents": {}
+  "usingComponents": {
+    "tc-swiper": "/components/tc-swiper/tc-swiper"
+  }
 }

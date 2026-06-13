@@ -3,7 +3,10 @@ package com.controller;
 import com.annotation.IgnoreAuth;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.entity.MessageEntity;
+import com.entity.YonghuEntity;
+import com.service.MessageNotifyService;
 import com.service.MessageService;
+import com.service.YonghuService;
 import com.utils.MPUtil;
 import com.utils.PageUtils;
 import com.utils.R;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,6 +28,12 @@ import java.util.Map;
 public class MessageController {
     @Autowired
     private MessageService messageService;
+
+    @Autowired
+    private MessageNotifyService messageNotifyService;
+
+    @Autowired
+    private YonghuService yonghuService;
 
     /**
      * 后端列表
@@ -110,5 +120,49 @@ public class MessageController {
     public R delete(@RequestBody Long[] ids) {
         messageService.deleteBatchIds(Arrays.asList(ids));
         return R.ok();
+    }
+
+    /**
+     * 用户提交售后/改期等留言（写入消息中心）
+     */
+    @RequestMapping("/feedback")
+    public R feedback(@RequestParam String content,
+                      @RequestParam(required = false) String orderNo,
+                      @RequestParam(defaultValue = "售后") String leixing,
+                      HttpServletRequest request) {
+        Long userId = (Long) request.getSession().getAttribute("userId");
+        if (userId == null) return R.error("请先登录");
+        if (content == null || content.trim().isEmpty()) return R.error("请填写留言内容");
+        MessageEntity msg = new MessageEntity();
+        msg.setId(new Date().getTime() + (long) (Math.random() * 1000));
+        msg.setUserid(userId);
+        msg.setBiaoti(leixing + "申请");
+        msg.setNeirong((orderNo != null ? "订单 " + orderNo + "：" : "") + content.trim());
+        msg.setLeixing(leixing);
+        msg.setIsread("否");
+        messageService.insert(msg);
+        messageNotifyService.sendFeedback(userId, orderNo, content.trim());
+        return R.ok("已提交，客服将尽快处理");
+    }
+
+    /**
+     * 商家群发活动/系统消息
+     */
+    @RequestMapping("/push")
+    public R push(@RequestParam String title,
+                  @RequestParam String content,
+                  @RequestParam(required = false) Long userid,
+                  @RequestParam(defaultValue = "活动") String leixing) {
+        if (title == null || title.trim().isEmpty()) return R.error("请填写标题");
+        if (userid != null) {
+            messageNotifyService.sendActivity(userid, title, content);
+        } else {
+            List<YonghuEntity> users = yonghuService.selectList(
+                    new EntityWrapper<YonghuEntity>().eq("sfsh", "是"));
+            for (YonghuEntity u : users) {
+                messageNotifyService.sendActivity(u.getId(), title, content);
+            }
+        }
+        return R.ok("推送成功");
     }
 }

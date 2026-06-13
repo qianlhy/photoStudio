@@ -1,7 +1,11 @@
 <template>
 	<view class="page">
 		<view class="list">
-			<view class="cp-card" v-for="(item, idx) in list" :key="item.id">
+			<view class="order-group" v-for="(group, gidx) in grouped" :key="gidx">
+				<view class="group-head" v-if="group.orderNo">
+					<text class="group-no">订单 {{ group.orderNo }}</text>
+				</view>
+				<view class="cp-card" v-for="(item, idx) in group.items" :key="item.id">
 				<view class="cp-head">
 					<text class="cp-title">{{ item.taocanmingcheng || item.biaoti }}</text>
 					<text class="cp-date">{{ fmt(item.addtime) }}</text>
@@ -14,10 +18,13 @@
 				<view class="cp-foot">
 					<text class="cp-count">共 {{ imgsOf(item).length }} 张</text>
 					<view class="cp-btns">
-						<button class="mini-btn" @tap="saveAll(item)">保存到相册</button>
+						<button class="mini-btn" @tap="favItem(item)">收藏</button>
+						<button class="mini-btn" @tap="afterSale(item)">申请微调</button>
+						<button class="mini-btn" @tap="saveAll(item)">保存相册</button>
 						<button class="mini-btn primary" v-if="item.shipin" @tap="playVideo(item)">看视频</button>
 					</view>
 				</view>
+			</view>
 			</view>
 
 			<view class="empty" v-if="list.length === 0">
@@ -29,6 +36,7 @@
 </template>
 
 <script>
+	import http from '@/api/http.js'
 	export default {
 		data() {
 			return {
@@ -39,6 +47,15 @@
 		computed: {
 			baseUrl() {
 				return this.$base.url;
+			},
+			grouped() {
+				let map = {};
+				this.list.forEach(item => {
+					let key = item.dingdanbianhao || '其他';
+					if (!map[key]) map[key] = { orderNo: item.dingdanbianhao, items: [] };
+					map[key].items.push(item);
+				});
+				return Object.values(map);
 			}
 		},
 		async onShow() {
@@ -121,6 +138,33 @@
 					fail: () => {}
 				});
 				// #endif
+			},
+			async favItem(item) {
+				try {
+					await this.$api.add('storeup', {
+						refid: item.id, tablename: 'chengpin', name: item.taocanmingcheng || item.biaoti,
+						picture: item.tupian, type: '2'
+					});
+					this.$utils.msg('已收藏');
+				} catch (e) {}
+			},
+			afterSale(item) {
+				uni.showModal({
+					title: '申请微调',
+					editable: true,
+					placeholderText: '请描述需要微调的内容',
+					success: async (r) => {
+						if (!r.confirm || !r.content) return;
+						try {
+							await http.get('message/feedback', {
+								content: r.content,
+								orderNo: item.dingdanbianhao || '',
+								leixing: '售后'
+							});
+							this.$utils.msg('已提交售后申请');
+						} catch (e) {}
+					}
+				});
 			}
 		}
 	};
@@ -133,6 +177,22 @@
 
 	.list {
 		padding: 20rpx 24rpx;
+	}
+
+	.list {
+		padding: 0 24rpx;
+	}
+
+	.group-head {
+		padding: 20rpx 0 8rpx;
+	}
+
+	.group-no {
+		font-size: 26rpx;
+		font-weight: 600;
+		color: $brand-ink;
+		padding-left: 12rpx;
+		border-left: 6rpx solid $brand-primary;
 	}
 
 	.cp-card {

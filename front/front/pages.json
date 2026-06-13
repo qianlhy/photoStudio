@@ -32,6 +32,20 @@
 			"navigationBarTitleText": "忘记密码"
 		}
 	}, {
+		"path": "pages/apply/apply",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "注册申请"
+		}
+	}, {
+		"path": "pages/storeup/list",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "我的收藏"
+		}
+	}, {
 		"path": "pages/center/center",
 		"style": {
 			"navigationBarBackgroundColor": "#FFFFFF",

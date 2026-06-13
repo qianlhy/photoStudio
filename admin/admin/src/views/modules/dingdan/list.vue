@@ -153,7 +153,14 @@ export default {
       if (this.searchForm.zhuangtai) params["zhuangtai"] = this.searchForm.zhuangtai;
       this.$http({url: "dingdan/page", method: "get", params}).then(({data}) => {
         if (data && data.code === 0) {
-          this.dataList = data.data.list;
+          let list = data.data.list || [];
+          list.sort((a, b) => {
+            let la = (a.jiaofeisuoding === '是' || a.jiaofeisuoding === '已缴费锁定档期') ? 0 : 1;
+            let lb = (b.jiaofeisuoding === '是' || b.jiaofeisuoding === '已缴费锁定档期') ? 0 : 1;
+            if (la !== lb) return la - lb;
+            return (a.paiduixuhao || 999) - (b.paiduixuhao || 999);
+          });
+          this.dataList = list;
           this.totalPage = data.data.total;
         } else {
           this.dataList = [];
@@ -198,7 +205,7 @@ export default {
         zhuangtai: this.processForm.zhuangtai,
         yugudangqi: this.processForm.yugudangqi,
         paiduixuhao: this.processForm.paiduixuhao,
-        jiaofeisuoding: this.processForm.lock ? "是" : "否"
+        jiaofeisuoding: this.processForm.lock ? "已缴费锁定档期" : "否"
       };
       this.$http({url: "dingdan/update", method: "post", data}).then(({data}) => {
         if (data && data.code === 0) {

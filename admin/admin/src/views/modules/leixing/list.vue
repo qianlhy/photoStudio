@@ -93,6 +93,14 @@
           <el-table-column label="索引" :align="contents.tableAlign" v-if="contents.tableIndex" type="index"
                            width="50"/>
           <el-table-column :sortable="contents.tableSortable" :align="contents.tableAlign"
+                           prop="pinlei"
+                           :header-align="contents.tableAlign"
+                           label="所属品类">
+            <template slot-scope="scope">
+              {{ scope.row.pinlei || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column :sortable="contents.tableSortable" :align="contents.tableAlign"
                            prop="leixing"
                            :header-align="contents.tableAlign"
                            label="类型">

@@ -98,24 +98,39 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "recyclableRender", function() { return recyclableRender; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "components", function() { return components; });
 var components
+try {
+  components = {
+    tcSwiper: function () {
+      return __webpack_require__.e(/*! import() | components/tc-swiper/tc-swiper */ "components/tc-swiper/tc-swiper").then(__webpack_require__.bind(null, /*! @/components/tc-swiper/tc-swiper.vue */ 203))
+    },
+  }
+} catch (e) {
+  if (
+    e.message.indexOf("Cannot find module") !== -1 &&
+    e.message.indexOf(".vue") !== -1
+  ) {
+    console.error(e.message)
+    console.error("1. 排查组件名称拼写是否正确")
+    console.error(
+      "2. 排查组件是否符合 easycom 规范，文档：https://uniapp.dcloud.net.cn/collocation/pages?id=easycom"
+    )
+    console.error(
+      "3. 若组件不符合 easycom 规范，需手动引入，并在 components 中注册该组件"
+    )
+  } else {
+    throw e
+  }
+}
 var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  var g0 = _vm.banners.length
-  var g1 = _vm.banners.length
-  var g2 = _vm.categories.length
-  var g3 = _vm.taocans.length
-  var g4 = _vm.works.length
+  var g0 = _vm.cards.length
   _vm.$mp.data = Object.assign(
     {},
     {
       $root: {
         g0: g0,
-        g1: g1,
-        g2: g2,
-        g3: g3,
-        g4: g4,
       },
     }
   )
@@ -160,153 +175,114 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 54));
+var _defineProperty2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/defineProperty */ 11));
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 56));
 var _http = _interopRequireDefault(__webpack_require__(/*! @/api/http.js */ 35));
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { (0, _defineProperty2.default)(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 var _default = {
   data: function data() {
     return {
-      user: {},
-      banners: [],
-      categories: [],
+      cards: [],
       taocans: [],
-      works: [],
-      curFengge: ''
+      keyword: '',
+      pinlei: '',
+      showGrid: false,
+      user: {}
     };
   },
-  onLoad: function onLoad() {
-    var _this = this;
-    return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
-      var table, res;
-      return _regenerator.default.wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              table = uni.getStorageSync('nowTable');
-              if (!table) {
-                _context.next = 11;
-                break;
-              }
-              _context.prev = 2;
-              _context.next = 5;
-              return _this.$api.session(table);
-            case 5:
-              res = _context.sent;
-              _this.user = res.data;
-              _context.next = 11;
-              break;
-            case 9:
-              _context.prev = 9;
-              _context.t0 = _context["catch"](2);
-            case 11:
-              _this.loadAll();
-            case 12:
-            case "end":
-              return _context.stop();
-          }
-        }
-      }, _callee, null, [[2, 9]]);
-    }))();
+  computed: {
+    baseUrl: function baseUrl() {
+      return this.$base.url;
+    }
+  },
+  onShow: function onShow() {
+    this.checkAuth();
+    this.loadCards();
   },
   methods: {
-    full: function full(p) {
-      if (!p) return '';
-      var one = ('' + p).split(',')[0].trim();
-      if (!one) return '';
-      if (/^https?:\/\//.test(one)) return one;
-      return this.$base.url + one;
+    checkAuth: function checkAuth() {
+      var _this = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
+        var token, res;
+        return _regenerator.default.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                token = uni.getStorageSync('token');
+                if (token) {
+                  _context.next = 4;
+                  break;
+                }
+                uni.navigateTo({
+                  url: '../login/login'
+                });
+                return _context.abrupt("return");
+              case 4:
+                _context.prev = 4;
+                _context.next = 7;
+                return _this.$api.session('yonghu');
+              case 7:
+                res = _context.sent;
+                _this.user = res.data || {};
+                if (_this.user.sfsh === '否') {
+                  uni.redirectTo({
+                    url: '../apply/apply?pending=1'
+                  });
+                } else if (_this.user.sfsh === '驳回') {
+                  uni.redirectTo({
+                    url: '../apply/apply?rejected=1'
+                  });
+                }
+                _context.next = 14;
+                break;
+              case 12:
+                _context.prev = 12;
+                _context.t0 = _context["catch"](4);
+              case 14:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, null, [[4, 12]]);
+      }))();
     },
-    loadAll: function loadAll() {
+    setPinlei: function setPinlei(p) {
+      this.pinlei = p;
+      this.loadCards();
+    },
+    loadCards: function loadCards() {
       var _this2 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
+        var params, res;
         return _regenerator.default.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                _context2.next = 2;
-                return Promise.all([_this2.loadTaocan(), _this2.loadCategories(), _this2.loadWorks()]);
-              case 2:
-                _this2.buildBanners();
-                _this2.matchCategoryImages();
-              case 4:
+                _context2.prev = 0;
+                params = {};
+                if (_this2.pinlei) params.pinlei = _this2.pinlei;
+                if (_this2.keyword) params.keyword = _this2.keyword;
+                _context2.next = 6;
+                return _http.default.get('taocan/cards', params);
+              case 6:
+                res = _context2.sent;
+                _this2.cards = res.data || [];
+                _context2.next = 13;
+                break;
+              case 10:
+                _context2.prev = 10;
+                _context2.t0 = _context2["catch"](0);
+                _this2.cards = [];
+              case 13:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2);
+        }, _callee2, null, [[0, 10]]);
       }))();
     },
-    loadCategories: function loadCategories() {
+    loadGrid: function loadGrid() {
       var _this3 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
         var res, list;
@@ -314,152 +290,126 @@ var _default = {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                _context3.prev = 0;
+                _this3.showGrid = true;
                 _context3.next = 3;
-                return _this3.$api.list('leixing', {
+                return _this3.$api.list('taocan', {
                   page: 1,
-                  limit: 20
+                  limit: 20,
+                  shangxiajia: '上架',
+                  sort: 'paixu',
+                  order: 'asc'
                 });
               case 3:
                 res = _context3.sent;
                 list = res.data && res.data.list || [];
-                _this3.categories = list.map(function (it) {
-                  var name = it.leixing || '';
-                  return {
-                    name: name,
-                    first: name.substring(0, 1),
-                    img: '',
-                    raw: it
-                  };
+                _this3.taocans = list.map(function (t) {
+                  return _objectSpread(_objectSpread({}, t), {}, {
+                    cover: _this3.full(t.fengmian),
+                    priceText: t.xianxiabiaojia || '0'
+                  });
                 });
-                _context3.next = 11;
-                break;
-              case 8:
-                _context3.prev = 8;
-                _context3.t0 = _context3["catch"](0);
-                _this3.categories = [];
-              case 11:
+              case 6:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, null, [[0, 8]]);
+        }, _callee3);
       }))();
     },
-    loadTaocan: function loadTaocan() {
+    full: function full(p) {
+      if (!p) return '';
+      return this.baseUrl + p.split(',')[0];
+    },
+    removeTop: function removeTop() {
+      if (this.cards.length) this.cards.shift();
+    },
+    onLike: function onLike(card) {
       var _this4 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
-        var params, res, list;
         return _regenerator.default.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                params = {
-                  page: 1,
-                  limit: 6,
-                  shangxiajia: '上架'
-                };
-                if (_this4.curFengge) params.fengge = _this4.curFengge;
-                _context4.prev = 2;
-                _context4.next = 5;
-                return _this4.$api.list('taocan', params);
-              case 5:
-                res = _context4.sent;
-                list = res.data && res.data.list || [];
-                _this4.taocans = list.map(function (it) {
-                  return Object.assign({}, it, {
-                    cover: _this4.full(it.fengmian),
-                    priceText: it.xianxiabiaojia != null ? it.xianxiabiaojia : '面议'
-                  });
-                });
-                _context4.next = 13;
-                break;
-              case 10:
-                _context4.prev = 10;
-                _context4.t0 = _context4["catch"](2);
-                _this4.taocans = [];
-              case 13:
+                _context4.next = 2;
+                return _this4.saveStoreup(card, '1');
+              case 2:
+                _this4.$utils.msg('已收藏');
+                _this4.removeTop();
+              case 4:
               case "end":
                 return _context4.stop();
             }
           }
-        }, _callee4, null, [[2, 10]]);
+        }, _callee4);
       }))();
     },
-    loadWorks: function loadWorks() {
+    onNope: function onNope(card) {
       var _this5 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee5() {
-        var res, list;
         return _regenerator.default.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                _context5.prev = 0;
-                _context5.next = 3;
-                return _this5.$api.list('chengpin', {
-                  page: 1,
-                  limit: 4,
-                  shangxiajia: '上架'
-                });
+                _context5.next = 2;
+                return _this5.saveStoreup(card, '22');
+              case 2:
+                _this5.removeTop();
               case 3:
-                res = _context5.sent;
-                list = res.data && res.data.list || [];
-                _this5.works = list.map(function (it) {
-                  return Object.assign({}, it, {
-                    cover: _this5.full(it.tupian)
-                  });
-                });
-                _context5.next = 11;
-                break;
-              case 8:
-                _context5.prev = 8;
-                _context5.t0 = _context5["catch"](0);
-                _this5.works = [];
-              case 11:
               case "end":
                 return _context5.stop();
             }
           }
-        }, _callee5, null, [[0, 8]]);
+        }, _callee5);
       }))();
     },
-    buildBanners: function buildBanners() {
-      var imgs = [];
-      this.taocans.forEach(function (t) {
-        if (t.cover) imgs.push({
-          img: t.cover,
-          id: t.id
-        });
-      });
-      this.banners = imgs.slice(0, 5);
+    tapLike: function tapLike() {
+      if (this.$refs.swiper) this.$refs.swiper.swipe('right');
     },
-    matchCategoryImages: function matchCategoryImages() {
+    tapNope: function tapNope() {
+      if (this.$refs.swiper) this.$refs.swiper.swipe('left');
+    },
+    saveStoreup: function saveStoreup(card, type) {
       var _this6 = this;
-      this.categories = this.categories.map(function (c) {
-        var hit = _this6.taocans.find(function (t) {
-          return t.fengge === c.name;
-        });
-        return Object.assign({}, c, {
-          img: hit ? hit.cover : ''
-        });
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee6() {
+        return _regenerator.default.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                _context6.prev = 0;
+                _context6.next = 3;
+                return _this6.$api.add('storeup', {
+                  refid: card.id,
+                  tablename: 'taocan',
+                  name: card.taocanmingcheng,
+                  picture: card.fengmian,
+                  type: type
+                });
+              case 3:
+                _context6.next = 7;
+                break;
+              case 5:
+                _context6.prev = 5;
+                _context6.t0 = _context6["catch"](0);
+              case 7:
+              case "end":
+                return _context6.stop();
+            }
+          }
+        }, _callee6, null, [[0, 5]]);
+      }))();
+    },
+    goDetail: function goDetail(card) {
+      uni.navigateTo({
+        url: '../taocan/detail?id=' + card.id
       });
     },
-    onCate: function onCate(c) {
-      this.curFengge = this.curFengge === c.name ? '' : c.name;
-      this.loadTaocan();
+    goStoreup: function goStoreup() {
+      uni.navigateTo({
+        url: '../storeup/list'
+      });
     },
-    onBannerTap: function onBannerTap(b) {
-      if (b && b.id) this.$utils.jump("../taocan/detail?id=".concat(b.id));
-    },
-    goTaocan: function goTaocan(t) {
-      if (t && t.id) this.$utils.jump("../taocan/detail?id=".concat(t.id));
-    },
-    goTaocanAll: function goTaocanAll() {
-      this.curFengge = '';
-      this.loadTaocan();
-    },
-    goChengpin: function goChengpin() {
-      this.$utils.tab('../chengpin/list');
+    goTaocanGrid: function goTaocanGrid() {
+      this.loadGrid();
     }
   }
 };

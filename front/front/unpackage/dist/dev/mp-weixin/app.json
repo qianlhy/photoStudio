@@ -4,6 +4,8 @@
     "pages/index/index",
     "pages/register/register",
     "pages/forget/forget",
+    "pages/apply/apply",
+    "pages/storeup/list",
     "pages/center/center",
     "pages/user-info/user-info",
     "pages/news-detail/news-detail",

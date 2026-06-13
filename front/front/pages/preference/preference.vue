@@ -49,13 +49,18 @@
 					}
 				} catch (e) {}
 			}
-			let res = await this.$api.list('leixing', {
-				page: 1,
-				limit: 100
-			});
-			this.fenggeList = (res.data && res.data.list) || [];
+			this.loadFengge();
+		},
+		watch: {
+			pinlei() { this.loadFengge(); }
 		},
 		methods: {
+			async loadFengge() {
+				let params = { page: 1, limit: 100 };
+				if (this.pinlei && this.pinlei !== '都看看') params.pinlei = this.pinlei;
+				let res = await this.$api.list('leixing', params);
+				this.fenggeList = (res.data && res.data.list) || [];
+			},
 			toggle(name) {
 				let idx = this.selected.indexOf(name);
 				if (idx > -1) {

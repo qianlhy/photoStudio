@@ -38,6 +38,19 @@ page.data-v-25129e08 {
 .list.data-v-25129e08 {
   padding: 20rpx 24rpx;
 }
+.list.data-v-25129e08 {
+  padding: 0 24rpx;
+}
+.group-head.data-v-25129e08 {
+  padding: 20rpx 0 8rpx;
+}
+.group-no.data-v-25129e08 {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #222222;
+  padding-left: 12rpx;
+  border-left: 6rpx solid #B49A6B;
+}
 .cp-card.data-v-25129e08 {
   background: #fff;
   border-radius: 24rpx;

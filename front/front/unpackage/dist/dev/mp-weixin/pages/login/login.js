@@ -203,6 +203,8 @@ var _http = _interopRequireDefault(__webpack_require__(/*! @/api/http.js */ 35))
 //
 //
 //
+//
+//
 var _default = {
   data: function data() {
     return {
@@ -245,20 +247,34 @@ var _default = {
                     });
                   case 6:
                     res = _context.sent;
-                    _context.next = 9;
+                    if (!(res && res.needApply)) {
+                      _context.next = 10;
+                      break;
+                    }
+                    uni.navigateTo({
+                      url: '../apply/apply?openid=' + (res.openid || '')
+                    });
+                    return _context.abrupt("return");
+                  case 10:
+                    _context.next = 12;
                     return _this.afterLogin(res);
-                  case 9:
-                    _context.next = 13;
+                  case 12:
+                    _context.next = 17;
                     break;
-                  case 11:
-                    _context.prev = 11;
+                  case 14:
+                    _context.prev = 14;
                     _context.t0 = _context["catch"](3);
-                  case 13:
+                    if (_context.t0 && _context.t0.needApply) {
+                      uni.navigateTo({
+                        url: '../apply/apply'
+                      });
+                    }
+                  case 17:
                   case "end":
                     return _context.stop();
                 }
               }
-            }, _callee, null, [[3, 11]]);
+            }, _callee, null, [[3, 14]]);
           }));
           function success(_x) {
             return _success.apply(this, arguments);
@@ -348,21 +364,35 @@ var _default = {
                 });
               case 9:
                 res = _context3.sent;
-                _context3.next = 12;
+                if (!(res && res.needApply)) {
+                  _context3.next = 13;
+                  break;
+                }
+                uni.navigateTo({
+                  url: '../apply/apply'
+                });
+                return _context3.abrupt("return");
+              case 13:
+                _context3.next = 15;
                 return _this3.afterLogin(res);
-              case 12:
-                _context3.next = 16;
+              case 15:
+                _context3.next = 19;
                 break;
-              case 14:
-                _context3.prev = 14;
+              case 17:
+                _context3.prev = 17;
                 _context3.t0 = _context3["catch"](6);
-              case 16:
+              case 19:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, null, [[6, 14]]);
+        }, _callee3, null, [[6, 17]]);
       }))();
+    },
+    goApply: function goApply() {
+      uni.navigateTo({
+        url: '../apply/apply'
+      });
     },
     // 开发体验挡板：固定手机号 + 模拟验证码 123456 一键登录
     devLogin: function devLogin() {
@@ -407,18 +437,26 @@ var _default = {
             switch (_context5.prev = _context5.next) {
               case 0:
                 if (!(!res || !res.token)) {
-                  _context5.next = 2;
+                  _context5.next = 3;
                   break;
                 }
+                if (res && res.sfsh) {
+                  if (res.sfsh === '否') uni.navigateTo({
+                    url: '../apply/apply?pending=1'
+                  });
+                  if (res.sfsh === '驳回') uni.navigateTo({
+                    url: '../apply/apply?rejected=1'
+                  });
+                }
                 return _context5.abrupt("return");
-              case 2:
+              case 3:
                 uni.removeStorageSync('useridTag');
                 uni.setStorageSync('token', res.token);
                 uni.setStorageSync('nowTable', 'yonghu');
                 uni.setStorageSync('role', '用户');
-                _context5.next = 8;
+                _context5.next = 9;
                 return _this5.$api.session('yonghu');
-              case 8:
+              case 9:
                 s = _context5.sent;
                 uni.setStorageSync('userid', s.data.id);
                 uni.setStorageSync('nickname', s.data.xingming || s.data.zhanghao || '');
@@ -426,7 +464,7 @@ var _default = {
                   uni.setStorageSync('vip', s.data.vip);
                 }
                 if (!(res.needPreference || !s.data.pianhao)) {
-                  _context5.next = 15;
+                  _context5.next = 16;
                   break;
                 }
                 uni.navigateTo({
@@ -436,9 +474,9 @@ var _default = {
                   }
                 });
                 return _context5.abrupt("return");
-              case 15:
-                _this5.$utils.tab('../index/index');
               case 16:
+                _this5.$utils.tab('../index/index');
+              case 17:
               case "end":
                 return _context5.stop();
             }

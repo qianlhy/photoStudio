@@ -1,0 +1,170 @@
+@charset "UTF-8";
+/**
+ * 这里是uni-app内置的常用样式变量
+ *
+ * uni-app 官方扩展插件及插件市场（https://ext.dcloud.net.cn）上很多三方插件均使用了这些样式变量
+ * 如果你是插件开发者，建议你使用scss预处理，并在插件代码中直接使用这些变量（无需 import 这个文件），方便用户通过搭积木的方式开发整体风格一致的App
+ *
+ */
+/**
+ * 如果你是App开发者（插件使用者），你可以通过修改这些变量来定制自己的插件主题，实现自定义主题功能
+ *
+ * 如果你的项目同样使用了 scss预处理，你也可以直接在你的 scss 代码中使用如下变量，同时无需 import 这个文件
+ */
+/* 颜色变量 */
+/* 行为相关颜色 */
+/* 文字基本颜色 */
+/* 背景颜色 */
+/* 边框颜色 */
+/* 尺寸变量 */
+/* 文字尺寸 */
+/* 图片尺寸 */
+/* Border Radius */
+/* 水平间距 */
+/* 垂直间距 */
+/* 透明度 */
+/* 文章场景相关 */
+/* ===================================================== */
+/* 照相馆 · 商用品牌设计 Token（高级摄影质感：白底留白 + 香槟驼金 + 橄榄绿 CTA） */
+/* ===================================================== */
+/* 品牌色 */
+/* 中性色 */
+/* 圆角 */
+/* 阴影 */
+/* 间距 */
+.tc-swiper.data-v-d89d4a1c {
+  position: relative;
+  width: 100%;
+  height: 920rpx;
+}
+.tc-stack.data-v-d89d4a1c {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.tc-card.data-v-d89d4a1c {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 900rpx;
+  border-radius: 28rpx;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.12);
+  will-change: transform;
+}
+.tc-card-img.data-v-d89d4a1c {
+  width: 100%;
+  height: 100%;
+}
+.tc-card-mask.data-v-d89d4a1c {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 380rpx;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+}
+.tc-card-info.data-v-d89d4a1c {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 30rpx 36rpx 40rpx;
+  box-sizing: border-box;
+  color: #fff;
+}
+.tc-card-tags.data-v-d89d4a1c {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 14rpx;
+}
+.tc-tag.data-v-d89d4a1c {
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  margin-right: 12rpx;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+.tc-tag-pinlei.data-v-d89d4a1c {
+  background: #FFE16D;
+  color: #6b4e00;
+  font-weight: 600;
+}
+.tc-card-title.data-v-d89d4a1c {
+  font-size: 40rpx;
+  font-weight: 700;
+  margin-bottom: 10rpx;
+}
+.tc-card-brief.data-v-d89d4a1c {
+  font-size: 26rpx;
+  opacity: 0.85;
+  line-height: 36rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.tc-card-price.data-v-d89d4a1c {
+  margin-top: 16rpx;
+  display: flex;
+  align-items: baseline;
+}
+.tc-price-symbol.data-v-d89d4a1c {
+  color: #FFE16D;
+  font-size: 28rpx;
+}
+.tc-price-num.data-v-d89d4a1c {
+  color: #FFE16D;
+  font-size: 48rpx;
+  font-weight: 700;
+  margin-right: 12rpx;
+}
+.tc-price-unit.data-v-d89d4a1c {
+  font-size: 22rpx;
+  opacity: 0.7;
+}
+.tc-badge.data-v-d89d4a1c {
+  position: absolute;
+  top: 60rpx;
+  padding: 10rpx 28rpx;
+  font-size: 36rpx;
+  font-weight: 800;
+  border-radius: 12rpx;
+  border: 6rpx solid;
+  z-index: 5;
+}
+.tc-badge-like.data-v-d89d4a1c {
+  right: 50rpx;
+  color: #67c23a;
+  border-color: #67c23a;
+  -webkit-transform: rotate(18deg);
+          transform: rotate(18deg);
+}
+.tc-badge-nope.data-v-d89d4a1c {
+  left: 50rpx;
+  color: #f56c6c;
+  border-color: #f56c6c;
+  -webkit-transform: rotate(-18deg);
+          transform: rotate(-18deg);
+}
+.tc-empty.data-v-d89d4a1c {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.tc-empty-img.data-v-d89d4a1c {
+  width: 160rpx;
+  height: 160rpx;
+  opacity: 0.5;
+}
+.tc-empty-text.data-v-d89d4a1c {
+  margin-top: 20rpx;
+  color: #999;
+  font-size: 26rpx;
+}
