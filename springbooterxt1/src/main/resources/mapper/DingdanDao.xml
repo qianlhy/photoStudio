@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dao.DingdanDao">
+
+    <resultMap type="com.entity.DingdanEntity" id="dingdanMap">
+        <result property="dingdanbianhao" column="dingdanbianhao"/>
+        <result property="taocanid" column="taocanid"/>
+        <result property="taocanmingcheng" column="taocanmingcheng"/>
+        <result property="fengmian" column="fengmian"/>
+        <result property="pinlei" column="pinlei"/>
+        <result property="fengge" column="fengge"/>
+        <result property="xianxiabiaojia" column="xianxiabiaojia"/>
+        <result property="userid" column="userid"/>
+        <result property="zhanghao" column="zhanghao"/>
+        <result property="xingming" column="xingming"/>
+        <result property="shoujihaoma" column="shoujihaoma"/>
+        <result property="paisherenshu" column="paisherenshu"/>
+        <result property="yixiangdangqi" column="yixiangdangqi"/>
+        <result property="yugudangqi" column="yugudangqi"/>
+        <result property="beizhu" column="beizhu"/>
+        <result property="paiduixuhao" column="paiduixuhao"/>
+        <result property="zhuangtai" column="zhuangtai"/>
+        <result property="jiaofeisuoding" column="jiaofeisuoding"/>
+        <result property="quxiaoyuanyin" column="quxiaoyuanyin"/>
+    </resultMap>
+
+    <select id="selectListVO" resultType="com.entity.vo.DingdanVO">
+        SELECT * FROM dingdan dingdan
+        <where> 1=1 ${ew.sqlSegment}</where>
+    </select>
+
+    <select id="selectVO" resultType="com.entity.vo.DingdanVO">
+        SELECT dingdan.* FROM dingdan dingdan
+        <where> 1=1 ${ew.sqlSegment}</where>
+    </select>
+
+    <select id="selectListView" resultType="com.entity.view.DingdanView">
+        SELECT dingdan.* FROM dingdan dingdan
+        <where> 1=1 ${ew.sqlSegment}</where>
+    </select>
+
+    <select id="selectView" resultType="com.entity.view.DingdanView">
+        SELECT * FROM dingdan dingdan <where> 1=1 ${ew.sqlSegment}</where>
+    </select>
+
+</mapper>

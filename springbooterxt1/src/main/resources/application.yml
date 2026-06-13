@@ -1,0 +1,73 @@
+# Tomcat
+server:
+    tomcat:
+        uri-encoding: UTF-8
+    port: 8080
+    servlet:
+        context-path: /ssm48yhg
+
+spring:
+    datasource:
+        driverClassName: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://127.0.0.1:3306/ssm48yhg?characterEncoding=utf8&useSSL=false&serverTimezone=UTC&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true
+        username: root
+        password: root
+
+
+
+    servlet:
+      multipart:
+        max-file-size: 300MB
+        max-request-size: 300MB
+    resources:
+      static-locations: classpath:static/,file:static/,file:../admin/,file:../front/
+
+#mybatis
+mybatis-plus:
+  mapper-locations: classpath*:mapper/*.xml
+  #实体扫描，多个package用逗号或者分号分隔
+  typeAliasesPackage: com.entity
+  global-config:
+    #主键类型  0:"数据库ID自增", 1:"用户输入ID",2:"全局唯一ID (数字类型唯一ID)", 3:"全局唯一ID UUID";
+    id-type: 1
+    #字段策略 0:"忽略判断",1:"非 NULL 判断"),2:"非空判断"
+    field-strategy: 2
+    #驼峰下划线转换
+    db-column-underline: true
+    #刷新mapper 调试神器
+    refresh-mapper: true
+    #逻辑删除配置
+    logic-delete-value: -1
+    logic-not-delete-value: 0
+    #自定义SQL注入器
+    sql-injector: com.baomidou.mybatisplus.mapper.LogicSqlInjector
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    call-setters-on-nulls: true
+    #springboot 项目mybatis plus 设置 jdbcTypeForNull (oracle数据库需配置JdbcType.NULL, 默认是Other)
+    jdbc-type-for-null: 'null'
+    #log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 微信小程序登录（请填写自己的小程序 AppID / AppSecret）
+wx:
+  appid: your_wx_appid
+  secret: your_wx_secret
+# 手机号短信验证码登录
+# mock-enabled=true 为开发模拟模式：任意手机号使用 mock-code 即可登录；
+# 接入真实短信网关后，将 mock-enabled 置为 false，并在 sendSmsCode 中实现真实下发逻辑
+sms:
+  mock-enabled: true
+  mock-code: "123456"
+
+# 微信小程序支付（JSAPI / 微信支付 v3）
+# enabled=false 时下单走“到店缴费锁档”线下流程；接入商户后填写以下凭证并置为 true
+# 证书/私钥获取见微信支付商户平台；notify-url 须为公网可达的 https 回调地址
+wxpay:
+  enabled: false
+  appid: ${wx.appid}
+  mchid: your_mch_id
+  api-v3-key: your_api_v3_key
+  cert-serial-no: your_cert_serial_no
+  private-key-path: classpath:cert/apiclient_key.pem
+  notify-url: https://your.domain.com/ssm48yhg/wxpay/notify

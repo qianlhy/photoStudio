@@ -1,0 +1,189 @@
+.form-content {
+  background: #ffffff;
+  padding: 10px 10px 0 10px;
+}
+
+.table-content {
+  background: #ffffff;
+  padding: 0 10px;
+}
+
+.pagination-content {
+  margin-top: 10px;
+  padding-bottom: 10px;
+  text-align: right;
+}
+
+.detail-form-content {
+  background: #ffffff;
+  padding: 10px;
+
+  .el-input {
+    min-width: 200px;
+    max-width: 600px;
+  }
+}
+
+.bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+}
+
+.login-form {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 350px;
+  height: 100%;
+  background: #ffffff;
+  padding: 0 60px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.h1 {
+  margin-top: 80px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.btn-login {
+  margin-top: 50px;
+  width: 100%;
+}
+
+/* ===================================================== */
+/* 照相馆 · 后台商用品牌样式（与小程序同级：白底留白 + 香槟驼金） */
+/* ===================================================== */
+$brand-primary: #B49A6B;
+$brand-primary-deep: #8C7853;
+$brand-primary-soft: #F3EEE4;
+$brand-ink: #222222;
+$brand-ink-2: #666666;
+$brand-line: #ECECEC;
+$brand-bg-soft: #F6F5F2;
+$brand-radius: 12px;
+$brand-shadow: 0 6px 24px rgba(60, 50, 30, 0.06);
+
+body {
+  background: $brand-bg-soft;
+  color: $brand-ink;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+/* 卡片化容器 */
+.form-content,
+.table-content {
+  background: #fff;
+  border-radius: $brand-radius;
+}
+
+.detail-form-content {
+  background: #fff;
+  border-radius: $brand-radius;
+}
+
+/* 表格质感：表头底色、细分割线、行悬浮（兼容新旧 Element 表头类名） */
+.el-table {
+  th,
+  th.el-table__cell {
+    background: $brand-primary-soft !important;
+    color: $brand-primary-deep !important;
+    font-weight: 600;
+  }
+
+  td,
+  th,
+  td.el-table__cell,
+  th.el-table__cell {
+    border-bottom: 1px solid $brand-line;
+  }
+
+  &::before {
+    background: $brand-line;
+  }
+
+  tbody tr:hover > td {
+    background: $brand-primary-soft !important;
+  }
+}
+
+/* 按钮：圆角 + 主色按钮去渐变质感 */
+.el-button {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.el-button--primary {
+  background: $brand-primary;
+  border-color: $brand-primary;
+
+  &:hover,
+  &:focus {
+    background: $brand-primary-deep;
+    border-color: $brand-primary-deep;
+  }
+}
+
+.el-button--text {
+  color: $brand-primary-deep;
+}
+
+/* 分页：当前页品牌色 */
+.el-pagination.is-background .el-pager li:not(.disabled).active {
+  background-color: $brand-primary;
+}
+
+.el-pager li.active {
+  color: $brand-primary;
+}
+
+/* 表单聚焦/标签卡片 */
+.el-input__inner:focus,
+.el-textarea__inner:focus {
+  border-color: $brand-primary;
+}
+
+.el-card {
+  border-radius: $brand-radius;
+  border: 1px solid $brand-line;
+  box-shadow: $brand-shadow !important;
+}
+
+.el-card__header {
+  border-bottom: 1px solid $brand-line;
+  font-weight: 600;
+  color: $brand-ink;
+}
+
+/* 对话框圆角 */
+.el-dialog {
+  border-radius: $brand-radius;
+  overflow: hidden;
+}
+
+.el-dialog__header {
+  background: $brand-primary-soft;
+
+  .el-dialog__title {
+    color: $brand-primary-deep;
+    font-weight: 600;
+  }
+}
+
+/* 滚动条质感 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(140, 120, 83, 0.28);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 120, 83, 0.45);
+}

@@ -1,0 +1,238 @@
+package com.entity.model;
+
+import java.io.Serializable;
+
+
+/**
+ * 用户
+ * 接收传参的实体类
+ * （实际开发中配合移动端接口开发手动去掉些没用的字段， 后端一般用entity就够用了）
+ * 取自ModelAndView 的model名称
+ *
+ * @author
+ * @email
+
+ */
+public class YonghuModel implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+
+    /**
+     * 密码
+     */
+
+    private String mima;
+
+    /**
+     * 姓名
+     */
+
+    private String xingming;
+
+    /**
+     * 性别
+     */
+
+    private String xingbie;
+
+    /**
+     * 邮箱
+     */
+
+    private String youxiang;
+
+    /**
+     * 手机号码
+     */
+
+    private String shoujihaoma;
+
+    /**
+     * 相片
+     */
+
+    private String xiangpian;
+
+    /**
+     * 意向拍摄品类
+     */
+
+    private String yixiangpinlei;
+
+    /**
+     * 偏好风格(逗号分隔)
+     */
+
+    private String pianhao;
+
+    /**
+     * 注册备注
+     */
+
+    private String beizhu;
+
+    /**
+     * 是否审核
+     */
+
+    private String sfsh;
+
+    /**
+     * 审核回复
+     */
+
+    private String shhf;
+
+
+    /**
+     * 设置：密码
+     */
+
+    public void setMima(String mima) {
+        this.mima = mima;
+    }
+
+    /**
+     * 获取：密码
+     */
+    public String getMima() {
+        return mima;
+    }
+
+
+    /**
+     * 设置：姓名
+     */
+
+    public void setXingming(String xingming) {
+        this.xingming = xingming;
+    }
+
+    /**
+     * 获取：姓名
+     */
+    public String getXingming() {
+        return xingming;
+    }
+
+
+    /**
+     * 设置：性别
+     */
+
+    public void setXingbie(String xingbie) {
+        this.xingbie = xingbie;
+    }
+
+    /**
+     * 获取：性别
+     */
+    public String getXingbie() {
+        return xingbie;
+    }
+
+
+    /**
+     * 设置：邮箱
+     */
+
+    public void setYouxiang(String youxiang) {
+        this.youxiang = youxiang;
+    }
+
+    /**
+     * 获取：邮箱
+     */
+    public String getYouxiang() {
+        return youxiang;
+    }
+
+
+    /**
+     * 设置：手机号码
+     */
+
+    public void setShoujihaoma(String shoujihaoma) {
+        this.shoujihaoma = shoujihaoma;
+    }
+
+    /**
+     * 获取：手机号码
+     */
+    public String getShoujihaoma() {
+        return shoujihaoma;
+    }
+
+
+    /**
+     * 设置：相片
+     */
+
+    public void setXiangpian(String xiangpian) {
+        this.xiangpian = xiangpian;
+    }
+
+    /**
+     * 获取：相片
+     */
+    public String getXiangpian() {
+        return xiangpian;
+    }
+
+
+    public void setYixiangpinlei(String yixiangpinlei) {
+        this.yixiangpinlei = yixiangpinlei;
+    }
+
+    public String getYixiangpinlei() {
+        return yixiangpinlei;
+    }
+
+    public void setPianhao(String pianhao) {
+        this.pianhao = pianhao;
+    }
+
+    public String getPianhao() {
+        return pianhao;
+    }
+
+    public void setBeizhu(String beizhu) {
+        this.beizhu = beizhu;
+    }
+
+    public String getBeizhu() {
+        return beizhu;
+    }
+
+    /**
+     * 设置：是否审核
+     */
+
+    public void setSfsh(String sfsh) {
+        this.sfsh = sfsh;
+    }
+
+    /**
+     * 获取：是否审核
+     */
+    public String getSfsh() {
+        return sfsh;
+    }
+
+
+    /**
+     * 设置：审核回复
+     */
+
+    public void setShhf(String shhf) {
+        this.shhf = shhf;
+    }
+
+    /**
+     * 获取：审核回复
+     */
+    public String getShhf() {
+        return shhf;
+    }
+
+}

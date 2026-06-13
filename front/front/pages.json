@@ -1,0 +1,136 @@
+{
+	"easycom": {
+		"^z-(.*)": "@zebra-ui/swiper/components/z-$1/z-$1.vue",
+		"^tc-(.*)": "@/components/tc-$1/tc-$1.vue"
+	},
+	"pages": [{
+		"path": "pages/login/login",
+		"style": {
+			"navigationBarBackgroundColor": "#F3EEE4",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": ""
+		}
+	}, {
+		"path": "pages/index/index",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "首页"
+		}
+	}, {
+		"path": "pages/register/register",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "注册"
+		}
+	}, {
+		"path": "pages/forget/forget",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "忘记密码"
+		}
+	}, {
+		"path": "pages/center/center",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "我的"
+		}
+	}, {
+		"path": "pages/user-info/user-info",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "用户信息"
+		}
+	}, {
+		"path": "pages/news-detail/news-detail",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "资讯详情"
+		}
+	}, {
+		"path": "pages/pay-confirm/pay-confirm",
+		"style": {
+			"navigationBarTitleText": "确认支付"
+		}
+	}, {
+		"path": "pages/taocan/detail",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "套餐详情"
+		}
+	}, {
+		"path": "pages/dingdan/list",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "我的订单"
+		}
+	}, {
+		"path": "pages/dingdan/detail",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "订单详情"
+		}
+	}, {
+		"path": "pages/chengpin/list",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "成品专区"
+		}
+	}, {
+		"path": "pages/preference/preference",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "拍摄偏好"
+		}
+	}, {
+		"path": "pages/message/list",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "消息中心"
+		}
+	}, {
+		"path": "pages/store/notice",
+		"style": {
+			"navigationBarBackgroundColor": "#FFFFFF",
+			"navigationBarTextStyle": "black",
+			"navigationBarTitleText": "门店须知"
+		}
+	}],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "照相馆预约小程序",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	},
+	"tabBar": {
+		"color": "#999999",
+		"selectedColor": "#B49A6B",
+		"borderStyle": "white",
+		"backgroundColor": "#FFFFFF",
+		"list": [{
+				"pagePath": "pages/index/index",
+				"text": "首页"
+			}, {
+				"pagePath": "pages/chengpin/list",
+				"text": "成品"
+			}, {
+				"pagePath": "pages/dingdan/list",
+				"text": "订单"
+			}, {
+				"pagePath": "pages/center/center",
+				"text": "我的"
+			}
+		]
+	}
+}

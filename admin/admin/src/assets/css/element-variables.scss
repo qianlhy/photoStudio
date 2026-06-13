@@ -1,0 +1,9 @@
+/* 改变主题色变量（照相馆商用品牌：香槟驼金） */
+$--color-primary: #B49A6B !default;
+$--color-success: #8FA67A !default;
+$--color-warning: #D9A441 !default;
+$--color-danger: #E8423F !default;
+$--color-info: #909399 !default;
+/* 改变 icon 字体路径变量，必需 */
+$--font-path: '~element-ui/lib/theme-chalk/fonts';
+@import "~element-ui/packages/theme-chalk/src/index";
