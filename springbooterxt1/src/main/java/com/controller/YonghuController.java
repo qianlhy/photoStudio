@@ -150,6 +150,7 @@ public class YonghuController {
             if ("驳回".equals(exist.getSfsh())) {
                 exist.setXingming(yonghu.getXingming());
                 exist.setYixiangpinlei(yonghu.getYixiangpinlei());
+                exist.setPianhao(yonghu.getPianhao());
                 exist.setBeizhu(yonghu.getBeizhu());
                 exist.setSfsh("否");
                 exist.setShhf("");

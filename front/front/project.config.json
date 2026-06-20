@@ -1,5 +1,5 @@
 {
-  "description": "微信小程序配置（请把 YOUR_WX_APPID 换成真实 AppID 后才能扫码预览）",
+  "description": "微信小程序配置",
   "packOptions": {
     "ignore": []
   },
@@ -12,7 +12,7 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.7.12",
-  "appid": "touristappid",
+  "appid": "wx9b6abdb5b925b115",
   "projectname": "app02",
   "condition": {}
 }

@@ -51,7 +51,7 @@ mybatis-plus:
 
 # 微信小程序登录（请填写自己的小程序 AppID / AppSecret）
 wx:
-  appid: your_wx_appid
+  appid: wx9b6abdb5b925b115
   secret: your_wx_secret
 # 手机号短信验证码登录
 # mock-enabled=true 为开发模拟模式：任意手机号使用 mock-code 即可登录；

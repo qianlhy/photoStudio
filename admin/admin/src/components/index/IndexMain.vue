@@ -1,6 +1,5 @@
 <template>
-  <el-main style="padding: 16px 24px; background: #F6F5F2;">
-    <bread-crumbs :title="title" class="bread-crumbs"></bread-crumbs>
+  <el-main style="padding: 20px; background: #f0f2f5;">
     <router-view class="router-view"></router-view>
   </el-main>
 </template>
@@ -115,23 +114,12 @@ a:hover {
 }
 
 .el-main {
-  background-color: #F6F5F2;
-  padding: 16px 24px;
-  min-height: 100vh;
+  background-color: #f0f2f5;
+  padding: 20px;
+  min-height: calc(100vh - 60px);
 }
 
 .router-view {
-  padding: 18px;
-  margin-top: 14px;
-  background: #FFFFFF;
-  border-radius: 14px;
-  box-shadow: 0 6px 24px rgba(60, 50, 30, 0.05);
-  box-sizing: border-box;
-}
-
-.bread-crumbs {
-  width: 100%;
-  margin-top: 2px;
   box-sizing: border-box;
 }
 

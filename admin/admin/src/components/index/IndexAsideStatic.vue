@@ -1,31 +1,39 @@
 <template>
-  <el-aside class="index-aside" width="100%">
+  <el-aside class="index-aside" width="210px">
+    <!-- 品牌 Logo 区 -->
+    <div class="aside-logo">
+      <div class="logo-badge">摄</div>
+      <span class="logo-text">{{ this.$project.projectName }}</span>
+    </div>
     <div class="index-aside-inner menulist">
       <div v-for="item in menuList" :key="item.roleName" v-if="role==item.roleName" class="menulist-item">
-        <div class="menulistImg" v-if="true && 1 == 2">
-          <el-image
-              :style='{"padding":"0","boxShadow":"0 0 6px rgba(0,0,0,0)","margin":"0","borderColor":"rgba(0,0,0,0)","borderRadius":"0","borderWidth":"0","width":"100%","borderStyle":"solid","height":"auto"}'
-              v-if="'http://codegen.caihongy.cn/20201021/cc7d45d9c8164b58b18351764eba9be1.jpg'"
-              src="http://codegen.caihongy.cn/20201021/cc7d45d9c8164b58b18351764eba9be1.jpg" fit="cover"/>
-        </div>
-        <el-menu :mode="1 == 1? 'horizontal':'vertical'" :unique-opened="true" class="el-menu-demo" default-active="0">
-          <el-menu-item index="0" @click="menuHandler('')"><i v-if="false" class="el-icon-menu el-icon-s-home"/>首页
+        <el-menu
+            router
+            :default-active="activeMenu"
+            :unique-opened="true"
+            class="el-menu-demo"
+            background-color="#2B3648"
+            text-color="#c4ccda"
+            active-text-color="#E6C88E">
+          <el-menu-item index="/">
+            <i class="el-icon-s-home"/>
+            <span slot="title">首页</span>
           </el-menu-item>
-          <el-submenu :index="1+''">
+          <el-submenu index="center">
             <template slot="title">
-              <i v-if="false" class="el-icon-menu el-icon-user-solid"/>
+              <i class="el-icon-user-solid"/>
               <span>个人中心</span>
             </template>
-            <el-menu-item :index="1-1" @click="menuHandler('updatePassword')">修改密码</el-menu-item>
-            <el-menu-item :index="1-2" @click="menuHandler('center')">个人信息</el-menu-item>
+            <el-menu-item index="/updatePassword">修改密码</el-menu-item>
+            <el-menu-item index="/center">个人信息</el-menu-item>
           </el-submenu>
-          <el-submenu v-for=" (menu,index) in item.backMenu" :key="menu.menu" :index="index+2+''">
+          <el-submenu v-for="(menu,index) in item.backMenu" :key="menu.menu" :index="index+2+''">
             <template slot="title">
-              <i v-if="false" class="el-icon-menu" :class="icons[index]"/>
+              <i class="el-icon-menu" :class="icons[index]"/>
               <span>{{ menu.menu }}</span>
             </template>
-            <el-menu-item v-for=" (child,sort) in menu.child" :key="sort" :index="(index+2)+'-'+sort"
-                          @click="menuHandler(child.tableName)">{{ child.menu }}
+            <el-menu-item v-for="(child,sort) in menu.child" :key="sort" :index="'/'+child.tableName">
+              {{ child.menu }}
             </el-menu-item>
           </el-submenu>
         </el-menu>
@@ -47,45 +55,29 @@ export default {
         'el-icon-s-cooperation',
         'el-icon-s-order',
         'el-icon-s-platform',
-        'el-icon-s-fold',
-        'el-icon-s-unfold',
-        'el-icon-s-operation',
-        'el-icon-s-promotion',
-        'el-icon-s-release',
-        'el-icon-s-ticket',
         'el-icon-s-management',
-        'el-icon-s-open',
-        'el-icon-s-shop',
+        'el-icon-s-custom',
+        'el-icon-s-goods',
+        'el-icon-s-claim',
         'el-icon-s-marketing',
         'el-icon-s-flag',
-        'el-icon-s-comment',
-        'el-icon-s-finance',
-        'el-icon-s-claim',
-        'el-icon-s-custom',
-        'el-icon-s-opportunity',
         'el-icon-s-data',
-        'el-icon-s-check',
+        'el-icon-s-promotion',
+        'el-icon-s-comment',
+        'el-icon-s-ticket',
+        'el-icon-s-finance',
+        'el-icon-s-opportunity',
         'el-icon-s-grid',
         'el-icon-menu',
-        'el-icon-chat-dot-square',
         'el-icon-message',
+        'el-icon-picture-outline',
         'el-icon-postcard',
-        'el-icon-position',
-        'el-icon-microphone',
-        'el-icon-close-notification',
-        'el-icon-bangzhu',
-        'el-icon-time',
-        'el-icon-odometer',
-        'el-icon-crop',
-        'el-icon-aim',
-        'el-icon-switch-button',
-        'el-icon-full-screen',
-        'el-icon-copy-document',
-        'el-icon-mic',
-        'el-icon-stopwatch',
       ],
-      menulistStyle: '${template.back.menulist.menulistStyle}',
-      menulistBorderBottom: {},
+    }
+  },
+  computed: {
+    activeMenu() {
+      return this.$route.path
     }
   },
   mounted() {
@@ -113,305 +105,146 @@ export default {
     }
     this.role = this.$storage.get('role')
   },
-  created() {
-    setTimeout(() => {
-      this.menulistStyleChange()
-    }, 10)
-    this.icons.sort(() => {
-      return (0.5 - Math.random())
-    })
-    this.lineBorder()
-  },
-  methods: {
-    lineBorder() {
-      let style = '${template.back.menulist.menulistStyle}'
-      let w = '${template.back.menulist.menulistLineWidth}'
-      let s = '${template.back.menulist.menulistLineStyle}'
-      let c = '${template.back.menulist.menulistLineColor}'
-      if (style == 'vertical') {
-        this.menulistBorderBottom = {
-          borderBottomWidth: w,
-          borderBottomStyle: s,
-          borderBottomColor: c
-        }
-      } else {
-        this.menulistBorderBottom = {
-          borderRightWidth: w,
-          borderRightStyle: s,
-          borderRightColor: c
-        }
-      }
-    },
-    menuHandler(name) {
-      let router = this.$router
-      name = '/' + name
-      router.push(name)
-    },
-    // 菜单
-    setMenulistHoverColor() {
-      let that = this
-      return;
-      this.$nextTick(() => {
-        document.querySelectorAll('.menulist .el-menu-item').forEach(el => {
-          el.addEventListener("mouseenter", e => {
-            e.stopPropagation()
-            el.style.backgroundColor = "${template.back.menulist.menulistHoverColor}"
-          })
-          el.addEventListener("mouseleave", e => {
-            e.stopPropagation()
-            // el.style.backgroundColor = "${template.back.menulist.menulistBgColor}"
-            el.style.background = "none"
-          })
-          el.addEventListener("focus", e => {
-            e.stopPropagation()
-            el.style.backgroundColor = "${template.back.menulist.menulistHoverColor}"
-          })
-        })
-        document.querySelectorAll('.menulist .el-submenu__title').forEach(el => {
-          el.addEventListener("mouseenter", e => {
-            e.stopPropagation()
-            el.style.backgroundColor = "${template.back.menulist.menulistHoverColor}"
-          })
-          el.addEventListener("mouseleave", e => {
-            e.stopPropagation()
-            // el.style.backgroundColor = "${template.back.menulist.menulistBgColor}"
-            el.style.background = "none"
-          })
-        })
-      })
-    },
-    setMenulistIconColor() {
-      this.$nextTick(() => {
-        document.querySelectorAll('.menulist .el-submenu__title .el-submenu__icon-arrow').forEach(el => {
-          el.style.color = "${template.back.menulist.menulistIconColor}"
-        })
-      })
-    },
-    menulistStyleChange() {
-      this.setMenulistIconColor()
-      this.setMenulistHoverColor()
-      this.setMenulistStyleHeightChange()
-      let str = "1"
-      if (1 == str) {
-        this.$nextTick(() => {
-          document.querySelectorAll('.el-container .el-container').forEach(el => {
-            el.style.display = "block"
-            el.style.paddingTop = "64px" // header 高度
-          })
-          document.querySelectorAll('.el-aside').forEach(el => {
-            el.style.width = "100%"
-            el.style.height = "auto"
-            el.style.paddingTop = '0'
-          })
-          document.querySelectorAll('.index-aside .index-aside-inner').forEach(el => {
-            el.style.paddingTop = '0'
-            el.style.width = "100%"
-          })
-        })
-      }
-      if (2 === str) {
-        this.$nextTick(() => {
-          document.querySelectorAll('.index-aside .index-aside-inner').forEach(el => {
-            el.style.paddingTop = "80px"
-          })
-        })
-      }
-    },
-    setMenulistStyleHeightChange() {
-      return;
-      this.$nextTick(() => {
-        document.querySelectorAll('.menulist-item>.el-menu--horizontal>.el-menu-item').forEach(el => {
-          el.style.height = "${template.back.menulist.menulistHeight}"
-          el.style.lineHeight = "${template.back.menulist.menulistHeight}"
-        })
-        document.querySelectorAll('.menulist-item>.el-menu--horizontal>.el-submenu>.el-submenu__title').forEach(el => {
-          el.style.height = "${template.back.menulist.menulistHeight}"
-          el.style.lineHeight = "${template.back.menulist.menulistHeight}"
-        })
-      })
-    },
-  }
 }
 </script>
+
 <style lang="scss" scoped>
-.el-container {
-  display: block;
-}
+$aside-bg: #2B3648;
+$aside-bg-deep: #232C3B;
+$aside-gold: #E6C88E;
 
 .index-aside {
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-wrap: wrap;
+  height: 100%;
+  background: linear-gradient(180deg, #313D52 0%, #2B3648 55%, #262F3F 100%) !important;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.12);
 
-  .menulistImg {
-    font-size: 0;
-    box-sizing: border-box;
+  // Logo 区
+  .aside-logo {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    background: $aside-bg-deep;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 
-    .el-image {
-      margin: 0 auto;
-      width: 100px;
-      height: 100px;
-      border-radius: 100%;
-      display: block;
+    .logo-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      margin-right: 12px;
+      background: linear-gradient(135deg, #C9B187, #A6885A);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .logo-text {
+      color: #f4ede0;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 
+  .index-aside-inner {
+    width: 100%;
+  }
 
   .el-menu-demo {
     width: 100%;
-    height: auto !important;
-    padding: 8px 18px;
-    margin: 0;
-    border: none !important;
-    background: #fff !important;
-    border-bottom: 1px solid #ECECEC !important;
-    box-shadow: 0 2px 8px rgba(60, 50, 30, 0.04);
+    border-right: none !important;
+    padding: 8px 0;
     box-sizing: border-box;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    background: transparent !important;
+  }
 
-    & > .el-menu-item {
-      width: auto;
-      height: 40px !important;
-      line-height: 40px !important;
-      padding: 0 18px;
-      margin: 4px 6px 4px 0;
-      color: #555;
-      font-size: 14px;
-      border-radius: 10px;
-      border: none;
-      background-color: transparent !important;
-      box-shadow: none;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      box-sizing: border-box;
-      transition: all .2s;
+  // 让一级菜单/分组标题透出侧栏渐变底色
+  ::v-deep .el-menu-item,
+  ::v-deep .el-submenu__title {
+    background-color: transparent !important;
+  }
 
-      &:hover {
-        background-color: #F3EEE4 !important;
-        color: #8C7853;
-      }
+  // 一级菜单项（首页）
+  ::v-deep .el-menu-item {
+    height: 48px;
+    line-height: 48px;
+    font-size: 14px;
 
-      &.is-active {
-        background-color: #B49A6B !important;
-        color: #fff !important;
-      }
+    i {
+      color: #98a4b8;
+      margin-right: 8px;
+      font-size: 17px;
     }
 
-    .el-submenu {
-      margin: 4px 6px 4px 0;
+    &:hover {
+      background-color: #313d52 !important;
+      color: #fff !important;
     }
 
-    & ::v-deep .el-submenu__title {
-      width: auto;
-      height: 40px !important;
-      line-height: 40px !important;
-      padding: 0 18px;
-      color: #555;
-      font-size: 14px;
-      border-radius: 10px;
-      border: none;
-      background-color: transparent !important;
-      box-shadow: none;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      box-sizing: border-box;
-      transition: all .2s;
+    &.is-active {
+      background-color: $aside-bg-deep !important;
+      color: $aside-gold !important;
+      border-left: 3px solid $aside-gold;
 
-      &:hover {
-        background-color: #F3EEE4 !important;
-        color: #8C7853;
-      }
-
-      .el-submenu__icon-arrow {
-        margin: 0 0 0 6px;
-        padding: 0;
-        color: #999 !important;
-        font-size: 12px;
-        position: static;
-        transform: none;
-        text-align: center;
-        display: inline-block;
-      }
-    }
-
-    & ::v-deep .el-menu.el-menu--inline {
-      width: 168px;
-      height: auto;
-      padding: 6px;
-      margin: 0 auto;
-      border-radius: 12px;
-      border: 1px solid #ECECEC;
-      background-color: #fff;
-      box-shadow: 0 8px 28px rgba(60, 50, 30, 0.12);
-
-      .el-menu-item {
-        width: 100%;
-        height: 40px;
-        line-height: 40px;
-        padding: 0 14px !important;
-        margin: 2px 0;
-        color: #555 !important;
-        font-size: 14px;
-        border-radius: 8px;
-        border: none;
-        background-color: transparent !important;
-        box-shadow: none;
-        text-align: left;
-        min-width: auto;
-
-        &.is-active {
-          color: #8C7853 !important;
-          background-color: #F3EEE4 !important;
-          font-weight: 600;
-        }
-
-        &:hover {
-          color: #8C7853 !important;
-          background-color: #F3EEE4 !important;
-        }
+      i {
+        color: $aside-gold;
       }
     }
   }
-}
-</style>
-<style>
 
-.el-menu--horizontal .el-menu--popup {
-  width: 176px;
-  height: auto;
-  padding: 6px;
-  margin: 0 auto;
-  border-radius: 12px;
-  border: 1px solid #ECECEC;
-  background-color: #fff;
-  box-shadow: 0 8px 28px rgba(60, 50, 30, 0.12);
-  min-width: auto;
-}
+  // 一级标题（分组）
+  ::v-deep .el-submenu__title {
+    height: 48px;
+    line-height: 48px;
+    font-size: 14px;
 
-.el-menu--horizontal .el-menu--popup .el-menu-item {
-  width: 100%;
-  height: 40px;
-  line-height: 40px;
-  padding: 0 14px;
-  margin: 2px 0;
-  color: #555 !important;
-  font-size: 14px;
-  border-radius: 8px;
-  border: none;
-  background-color: transparent !important;
-  box-shadow: none;
-  text-align: left;
-  min-width: auto;
-}
+    i {
+      color: #98a4b8;
+      margin-right: 8px;
+      font-size: 17px;
+    }
 
-.el-menu--horizontal .el-menu--popup .el-menu-item:hover,
-.el-menu--horizontal .el-menu--popup .el-menu-item.is-active {
-  color: #8C7853 !important;
-  background-color: #F3EEE4 !important;
+    &:hover {
+      background-color: #313d52 !important;
+      color: #fff !important;
+    }
+  }
+
+  // 二级菜单项（更深底色）
+  ::v-deep .el-menu--inline {
+    background-color: $aside-bg-deep !important;
+
+    .el-menu-item {
+      height: 44px;
+      line-height: 44px;
+      min-width: auto;
+      padding-left: 50px !important;
+      background-color: $aside-bg-deep !important;
+      color: #aab4c5 !important;
+
+      &:hover {
+        background-color: #313d52 !important;
+        color: #fff !important;
+      }
+
+      &.is-active {
+        color: $aside-gold !important;
+        background-color: #313d52 !important;
+        border-left: 3px solid $aside-gold;
+        font-weight: 600;
+      }
+    }
+  }
 }
 </style>

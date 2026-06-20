@@ -26,10 +26,22 @@
 			<view class="field">
 				<text class="label">意向品类</text>
 				<view class="chips">
-					<view class="chip" :class="{ active: form.yixiangpinlei === '写真' }" @tap="form.yixiangpinlei='写真'">写真</view>
-					<view class="chip" :class="{ active: form.yixiangpinlei === '宣传片' }" @tap="form.yixiangpinlei='宣传片'">宣传片</view>
-					<view class="chip" :class="{ active: form.yixiangpinlei === '都看看' }" @tap="form.yixiangpinlei='都看看'">都看看</view>
+					<view class="chip" :class="{ active: form.yixiangpinlei === '写真' }" @tap="pickPinlei('写真')">写真</view>
+					<view class="chip" :class="{ active: form.yixiangpinlei === '宣传片' }" @tap="pickPinlei('宣传片')">宣传片</view>
+					<view class="chip" :class="{ active: form.yixiangpinlei === '都看看' }" @tap="pickPinlei('都看看')">都看看</view>
 				</view>
+			</view>
+			<view class="field col">
+				<text class="label">偏好细分风格<text class="label-opt">可多选·选填</text></text>
+				<block v-for="group in styleGroups" :key="group.cat">
+					<view class="group-head" v-if="styleGroups.length > 1">{{ group.label }}</view>
+					<view class="chips" v-if="group.styles.length">
+						<view class="chip" :class="{ active: styleSelected(item.leixing) }"
+							v-for="(item, idx) in group.styles" :key="idx" @tap="toggleStyle(item.leixing)">
+							{{ item.leixing }}
+						</view>
+					</view>
+				</block>
 			</view>
 			<view class="field col">
 				<text class="label">备注说明</text>
@@ -50,17 +62,45 @@
 				pending: false,
 				rejected: false,
 				reason: '',
-				form: { shoujihaoma: '', xingming: '', yixiangpinlei: '写真', beizhu: '', openid: '' }
+				form: { shoujihaoma: '', xingming: '', yixiangpinlei: '写真', beizhu: '', openid: '' },
+				selectedStyles: [],
+				allStyles: []
 			};
+		},
+		computed: {
+			// 细分小类按意向品类联动：写真/宣传片显示对应分组，"都看看"显示全部
+			styleGroups() {
+				let cats = this.form.yixiangpinlei === '都看看'
+					? ['写真', '宣传片']
+					: [this.form.yixiangpinlei];
+				let labelMap = { '写真': '个人写真', '宣传片': '商业宣传片' };
+				return cats
+					.filter(c => c)
+					.map(c => ({
+						cat: c,
+						label: labelMap[c] || c,
+						styles: this.allStyles.filter(s => s.pinlei === c)
+					}));
+			}
 		},
 		onLoad(opt) {
 			this.pending = opt.pending === '1';
 			this.rejected = opt.rejected === '1';
 			if (opt.openid) this.form.openid = opt.openid;
+			this.loadStyles();
 			this.loadUser();
 		},
 		methods: {
+			async loadStyles() {
+				// leixing/list 为 IgnoreAuth，未登录也可获取
+				try {
+					let res = await this.$api.list('leixing', { page: 1, limit: 100 });
+					this.allStyles = (res.data && res.data.list) || [];
+				} catch (e) {}
+			},
 			async loadUser() {
+				// 未登录用户（新用户提交申请）没有 token，调用鉴权接口会返回 401 被拦截器弹回登录页，故跳过
+				if (!uni.getStorageSync('token')) return;
 				try {
 					let res = await this.$api.session('yonghu');
 					if (res.data) {
@@ -69,10 +109,29 @@
 						this.form.yixiangpinlei = res.data.yixiangpinlei || '写真';
 						this.form.beizhu = res.data.beizhu || '';
 						this.reason = res.data.shhf || '';
+						if (res.data.pianhao) this.selectedStyles = res.data.pianhao.split(',').filter(i => i);
 						if (res.data.sfsh === '否') this.pending = true;
 						if (res.data.sfsh === '驳回') this.rejected = true;
 					}
 				} catch (e) {}
+			},
+			pickPinlei(p) {
+				this.form.yixiangpinlei = p;
+				// 切换品类后，剔除不属于当前可选范围的细分风格
+				let cats = p === '都看看' ? ['写真', '宣传片'] : [p];
+				let names = this.allStyles.filter(s => cats.indexOf(s.pinlei) > -1).map(s => s.leixing);
+				this.selectedStyles = this.selectedStyles.filter(n => names.indexOf(n) > -1);
+			},
+			styleSelected(name) {
+				return this.selectedStyles.indexOf(name) > -1;
+			},
+			toggleStyle(name) {
+				let idx = this.selectedStyles.indexOf(name);
+				if (idx > -1) {
+					this.selectedStyles.splice(idx, 1);
+				} else {
+					this.selectedStyles.push(name);
+				}
 			},
 			async submit() {
 				if (!this.form.shoujihaoma || !this.form.xingming) {
@@ -80,7 +139,8 @@
 					return;
 				}
 				try {
-					let res = await http.post('yonghu/apply', this.form);
+					let payload = Object.assign({}, this.form, { pianhao: this.selectedStyles.join(',') });
+					let res = await http.post('yonghu/apply', payload);
 					this.$utils.msg(res.msg || '申请已提交');
 					this.pending = true;
 					this.rejected = false;
@@ -105,6 +165,8 @@
 		&.col { flex-direction: column; align-items: flex-start; }
 	}
 	.label { width: 160rpx; font-size: 28rpx; color: $brand-ink-2; flex-shrink: 0; }
+	.label-opt { font-size: 22rpx; color: #bbb; margin-left: 12rpx; }
+	.group-head { width: 100%; font-size: 24rpx; color: $brand-ink-3; margin: 16rpx 0 10rpx; }
 	input, textarea { flex: 1; font-size: 28rpx; width: 100%; }
 	textarea { min-height: 160rpx; margin-top: 12rpx; }
 	.chips { display: flex; flex-wrap: wrap; gap: 16rpx; }

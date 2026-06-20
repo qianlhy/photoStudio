@@ -60,12 +60,93 @@ page.data-v-05c05866 {
   margin-bottom: 24rpx;
 }
 .sec-title.data-v-05c05866 {
+  display: flex;
+  align-items: center;
   font-size: 30rpx;
   font-weight: 700;
   color: #222222;
-  margin-bottom: 24rpx;
   padding-left: 16rpx;
   border-left: 6rpx solid #B49A6B;
+}
+.must.data-v-05c05866,
+.opt.data-v-05c05866 {
+  font-size: 22rpx;
+  font-weight: 500;
+  margin-left: 14rpx;
+  padding: 2rpx 14rpx;
+  border-radius: 20rpx;
+}
+.must.data-v-05c05866 {
+  color: #E8423F;
+  background: #FDE2E2;
+}
+.opt.data-v-05c05866 {
+  color: #8C7853;
+  background: #F3EEE4;
+}
+.sec-tip.data-v-05c05866 {
+  font-size: 24rpx;
+  color: #aaa;
+  margin: 12rpx 0 22rpx 16rpx;
+}
+/* 大类卡片 */
+.cat-wrap.data-v-05c05866 {
+  display: flex;
+  gap: 24rpx;
+}
+.cat.data-v-05c05866 {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 168rpx;
+  border-radius: 18rpx;
+  background: #f6f4ef;
+  border: 3rpx solid transparent;
+}
+.cat.active.data-v-05c05866 {
+  background: #F3EEE4;
+  border-color: #B49A6B;
+}
+.cat-icon.data-v-05c05866 {
+  font-size: 56rpx;
+  color: #b8a888;
+}
+.cat.active .cat-icon.data-v-05c05866 {
+  color: #8C7853;
+}
+.cat-name.data-v-05c05866 {
+  margin-top: 14rpx;
+  font-size: 28rpx;
+  color: #666666;
+  font-weight: 600;
+}
+.cat.active .cat-name.data-v-05c05866 {
+  color: #8C7853;
+}
+.cat-check.data-v-05c05866 {
+  position: absolute;
+  top: 14rpx;
+  right: 16rpx;
+  font-size: 30rpx;
+  color: #B49A6B;
+}
+/* 细分小类分组 */
+.group-head.data-v-05c05866 {
+  font-size: 26rpx;
+  color: #666666;
+  font-weight: 600;
+  margin: 24rpx 0 16rpx;
+}
+.group-head.data-v-05c05866:first-child {
+  margin-top: 6rpx;
+}
+.group-empty.data-v-05c05866 {
+  font-size: 24rpx;
+  color: #bbb;
+  margin-bottom: 10rpx;
 }
 .chip-wrap.data-v-05c05866 {
   display: flex;
@@ -83,6 +164,12 @@ page.data-v-05c05866 {
   background: #B49A6B;
   color: #fff;
   font-weight: 600;
+}
+.empty-hint.data-v-05c05866 {
+  text-align: center;
+  font-size: 26rpx;
+  color: #bbb;
+  padding: 50rpx 24rpx;
 }
 .save-btn.data-v-05c05866 {
   margin-top: 20rpx;

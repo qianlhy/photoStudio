@@ -14,7 +14,34 @@
 				@touchmove.stop.prevent="index === 0 ? onTouchMove($event) : null"
 				@touchend="index === 0 ? onTouchEnd($event) : null"
 				@tap="index === 0 ? onTap(card) : null">
-				<image class="tc-card-img" :src="coverOf(card)" mode="aspectFill"></image>
+				<!-- 顶层视频卡：真实 video 播放（同屏仅一个，避免卡顿） -->
+				<video
+					v-if="index === 0 && isVideo(card)"
+					id="tcTopVideo"
+					class="tc-card-media tc-card-video"
+					:src="videoSrc(card)"
+					:poster="coverOf(card)"
+					:autoplay="true"
+					:loop="true"
+					:muted="true"
+					object-fit="cover"
+					:controls="false"
+					:show-center-play-btn="false"
+					:show-play-btn="false"
+					:show-fullscreen-btn="false"
+					:show-mute-btn="false"
+					:enable-progress-gesture="false"
+					:vslide-gesture="false"></video>
+				<!-- 封面图：非视频卡 / 非顶层 / 拖动或飞出动画中（盖住视频，保证滑动顺滑） -->
+				<image
+					v-if="!isVideo(card) || index !== 0 || dragging || animating"
+					class="tc-card-media tc-card-cover"
+					:src="coverOf(card)"
+					mode="aspectFill"></image>
+				<!-- 视频标识 -->
+				<view v-if="isVideo(card)" class="tc-video-flag"><text class="tc-play-tri"></text></view>
+				<!-- 顶层透明手势层：防止原生 video 吞掉左右滑动手势 -->
+				<view v-if="index === 0" class="tc-gesture"></view>
 				<!-- 右滑收藏角标 -->
 				<view v-if="index === 0 && moveX > 20" class="tc-badge tc-badge-like">收藏</view>
 				<!-- 左滑屏蔽角标 -->
@@ -91,12 +118,34 @@
 				let first = card.fengmian.split(',')[0];
 				return this.baseUrl + first;
 			},
+			isVideo(card) {
+				return !!(card && card.shipin && String(card.shipin).trim());
+			},
+			videoSrc(card) {
+				if (!this.isVideo(card)) return '';
+				let first = String(card.shipin).split(',')[0];
+				return this.baseUrl + first;
+			},
+			pauseTopVideo() {
+				try {
+					let ctx = uni.createVideoContext('tcTopVideo', this);
+					if (ctx) ctx.pause();
+				} catch (e) {}
+			},
+			playTopVideo() {
+				try {
+					let ctx = uni.createVideoContext('tcTopVideo', this);
+					if (ctx) ctx.play();
+				} catch (e) {}
+			},
 			onTouchStart(e) {
 				if (this.animating) return;
 				let t = e.touches[0] || e.changedTouches[0];
 				this.startX = t.clientX;
 				this.startY = t.clientY;
 				this.dragging = true;
+				// 拖动期间用封面图盖住并暂停视频，避免边解码边位移导致卡顿
+				if (this.isVideo(this.cards[0])) this.pauseTopVideo();
 			},
 			onTouchMove(e) {
 				if (!this.dragging) return;
@@ -139,6 +188,12 @@
 			reset() {
 				this.moveX = 0;
 				this.moveY = 0;
+				// 卡片归位 / 切换到新顶卡后，恢复（或启动）顶层视频播放
+				this.$nextTick(() => {
+					setTimeout(() => {
+						if (this.isVideo(this.cards[0])) this.playTopVideo();
+					}, 60);
+				});
 			},
 			onTap(card) {
 				// 轻微滑动视为点击
@@ -176,9 +231,56 @@
 		will-change: transform;
 	}
 
-	.tc-card-img {
+	.tc-card-media {
+		position: absolute;
+		top: 0;
+		left: 0;
 		width: 100%;
 		height: 100%;
+	}
+
+	/* 底层媒体（视频） */
+	.tc-card-video {
+		z-index: 1;
+	}
+
+	/* 封面图：拖动/飞出时盖住视频，或非视频卡的常态展示 */
+	.tc-card-cover {
+		z-index: 2;
+	}
+
+	/* 透明手势层：覆盖整张卡，保证滑动手势不被原生 video 吞掉 */
+	.tc-gesture {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 3;
+		background: transparent;
+	}
+
+	.tc-video-flag {
+		position: absolute;
+		top: 24rpx;
+		right: 24rpx;
+		width: 56rpx;
+		height: 56rpx;
+		border-radius: 50%;
+		background: rgba(0, 0, 0, 0.45);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 6;
+	}
+
+	.tc-play-tri {
+		width: 0;
+		height: 0;
+		margin-left: 6rpx;
+		border-style: solid;
+		border-width: 14rpx 0 14rpx 22rpx;
+		border-color: transparent transparent transparent #fff;
 	}
 
 	.tc-card-mask {
@@ -188,6 +290,7 @@
 		width: 100%;
 		height: 380rpx;
 		background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+		z-index: 4;
 	}
 
 	.tc-card-info {
@@ -198,6 +301,7 @@
 		padding: 30rpx 36rpx 40rpx;
 		box-sizing: border-box;
 		color: #fff;
+		z-index: 5;
 	}
 
 	.tc-card-tags {

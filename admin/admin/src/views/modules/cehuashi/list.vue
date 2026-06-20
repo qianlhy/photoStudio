@@ -724,22 +724,23 @@ export default {
   background: transparent;
 }
 
-.tables ::v-deep .el-table__body tr {
-  background-color: #f5f5f5 !important;
-  color: #606266 !important;
+.tables ::v-deep .el-table__header th,
+.tables ::v-deep .el-table__header th.el-table__cell {
+  background-color: #FAF9F6 !important;
+  color: #5c5345 !important;
 }
 
-.tables ::v-deep .el-table__body tr.el-table__row--striped td {
-  background: transparent;
+.tables ::v-deep .el-table__body tr > td {
+  background-color: #fff !important;
+  color: #5a5a5a !important;
 }
 
-.tables ::v-deep .el-table__body tr.el-table__row--striped {
-  background-color: rgba(184, 230, 253, 0.78) !important;
-  color: #606266 !important;
+.tables ::v-deep .el-table__body tr.el-table__row--striped > td {
+  background-color: #fff !important;
 }
 
 .tables ::v-deep .el-table__body tr:hover > td {
-  background-color: rgba(184, 230, 253, 1) !important;
+  background-color: #FAF7F1 !important;
   color: #333 !important;
 }
 

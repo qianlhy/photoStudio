@@ -79,6 +79,17 @@ page.data-v-769a7324 {
   color: #666666;
   flex-shrink: 0;
 }
+.label-opt.data-v-769a7324 {
+  font-size: 22rpx;
+  color: #bbb;
+  margin-left: 12rpx;
+}
+.group-head.data-v-769a7324 {
+  width: 100%;
+  font-size: 24rpx;
+  color: #999999;
+  margin: 16rpx 0 10rpx;
+}
 input.data-v-769a7324, textarea.data-v-769a7324 {
   flex: 1;
   font-size: 28rpx;

@@ -85,10 +85,21 @@ var render = function () {
   var l0 = !(g0 === 0)
     ? _vm.__map(_vm.renderCards, function (card, index) {
         var $orig = _vm.__get_orig(card)
-        var m0 = _vm.coverOf(card)
+        var m0 = index === 0 && _vm.isVideo(card)
+        var m1 = m0 ? _vm.videoSrc(card) : null
+        var m2 = m0 ? _vm.coverOf(card) : null
+        var m3 =
+          !_vm.isVideo(card) || index !== 0 || _vm.dragging || _vm.animating
+        var m4 = m3 ? _vm.coverOf(card) : null
+        var m5 = _vm.isVideo(card)
         return {
           $orig: $orig,
           m0: m0,
+          m1: m1,
+          m2: m2,
+          m3: m3,
+          m4: m4,
+          m5: m5,
         }
       })
     : null
@@ -167,12 +178,39 @@ __webpack_require__.r(__webpack_exports__);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-
+/* WEBPACK VAR INJECTION */(function(uni) {
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -268,12 +306,34 @@ var _default2 = {
       var first = card.fengmian.split(',')[0];
       return this.baseUrl + first;
     },
+    isVideo: function isVideo(card) {
+      return !!(card && card.shipin && String(card.shipin).trim());
+    },
+    videoSrc: function videoSrc(card) {
+      if (!this.isVideo(card)) return '';
+      var first = String(card.shipin).split(',')[0];
+      return this.baseUrl + first;
+    },
+    pauseTopVideo: function pauseTopVideo() {
+      try {
+        var ctx = uni.createVideoContext('tcTopVideo', this);
+        if (ctx) ctx.pause();
+      } catch (e) {}
+    },
+    playTopVideo: function playTopVideo() {
+      try {
+        var ctx = uni.createVideoContext('tcTopVideo', this);
+        if (ctx) ctx.play();
+      } catch (e) {}
+    },
     onTouchStart: function onTouchStart(e) {
       if (this.animating) return;
       var t = e.touches[0] || e.changedTouches[0];
       this.startX = t.clientX;
       this.startY = t.clientY;
       this.dragging = true;
+      // 拖动期间用封面图盖住并暂停视频，避免边解码边位移导致卡顿
+      if (this.isVideo(this.cards[0])) this.pauseTopVideo();
     },
     onTouchMove: function onTouchMove(e) {
       if (!this.dragging) return;
@@ -315,8 +375,15 @@ var _default2 = {
       }, 280);
     },
     reset: function reset() {
+      var _this3 = this;
       this.moveX = 0;
       this.moveY = 0;
+      // 卡片归位 / 切换到新顶卡后，恢复（或启动）顶层视频播放
+      this.$nextTick(function () {
+        setTimeout(function () {
+          if (_this3.isVideo(_this3.cards[0])) _this3.playTopVideo();
+        }, 60);
+      });
     },
     onTap: function onTap(card) {
       // 轻微滑动视为点击
@@ -327,6 +394,7 @@ var _default2 = {
   }
 };
 exports.default = _default2;
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
 
 /***/ }),
 

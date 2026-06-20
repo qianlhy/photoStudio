@@ -1,5 +1,9 @@
 <template>
   <div class="addEdit-block">
+    <div class="addEdit-head">
+      <i class="el-icon-arrow-left back-arrow" @click="back()"></i>
+      <span class="addEdit-title" @click="back()">{{ info ? '查看详情' : (ruleForm.id ? '编辑' : '新增') }}</span>
+    </div>
     <el-form
         class="detail-form-content"
         ref="ruleForm"

@@ -102,17 +102,35 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  if (!_vm._isMounted) {
-    _vm.e0 = function ($event) {
-      _vm.form.yixiangpinlei = "写真"
+  var g0 = _vm.styleGroups.length
+  var l1 = _vm.__map(_vm.styleGroups, function (group, __i0__) {
+    var $orig = _vm.__get_orig(group)
+    var g1 = group.styles.length
+    var l0 = g1
+      ? _vm.__map(group.styles, function (item, idx) {
+          var $orig = _vm.__get_orig(item)
+          var m0 = _vm.styleSelected(item.leixing)
+          return {
+            $orig: $orig,
+            m0: m0,
+          }
+        })
+      : null
+    return {
+      $orig: $orig,
+      g1: g1,
+      l0: l0,
     }
-    _vm.e1 = function ($event) {
-      _vm.form.yixiangpinlei = "宣传片"
+  })
+  _vm.$mp.data = Object.assign(
+    {},
+    {
+      $root: {
+        g0: g0,
+        l1: l1,
+      },
     }
-    _vm.e2 = function ($event) {
-      _vm.form.yixiangpinlei = "都看看"
-    }
-  }
+  )
 }
 var recyclableRender = false
 var staticRenderFns = []
@@ -200,6 +218,18 @@ var _http = _interopRequireDefault(__webpack_require__(/*! @/api/http.js */ 35))
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   data: function data() {
     return {
@@ -212,18 +242,43 @@ var _default = {
         yixiangpinlei: '写真',
         beizhu: '',
         openid: ''
-      }
+      },
+      selectedStyles: [],
+      allStyles: []
     };
+  },
+  computed: {
+    // 细分小类按意向品类联动：写真/宣传片显示对应分组，"都看看"显示全部
+    styleGroups: function styleGroups() {
+      var _this = this;
+      var cats = this.form.yixiangpinlei === '都看看' ? ['写真', '宣传片'] : [this.form.yixiangpinlei];
+      var labelMap = {
+        '写真': '个人写真',
+        '宣传片': '商业宣传片'
+      };
+      return cats.filter(function (c) {
+        return c;
+      }).map(function (c) {
+        return {
+          cat: c,
+          label: labelMap[c] || c,
+          styles: _this.allStyles.filter(function (s) {
+            return s.pinlei === c;
+          })
+        };
+      });
+    }
   },
   onLoad: function onLoad(opt) {
     this.pending = opt.pending === '1';
     this.rejected = opt.rejected === '1';
     if (opt.openid) this.form.openid = opt.openid;
+    this.loadStyles();
     this.loadUser();
   },
   methods: {
-    loadUser: function loadUser() {
-      var _this = this;
+    loadStyles: function loadStyles() {
+      var _this2 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
         var res;
         return _regenerator.default.wrap(function _callee$(_context) {
@@ -232,18 +287,13 @@ var _default = {
               case 0:
                 _context.prev = 0;
                 _context.next = 3;
-                return _this.$api.session('yonghu');
+                return _this2.$api.list('leixing', {
+                  page: 1,
+                  limit: 100
+                });
               case 3:
                 res = _context.sent;
-                if (res.data) {
-                  _this.form.shoujihaoma = res.data.shoujihaoma || '';
-                  _this.form.xingming = res.data.xingming || '';
-                  _this.form.yixiangpinlei = res.data.yixiangpinlei || '写真';
-                  _this.form.beizhu = res.data.beizhu || '';
-                  _this.reason = res.data.shhf || '';
-                  if (res.data.sfsh === '否') _this.pending = true;
-                  if (res.data.sfsh === '驳回') _this.rejected = true;
-                }
+                _this2.allStyles = res.data && res.data.list || [];
                 _context.next = 9;
                 break;
               case 7:
@@ -257,40 +307,111 @@ var _default = {
         }, _callee, null, [[0, 7]]);
       }))();
     },
-    submit: function submit() {
-      var _this2 = this;
+    loadUser: function loadUser() {
+      var _this3 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
         var res;
         return _regenerator.default.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                if (!(!_this2.form.shoujihaoma || !_this2.form.xingming)) {
-                  _context2.next = 3;
+                if (uni.getStorageSync('token')) {
+                  _context2.next = 2;
                   break;
                 }
-                _this2.$utils.msg('请填写手机号和姓名');
                 return _context2.abrupt("return");
-              case 3:
-                _context2.prev = 3;
-                _context2.next = 6;
-                return _http.default.post('yonghu/apply', _this2.form);
-              case 6:
+              case 2:
+                _context2.prev = 2;
+                _context2.next = 5;
+                return _this3.$api.session('yonghu');
+              case 5:
                 res = _context2.sent;
-                _this2.$utils.msg(res.msg || '申请已提交');
-                _this2.pending = true;
-                _this2.rejected = false;
-                _context2.next = 14;
+                if (res.data) {
+                  _this3.form.shoujihaoma = res.data.shoujihaoma || '';
+                  _this3.form.xingming = res.data.xingming || '';
+                  _this3.form.yixiangpinlei = res.data.yixiangpinlei || '写真';
+                  _this3.form.beizhu = res.data.beizhu || '';
+                  _this3.reason = res.data.shhf || '';
+                  if (res.data.pianhao) _this3.selectedStyles = res.data.pianhao.split(',').filter(function (i) {
+                    return i;
+                  });
+                  if (res.data.sfsh === '否') _this3.pending = true;
+                  if (res.data.sfsh === '驳回') _this3.rejected = true;
+                }
+                _context2.next = 11;
                 break;
-              case 12:
-                _context2.prev = 12;
-                _context2.t0 = _context2["catch"](3);
-              case 14:
+              case 9:
+                _context2.prev = 9;
+                _context2.t0 = _context2["catch"](2);
+              case 11:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2, null, [[3, 12]]);
+        }, _callee2, null, [[2, 9]]);
+      }))();
+    },
+    pickPinlei: function pickPinlei(p) {
+      this.form.yixiangpinlei = p;
+      // 切换品类后，剔除不属于当前可选范围的细分风格
+      var cats = p === '都看看' ? ['写真', '宣传片'] : [p];
+      var names = this.allStyles.filter(function (s) {
+        return cats.indexOf(s.pinlei) > -1;
+      }).map(function (s) {
+        return s.leixing;
+      });
+      this.selectedStyles = this.selectedStyles.filter(function (n) {
+        return names.indexOf(n) > -1;
+      });
+    },
+    styleSelected: function styleSelected(name) {
+      return this.selectedStyles.indexOf(name) > -1;
+    },
+    toggleStyle: function toggleStyle(name) {
+      var idx = this.selectedStyles.indexOf(name);
+      if (idx > -1) {
+        this.selectedStyles.splice(idx, 1);
+      } else {
+        this.selectedStyles.push(name);
+      }
+    },
+    submit: function submit() {
+      var _this4 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
+        var payload, res;
+        return _regenerator.default.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                if (!(!_this4.form.shoujihaoma || !_this4.form.xingming)) {
+                  _context3.next = 3;
+                  break;
+                }
+                _this4.$utils.msg('请填写手机号和姓名');
+                return _context3.abrupt("return");
+              case 3:
+                _context3.prev = 3;
+                payload = Object.assign({}, _this4.form, {
+                  pianhao: _this4.selectedStyles.join(',')
+                });
+                _context3.next = 7;
+                return _http.default.post('yonghu/apply', payload);
+              case 7:
+                res = _context3.sent;
+                _this4.$utils.msg(res.msg || '申请已提交');
+                _this4.pending = true;
+                _this4.rejected = false;
+                _context3.next = 15;
+                break;
+              case 13:
+                _context3.prev = 13;
+                _context3.t0 = _context3["catch"](3);
+              case 15:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, null, [[3, 13]]);
       }))();
     },
     goLogin: function goLogin() {

@@ -102,30 +102,45 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  var l0 = _vm.__map(_vm.fenggeList, function (item, idx) {
-    var $orig = _vm.__get_orig(item)
-    var g0 = _vm.selected.indexOf(item.leixing)
+  var l0 = _vm.__map(_vm.bigCats, function (cat, __i0__) {
+    var $orig = _vm.__get_orig(cat)
+    var m0 = _vm.catSelected(cat.value)
+    var m1 = _vm.catSelected(cat.value)
     return {
       $orig: $orig,
-      g0: g0,
+      m0: m0,
+      m1: m1,
     }
   })
-  if (!_vm._isMounted) {
-    _vm.e0 = function ($event) {
-      _vm.pinlei = "写真"
-    }
-    _vm.e1 = function ($event) {
-      _vm.pinlei = "宣传片"
-    }
-    _vm.e2 = function ($event) {
-      _vm.pinlei = "都看看"
-    }
-  }
+  var g0 = _vm.selectedCats.length
+  var l2 = g0
+    ? _vm.__map(_vm.styleGroups, function (group, __i1__) {
+        var $orig = _vm.__get_orig(group)
+        var g1 = group.styles.length
+        var l1 = g1
+          ? _vm.__map(group.styles, function (item, idx) {
+              var $orig = _vm.__get_orig(item)
+              var m2 = _vm.styleSelected(item.leixing)
+              return {
+                $orig: $orig,
+                m2: m2,
+              }
+            })
+          : null
+        return {
+          $orig: $orig,
+          g1: g1,
+          l1: l1,
+        }
+      })
+    : null
   _vm.$mp.data = Object.assign(
     {},
     {
       $root: {
         l0: l0,
+        g0: g0,
+        l2: l2,
       },
     }
   )
@@ -200,17 +215,59 @@ var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/r
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   data: function data() {
     return {
       user: {},
-      pinlei: '',
-      selected: [],
-      fenggeList: []
+      // 大类展示标签 -> 底层品类值（与 taocan/leixing 的 pinlei 一致）
+      bigCats: [{
+        value: '写真',
+        label: '个人写真',
+        icon: 'cuIcon-camera'
+      }, {
+        value: '宣传片',
+        label: '商业宣传片',
+        icon: 'cuIcon-video'
+      }],
+      selectedCats: [],
+      selectedStyles: [],
+      allStyles: []
     };
   },
+  computed: {
+    // 仅展示已选大类对应的细分小类分组
+    styleGroups: function styleGroups() {
+      var _this = this;
+      return this.bigCats.filter(function (c) {
+        return _this.selectedCats.indexOf(c.value) > -1;
+      }).map(function (c) {
+        return {
+          cat: c.value,
+          label: c.label,
+          styles: _this.allStyles.filter(function (s) {
+            return s.pinlei === c.value;
+          })
+        };
+      });
+    }
+  },
   onLoad: function onLoad() {
-    var _this = this;
+    var _this2 = this;
     return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
       var table, res;
       return _regenerator.default.wrap(function _callee$(_context) {
@@ -219,61 +276,68 @@ var _default = {
             case 0:
               table = uni.getStorageSync('nowTable');
               if (!table) {
-                _context.next = 13;
+                _context.next = 12;
                 break;
               }
               _context.prev = 2;
               _context.next = 5;
-              return _this.$api.session(table);
+              return _this2.$api.session(table);
             case 5:
               res = _context.sent;
-              _this.user = res.data;
-              _this.pinlei = _this.user.yixiangpinlei || '';
-              if (_this.user.pianhao) {
-                _this.selected = _this.user.pianhao.split(',').filter(function (i) {
-                  return i;
-                });
-              }
-              _context.next = 13;
+              _this2.user = res.data || {};
+              _this2.initFromUser();
+              _context.next = 12;
               break;
-            case 11:
-              _context.prev = 11;
+            case 10:
+              _context.prev = 10;
               _context.t0 = _context["catch"](2);
+            case 12:
+              _this2.loadStyles();
             case 13:
-              _this.loadFengge();
-            case 14:
             case "end":
               return _context.stop();
           }
         }
-      }, _callee, null, [[2, 11]]);
+      }, _callee, null, [[2, 10]]);
     }))();
   },
-  watch: {
-    pinlei: function pinlei() {
-      this.loadFengge();
-    }
-  },
   methods: {
-    loadFengge: function loadFengge() {
-      var _this2 = this;
+    // 回填：把已保存的偏好还原到大类/细分选择
+    initFromUser: function initFromUser() {
+      var yx = this.user.yixiangpinlei || '';
+      if (yx === '都看看') {
+        this.selectedCats = ['写真', '宣传片'];
+      } else if (yx === '写真' || yx === '宣传片') {
+        this.selectedCats = [yx];
+      } else if (yx) {
+        // 兼容历史逗号存储
+        this.selectedCats = yx.split(',').filter(function (v) {
+          return v === '写真' || v === '宣传片';
+        });
+      }
+      if (this.user.pianhao) {
+        this.selectedStyles = this.user.pianhao.split(',').filter(function (i) {
+          return i;
+        });
+      }
+    },
+    loadStyles: function loadStyles() {
+      var _this3 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
-        var params, res;
+        var res;
         return _regenerator.default.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                params = {
+                _context2.next = 2;
+                return _this3.$api.list('leixing', {
                   page: 1,
                   limit: 100
-                };
-                if (_this2.pinlei && _this2.pinlei !== '都看看') params.pinlei = _this2.pinlei;
-                _context2.next = 4;
-                return _this2.$api.list('leixing', params);
-              case 4:
+                });
+              case 2:
                 res = _context2.sent;
-                _this2.fenggeList = res.data && res.data.list || [];
-              case 6:
+                _this3.allStyles = res.data && res.data.list || [];
+              case 4:
               case "end":
                 return _context2.stop();
             }
@@ -281,47 +345,83 @@ var _default = {
         }, _callee2);
       }))();
     },
-    toggle: function toggle(name) {
-      var idx = this.selected.indexOf(name);
+    catSelected: function catSelected(v) {
+      return this.selectedCats.indexOf(v) > -1;
+    },
+    toggleCat: function toggleCat(v) {
+      var idx = this.selectedCats.indexOf(v);
       if (idx > -1) {
-        this.selected.splice(idx, 1);
+        this.selectedCats.splice(idx, 1);
+        // 取消大类时，移除其名下已选的细分风格
+        var names = this.allStyles.filter(function (s) {
+          return s.pinlei === v;
+        }).map(function (s) {
+          return s.leixing;
+        });
+        this.selectedStyles = this.selectedStyles.filter(function (n) {
+          return names.indexOf(n) === -1;
+        });
       } else {
-        this.selected.push(name);
+        this.selectedCats.push(v);
       }
     },
+    styleSelected: function styleSelected(name) {
+      return this.selectedStyles.indexOf(name) > -1;
+    },
+    toggleStyle: function toggleStyle(name) {
+      var idx = this.selectedStyles.indexOf(name);
+      if (idx > -1) {
+        this.selectedStyles.splice(idx, 1);
+      } else {
+        this.selectedStyles.push(name);
+      }
+    },
+    // 根据所选大类推导落库的 yixiangpinlei（两个都选=都看看）
+    resolvePinlei: function resolvePinlei() {
+      if (this.selectedCats.length >= 2) return '都看看';
+      if (this.selectedCats.length === 1) return this.selectedCats[0];
+      return '';
+    },
     save: function save() {
-      var _this3 = this;
+      var _this4 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
         var table;
         return _regenerator.default.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                if (!(!_this3.user || !_this3.user.id)) {
+                if (!(!_this4.user || !_this4.user.id)) {
                   _context3.next = 3;
                   break;
                 }
-                _this3.$utils.msg('请先登录');
+                _this4.$utils.msg('请先登录');
                 return _context3.abrupt("return");
               case 3:
-                table = uni.getStorageSync('nowTable');
-                _context3.next = 6;
-                return _this3.$api.update(table, {
-                  id: _this3.user.id,
-                  yixiangpinlei: _this3.pinlei,
-                  pianhao: _this3.selected.join(',')
-                });
+                if (_this4.selectedCats.length) {
+                  _context3.next = 6;
+                  break;
+                }
+                _this4.$utils.msg('请至少选择一个拍摄大类');
+                return _context3.abrupt("return");
               case 6:
-                _this3.$utils.msg('偏好已保存');
+                table = uni.getStorageSync('nowTable');
+                _context3.next = 9;
+                return _this4.$api.update(table, {
+                  id: _this4.user.id,
+                  yixiangpinlei: _this4.resolvePinlei(),
+                  pianhao: _this4.selectedStyles.join(',')
+                });
+              case 9:
+                _this4.$utils.msg('偏好已保存，将为你优先推荐');
                 setTimeout(function () {
                   uni.switchTab({
                     url: '../index/index',
                     fail: function fail() {
-                      return _this3.$utils.jump('../index/index');
+                      return _this4.$utils.jump('../index/index');
                     }
                   });
                 }, 800);
-              case 8:
+              case 11:
               case "end":
                 return _context3.stop();
             }
@@ -330,11 +430,11 @@ var _default = {
       }))();
     },
     skip: function skip() {
-      var _this4 = this;
+      var _this5 = this;
       uni.switchTab({
         url: '../index/index',
         fail: function fail() {
-          return _this4.$utils.jump('../index/index');
+          return _this5.$utils.jump('../index/index');
         }
       });
     }
