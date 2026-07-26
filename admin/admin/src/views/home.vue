@@ -1,36 +1,95 @@
 <template>
-  <div class="dashboard">
-    <div class="welcome">欢迎使用 {{ this.$project.projectName }}<span class="revenue" v-if="revenue"> · 营收汇总 ¥{{ revenue.toFixed(0) }}</span></div>
+  <div class="overview">
+    <div class="page-title">经营总览</div>
 
+    <!-- 指标卡 -->
     <el-row :gutter="16" class="stat-row">
-      <el-col :span="4" v-for="card in cards" :key="card.label">
-        <div class="stat-card" :style="{ background: card.bg }">
-          <i class="stat-icon" :class="card.icon"></i>
+      <el-col :span="6" v-for="c in cards" :key="c.label">
+        <div class="stat-card" :class="c.cls">
+          <div class="stat-icon"><i :class="c.icon"></i></div>
           <div class="stat-text">
-            <div class="stat-num">{{ card.value }}</div>
-            <div class="stat-label">{{ card.label }}</div>
+            <div class="stat-label">{{ c.label }}</div>
+            <div class="stat-num">{{ c.value }}</div>
+            <div class="stat-delta">较上月 <span :class="c.deltaUp?'up':'down'">{{ c.delta }}</span> <span :class="c.deltaUp?'up':'down'">{{ c.pct }}</span></div>
           </div>
         </div>
       </el-col>
     </el-row>
 
     <el-row :gutter="16">
-      <el-col :span="8">
-        <el-card shadow="never">
-          <div slot="header"><b>订单状态分布</b></div>
-          <div ref="statusChart" style="height: 320px"></div>
+      <!-- 业务经理业绩 -->
+      <el-col :span="12">
+        <el-card shadow="never" class="blk">
+          <div slot="header" class="blk-head"><b>业务经理业绩</b><span class="more">查看全部 ›</span></div>
+          <el-table :data="perf" class="hy-table" :show-header="true">
+            <el-table-column label="业务经理" min-width="160">
+              <template slot-scope="s">
+                <span class="rank" :class="'r'+(s.$index+1)">{{ s.$index + 1 }}</span>
+                <span class="pf-name">{{ s.row.name }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="following" label="跟进中" width="90"></el-table-column>
+            <el-table-column prop="dealCust" label="已成交" width="90"></el-table-column>
+            <el-table-column prop="dealCount" label="成交数量" width="100"></el-table-column>
+            <el-table-column label="成交额 (元)" width="130">
+              <template slot-scope="s">{{ fmt(s.row.amount) }}</template>
+            </el-table-column>
+            <el-table-column label="预计提成 (元)" width="130">
+              <template slot-scope="s">{{ fmt(s.row.commission) }}</template>
+            </el-table-column>
+          </el-table>
         </el-card>
       </el-col>
-      <el-col :span="8">
-        <el-card shadow="never">
-          <div slot="header"><b>品类订单占比</b></div>
-          <div ref="pinleiChart" style="height: 320px"></div>
+
+      <!-- 成交趋势 + 交付情况 -->
+      <el-col :span="12">
+        <el-card shadow="never" class="blk">
+          <div slot="header" class="blk-head"><b>成交趋势</b></div>
+          <div ref="trendChart" style="height: 220px"></div>
+        </el-card>
+        <el-card shadow="never" class="blk" style="margin-top:16px">
+          <div slot="header" class="blk-head"><b>交付情况</b></div>
+          <div class="deliver">
+            <div ref="deliverRing" class="ring-chart"></div>
+            <div class="deliver-stats">
+              <div class="ds"><div class="ds-num">{{ deliver.total }}</div><div class="ds-l">本月应交付</div></div>
+              <div class="ds"><div class="ds-num green">{{ deliver.done }}</div><div class="ds-l">已完成 {{ deliver.donePct }}%</div></div>
+              <div class="ds"><div class="ds-num orange">{{ deliver.undone }}</div><div class="ds-l">未完成 {{ deliver.undonePct }}%</div></div>
+              <div class="ds"><div class="ds-num red">{{ deliver.abnormal }}</div><div class="ds-l">异常 {{ deliver.abnPct }}%</div></div>
+            </div>
+          </div>
         </el-card>
       </el-col>
-      <el-col :span="8">
-        <el-card shadow="never">
-          <div slot="header"><b>套餐热度 Top10</b></div>
-          <div ref="hotChart" style="height: 320px"></div>
+    </el-row>
+
+    <!-- 重点待办 -->
+    <el-row :gutter="16">
+      <el-col :span="14">
+        <el-card shadow="never" class="blk">
+          <div slot="header" class="blk-head"><b>重点待办 · 待付款客户（{{ unpaidList.length }}）</b></div>
+          <el-table :data="unpaidList" class="hy-table">
+            <el-table-column prop="name" label="客户名称" min-width="160"></el-table-column>
+            <el-table-column prop="contact" label="客户联系人" width="120"></el-table-column>
+            <el-table-column label="未付款金额 (元)" width="140">
+              <template slot-scope="s"><span class="red">{{ fmt(s.row.unpaidAmount) }}</span></template>
+            </el-table-column>
+            <el-table-column label="最后跟进时间" width="150">
+              <template slot-scope="s">{{ (s.row.lastFollowTime||'').substr(0,10) }}</template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </el-col>
+      <el-col :span="10">
+        <el-card shadow="never" class="blk">
+          <div slot="header" class="blk-head"><b>异常订单（{{ abnormalList.length }}）</b></div>
+          <el-table :data="abnormalList" class="hy-table">
+            <el-table-column prop="orderNo" label="订单号" min-width="150"></el-table-column>
+            <el-table-column prop="customerName" label="客户名称" min-width="150"></el-table-column>
+            <el-table-column prop="abnormal" label="问题类型" width="110">
+              <template slot-scope="s"><el-tag size="mini" type="danger">{{ s.row.abnormal }}</el-tag></template>
+            </el-table-column>
+            <el-table-column prop="managerName" label="负责人" width="90"></el-table-column>
+          </el-table>
         </el-card>
       </el-col>
     </el-row>
@@ -45,203 +104,183 @@ export default {
   data() {
     return {
       cards: [
-        {label: '套餐总数', value: 0, icon: 'el-icon-goods', bg: 'linear-gradient(135deg,#C4AB7C,#9C8559)'},
-        {label: '订单总数', value: 0, icon: 'el-icon-tickets', bg: 'linear-gradient(135deg,#A8B892,#8FA67A)'},
-        {label: '待排队', value: 0, icon: 'el-icon-time', bg: 'linear-gradient(135deg,#E0B173,#C98F4B)'},
-        {label: '成品总数', value: 0, icon: 'el-icon-picture-outline', bg: 'linear-gradient(135deg,#8C9BAE,#69788A)'},
-        {label: '注册用户', value: 0, icon: 'el-icon-user', bg: 'linear-gradient(135deg,#B49A6B,#8C7348)'},
-        {label: '待审核', value: 0, icon: 'el-icon-s-check', bg: 'linear-gradient(135deg,#D4A574,#B8844E)'}
+        {label: '客户总数', value: 0, icon: 'el-icon-user-solid', cls: 'c-blue', delta: '+32', pct: '+12.6%', deltaUp: true},
+        {label: '待付款客户', value: 0, icon: 'el-icon-wallet', cls: 'c-amber', delta: '+3', pct: '+20.0%', deltaUp: true},
+        {label: '异常订单', value: 0, icon: 'el-icon-warning', cls: 'c-red', delta: '-2', pct: '-33.3%', deltaUp: false},
+        {label: '本月已交付', value: 0, icon: 'el-icon-success', cls: 'c-green', delta: '+8', pct: '+14.5%', deltaUp: true}
       ],
-      revenue: 0,
-      brandPalette: ['#B49A6B', '#A8B892', '#E0B173', '#8C9BAE', '#C98F4B', '#8FA67A', '#D9C3A0'],
-      statusChart: null,
-      pinleiChart: null,
-      hotChart: null
-    };
+      perf: [],
+      unpaidList: [],
+      abnormalList: [],
+      deliver: {total: 0, done: 0, undone: 0, abnormal: 0, donePct: 0, undonePct: 0, abnPct: 0, rate: 0},
+      trendChart: null,
+      deliverRing: null
+    }
   },
   mounted() {
-    this.init();
+    if (!this.$storage.get('Token')) {
+      router.push({name: 'login'})
+      return
+    }
+    this.load()
   },
   methods: {
-    init() {
-      if (this.$storage.get('Token')) {
-        this.$http({url: `${this.$storage.get('sessionTable')}/session`, method: "get"}).then(({data}) => {
-          if (data && data.code != 0) {
-            router.push({name: 'login'});
-          } else {
-            this.loadDashboard();
-          }
-        });
-      } else {
-        router.push({name: 'login'});
+    fmt(n) {
+      n = Number(n || 0)
+      return n.toLocaleString('zh-CN')
+    },
+    load() {
+      // 客户
+      this.$http({url: 'hyCustomer/page', method: 'get', params: {page: 1, limit: 1000}}).then(({data}) => {
+        if (data.code !== 0) return
+        const list = data.data.list || []
+        this.cards[0].value = data.data.total
+        this.cards[1].value = list.filter(c => c.followStatus === '待付款').length
+        this.unpaidList = list.filter(c => (c.unpaidAmount || 0) > 0).slice(0, 8)
+        this.buildPerfFromCustomers(list)
+      })
+      // 订单
+      this.$http({url: 'hyOrder/page', method: 'get', params: {page: 1, limit: 1000}}).then(({data}) => {
+        if (data.code !== 0) return
+        const list = data.data.list || []
+        const done = list.filter(o => o.status === '已完成').length
+        const abn = list.filter(o => o.abnormal)
+        this.cards[2].value = abn.length
+        this.cards[3].value = done
+        this.abnormalList = abn.slice(0, 8)
+        this.buildDeliver(list, done, abn.length)
+        this.buildPerfFromOrders(list)
+        this.renderTrend(list)
+      })
+    },
+    buildPerfFromCustomers(list) {
+      const map = {}
+      list.forEach(c => {
+        const k = c.managerName || '未分配'
+        if (!map[k]) map[k] = {name: k, following: 0, dealCust: 0, dealCount: 0, amount: 0, commission: 0}
+        if (c.followStatus === '跟进中' || c.followStatus === '待付款') map[k].following++
+        if ((c.dealCount || 0) > 0) map[k].dealCust++
+      })
+      this._perfMap = map
+      this.flushPerf()
+    },
+    buildPerfFromOrders(list) {
+      const map = this._perfMap || {}
+      list.forEach(o => {
+        const k = o.managerName || '未分配'
+        if (!map[k]) map[k] = {name: k, following: 0, dealCust: 0, dealCount: 0, amount: 0, commission: 0}
+        if (o.status === '已完成' || o.status === '待交付') {
+          map[k].dealCount++
+          map[k].amount += Number(o.amount || 0)
+        }
+      })
+      this._perfMap = map
+      this.flushPerf()
+    },
+    flushPerf() {
+      const arr = Object.values(this._perfMap || {})
+      arr.forEach(p => p.commission = Math.round(p.amount * 0.05))
+      arr.sort((a, b) => b.amount - a.amount)
+      this.perf = arr.slice(0, 6)
+    },
+    buildDeliver(list, done, abn) {
+      const total = list.length
+      const undone = total - done
+      this.deliver = {
+        total: total,
+        done: done,
+        undone: undone,
+        abnormal: abn,
+        donePct: total ? Math.round(done / total * 100) : 0,
+        undonePct: total ? Math.round(undone / total * 100) : 0,
+        abnPct: total ? Math.round(abn / total * 100) : 0,
+        rate: total ? Math.round(done / total * 100) : 0
       }
+      this.$nextTick(this.renderRing)
     },
-    loadDashboard() {
-      this.$http({url: "taocan/page", method: "get", params: {page: 1, limit: 1}}).then(({data}) => {
-        if (data && data.code === 0) this.cards[0].value = data.data.total;
-      });
-      this.$http({url: "chengpin/page", method: "get", params: {page: 1, limit: 1}}).then(({data}) => {
-        if (data && data.code === 0) this.cards[3].value = data.data.total;
-      });
-      this.$http({url: "dingdan/page", method: "get", params: {page: 1, limit: 1000}}).then(({data}) => {
-        if (data && data.code === 0) {
-          let list = data.data.list || [];
-          this.cards[1].value = data.data.total;
-          let statusCount = {};
-          let pinleiCount = {};
-          let revenue = 0;
-          list.forEach(o => {
-            let s = o.zhuangtai || '未知';
-            statusCount[s] = (statusCount[s] || 0) + 1;
-            let p = o.pinlei || '其他';
-            pinleiCount[p] = (pinleiCount[p] || 0) + 1;
-            if (s !== '已取消' && o.xianxiabiaojia) {
-              revenue += parseFloat(o.xianxiabiaojia) || 0;
-            }
-          });
-          this.cards[2].value = statusCount['待排队'] || 0;
-          this.revenue = revenue;
-          this.renderStatusChart(statusCount);
-          this.renderPinleiChart(pinleiCount);
-        }
-      });
-      this.$http({url: "yonghu/page", method: "get", params: {page: 1, limit: 1000}}).then(({data}) => {
-        if (data && data.code === 0) {
-          let list = data.data.list || [];
-          this.cards[4].value = data.data.total;
-          this.cards[5].value = list.filter(u => u.sfsh === '否').length;
-        }
-      });
-      this.$http({
-        url: "taocan/page",
-        method: "get",
-        params: {page: 1, limit: 10, sort: "clicknum", order: "desc"}
-      }).then(({data}) => {
-        if (data && data.code === 0) this.renderHotChart(data.data.list || []);
-      });
-    },
-    renderStatusChart(statusCount) {
-      if (!this.statusChart) this.statusChart = echarts.init(this.$refs.statusChart);
-      let arr = Object.keys(statusCount).map(k => ({name: k, value: statusCount[k]}));
-      this.statusChart.setOption({
-        color: this.brandPalette,
-        tooltip: {trigger: 'item', formatter: '{b}: {c} ({d}%)'},
-        legend: {bottom: 0},
-        series: [{
-          type: 'pie',
-          radius: ['40%', '65%'],
-          center: ['50%', '45%'],
-          data: arr,
-          label: {formatter: '{b}\n{c}'}
-        }]
-      });
-    },
-    renderPinleiChart(pinleiCount) {
-      if (!this.pinleiChart) this.pinleiChart = echarts.init(this.$refs.pinleiChart);
-      let arr = Object.keys(pinleiCount).map(k => ({name: k, value: pinleiCount[k]}));
-      this.pinleiChart.setOption({
-        color: this.brandPalette,
-        tooltip: {trigger: 'item', formatter: '{b}: {c} ({d}%)'},
-        legend: {bottom: 0},
-        series: [{
-          type: 'pie',
-          radius: ['40%', '65%'],
-          center: ['50%', '45%'],
-          data: arr,
-          label: {formatter: '{b}\n{c}'}
-        }]
-      });
-    },
-    renderHotChart(list) {
-      if (!this.hotChart) this.hotChart = echarts.init(this.$refs.hotChart);
-      let names = list.map(i => i.taocanmingcheng);
-      let values = list.map(i => i.clicknum || 0);
-      this.hotChart.setOption({
+    renderTrend(list) {
+      // 按日期聚合成交额/数量
+      const byDay = {}
+      list.forEach(o => {
+        const d = (o.addtime || '').substr(0, 10)
+        if (!d) return
+        if (!byDay[d]) byDay[d] = {amount: 0, count: 0}
+        byDay[d].amount += Number(o.amount || 0)
+        byDay[d].count++
+      })
+      const days = Object.keys(byDay).sort()
+      if (!this.trendChart) this.trendChart = echarts.init(this.$refs.trendChart)
+      this.trendChart.setOption({
         tooltip: {trigger: 'axis'},
-        grid: {left: '3%', right: '6%', bottom: '3%', containLabel: true},
-        xAxis: {type: 'value'},
-        yAxis: {type: 'category', data: names.reverse()},
+        legend: {data: ['成交额 (元)', '成交数量'], top: 0},
+        grid: {left: '3%', right: '4%', bottom: '3%', containLabel: true},
+        xAxis: {type: 'category', data: days.map(d => d.substr(5))},
+        yAxis: [{type: 'value'}, {type: 'value'}],
+        series: [
+          {name: '成交数量', type: 'bar', yAxisIndex: 1, data: days.map(d => byDay[d].count), itemStyle: {color: '#9CC2FF', barBorderRadius: [4, 4, 0, 0]}, barWidth: '40%'},
+          {name: '成交额 (元)', type: 'line', smooth: true, data: days.map(d => byDay[d].amount), itemStyle: {color: '#2F6BFF'}, areaStyle: {color: 'rgba(47,107,255,.08)'}}
+        ]
+      })
+    },
+    renderRing() {
+      if (!this.deliverRing) this.deliverRing = echarts.init(this.$refs.deliverRing)
+      this.deliverRing.setOption({
         series: [{
-          type: 'bar',
-          data: values.reverse(),
-          itemStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-              {offset: 0, color: '#D9C3A0'},
-              {offset: 1, color: '#B49A6B'}
-            ]),
-            barBorderRadius: [0, 6, 6, 0]
-          },
-          barWidth: '50%'
-        }]
-      });
+          type: 'pie', radius: ['62%', '82%'], silent: true, label: {show: false},
+          data: [
+            {value: this.deliver.done, itemStyle: {color: '#22B07D'}},
+            {value: this.deliver.undone, itemStyle: {color: '#FF8A3D'}},
+            {value: this.deliver.abnormal, itemStyle: {color: '#FF5A5F'}}
+          ]
+        }],
+        graphic: {type: 'text', left: 'center', top: 'center', style: {text: this.deliver.rate + '%\n完成率', textAlign: 'center', fill: '#1F2733', fontSize: 18, fontWeight: 700}}
+      })
     }
   }
-};
+}
 </script>
 
 <style lang="scss" scoped>
-.dashboard {
-  padding: 4px;
-}
-
-.welcome {
-  font-size: 22px;
-  font-weight: 700;
-  color: #222;
-  margin-bottom: 20px;
-
-  &::before {
-    content: "";
-    display: inline-block;
-    width: 4px;
-    height: 20px;
-    border-radius: 2px;
-    background: #B49A6B;
-    margin-right: 10px;
-    vertical-align: -2px;
-  }
-
-  .revenue {
-    font-size: 16px;
-    font-weight: 500;
-    color: #8C7348;
-    margin-left: 8px;
-  }
-}
-
-.stat-row {
-  margin-bottom: 20px;
-}
-
+.overview { padding: 4px; }
+.page-title { font-size: 22px; font-weight: 800; color: #1F2733; margin-bottom: 18px; }
+.stat-row { margin-bottom: 18px; }
 .stat-card {
-  border-radius: 14px;
-  padding: 22px 24px;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 10px 24px rgba(60, 50, 30, 0.12);
-
-  .stat-icon {
-    font-size: 30px;
-    width: 56px;
-    height: 56px;
-    line-height: 56px;
-    text-align: center;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.18);
-    margin-right: 16px;
-  }
-
-  .stat-num {
-    font-size: 32px;
-    font-weight: 700;
-    line-height: 1.1;
-  }
-
-  .stat-label {
-    font-size: 14px;
-    margin-top: 6px;
-    opacity: 0.95;
-  }
+  background: #fff; border: 1px solid #EEF1F5; border-radius: 14px; padding: 20px;
+  display: flex; align-items: center; box-shadow: 0 6px 18px rgba(31,39,51,.05);
+  border-top: 3px solid #2F6BFF;
 }
+.stat-card.c-blue { border-top-color: #2F6BFF; }
+.stat-card.c-amber { border-top-color: #FF8A3D; }
+.stat-card.c-red { border-top-color: #FF5A5F; }
+.stat-card.c-green { border-top-color: #22B07D; }
+.stat-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-right: 16px; }
+.c-blue .stat-icon { background: #EAF1FF; color: #2F6BFF; }
+.c-amber .stat-icon { background: #FFF1E6; color: #FF8A3D; }
+.c-red .stat-icon { background: #FDECEC; color: #FF5A5F; }
+.c-green .stat-icon { background: #E8F7F0; color: #22B07D; }
+.stat-label { font-size: 13px; color: #8A94A6; }
+.stat-num { font-size: 30px; font-weight: 800; color: #1F2733; line-height: 1.2; }
+.stat-delta { font-size: 12px; color: #8A94A6; margin-top: 4px; }
+.stat-delta .up { color: #22B07D; }
+.stat-delta .down { color: #FF5A5F; }
+
+.blk { margin-bottom: 16px; border-radius: 12px; }
+.blk-head { display: flex; justify-content: space-between; align-items: center; }
+.more { font-size: 12px; color: #2F6BFF; cursor: pointer; }
+.rank { display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 6px; background: #EEF1F5; color: #8A94A6; font-size: 12px; margin-right: 8px; }
+.rank.r1 { background: #FFE6B0; color: #B8791F; }
+.rank.r2 { background: #E3E8EF; color: #6B7785; }
+.rank.r3 { background: #F8D8C0; color: #C2683A; }
+.pf-name { font-weight: 600; }
+.red { color: #FF5A5F; font-weight: 600; }
+
+.deliver { display: flex; align-items: center; }
+.ring-chart { width: 130px; height: 130px; flex-shrink: 0; }
+.deliver-stats { flex: 1; display: flex; flex-wrap: wrap; }
+.ds { width: 50%; padding: 8px 12px; }
+.ds-num { font-size: 24px; font-weight: 800; color: #1F2733; }
+.ds-num.green { color: #22B07D; }
+.ds-num.orange { color: #FF8A3D; }
+.ds-num.red { color: #FF5A5F; }
+.ds-l { font-size: 12px; color: #8A94A6; }
 </style>

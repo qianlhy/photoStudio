@@ -288,6 +288,7 @@ var _default = {
       detail: {},
       user: {},
       storeupFlag: 0,
+      storePhone: '',
       today: '',
       showForm: false,
       form: {
@@ -383,8 +384,9 @@ var _default = {
               _context.next = 18;
               return _this.loadDetail();
             case 18:
+              _this.loadStorePhone();
               _this.getStoreup();
-            case 19:
+            case 20:
             case "end":
               return _context.stop();
           }
@@ -423,33 +425,75 @@ var _default = {
         }, _callee2);
       }))();
     },
-    previewCover: function previewCover(idx) {
+    loadStorePhone: function loadStorePhone() {
       var _this3 = this;
-      uni.previewImage({
-        current: idx,
-        urls: this.coverList.map(function (i) {
-          return _this3.baseUrl + i;
-        })
-      });
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
+        var res, item;
+        return _regenerator.default.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _context3.prev = 0;
+                _context3.next = 3;
+                return _this3.$api.page('config', {
+                  page: 1,
+                  limit: 100
+                });
+              case 3:
+                res = _context3.sent;
+                item = (res.data && res.data.list || []).find(function (i) {
+                  return i.name === 'storePhone';
+                });
+                if (item) _this3.storePhone = item.value || '';
+                _context3.next = 10;
+                break;
+              case 8:
+                _context3.prev = 8;
+                _context3.t0 = _context3["catch"](0);
+              case 10:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, null, [[0, 8]]);
+      }))();
     },
-    preview: function preview(idx) {
+    previewCover: function previewCover(idx) {
       var _this4 = this;
       uni.previewImage({
         current: idx,
-        urls: this.shotList.map(function (i) {
+        urls: this.coverList.map(function (i) {
           return _this4.baseUrl + i;
         })
       });
     },
+    preview: function preview(idx) {
+      var _this5 = this;
+      uni.previewImage({
+        current: idx,
+        urls: this.shotList.map(function (i) {
+          return _this5.baseUrl + i;
+        })
+      });
+    },
     contactService: function contactService() {
+      var _this6 = this;
+      if (!this.storePhone) {
+        uni.showModal({
+          title: '联系客服',
+          content: '门店暂未设置联系电话，请前往“我的-门店须知”查看联系方式',
+          showCancel: false
+        });
+        return;
+      }
       uni.showModal({
         title: '联系客服',
-        content: '拨打门店电话 400-000-0000 或在“我的-门店须知”查看更多联系方式',
+        content: '拨打门店电话 ' + this.storePhone + ' 或在“我的-门店须知”查看更多联系方式',
         confirmText: '拨打',
         success: function success(r) {
           if (r.confirm) {
             uni.makePhoneCall({
-              phoneNumber: '4000000000',
+              phoneNumber: _this6.storePhone,
               fail: function fail() {}
             });
           }
@@ -470,92 +514,32 @@ var _default = {
       this.form.yixiangdangqi = e.detail.value;
     },
     getStoreup: function getStoreup() {
-      var _this5 = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
-        var res;
-        return _regenerator.default.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                if (!(!_this5.user || !_this5.user.id)) {
-                  _context3.next = 2;
-                  break;
-                }
-                return _context3.abrupt("return");
-              case 2:
-                _context3.next = 4;
-                return _this5.$api.list('storeup', {
-                  page: 1,
-                  limit: 1,
-                  refid: _this5.id,
-                  tablename: 'taocan',
-                  userid: _this5.user.id,
-                  type: 1
-                });
-              case 4:
-                res = _context3.sent;
-                _this5.storeupFlag = res.data.list.length;
-              case 6:
-              case "end":
-                return _context3.stop();
-            }
-          }
-        }, _callee3);
-      }))();
-    },
-    toggleStoreup: function toggleStoreup() {
-      var _this6 = this;
+      var _this7 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
-        var res, storeupId, cover;
+        var res;
         return _regenerator.default.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                if (!(!_this6.user || !_this6.user.id)) {
-                  _context4.next = 3;
+                if (!(!_this7.user || !_this7.user.id)) {
+                  _context4.next = 2;
                   break;
                 }
-                _this6.$utils.msg('请先登录');
                 return _context4.abrupt("return");
-              case 3:
-                _context4.next = 5;
-                return _this6.$api.list('storeup', {
+              case 2:
+                _context4.next = 4;
+                return _this7.$api.list('storeup', {
                   page: 1,
                   limit: 1,
-                  refid: _this6.id,
+                  refid: _this7.id,
                   tablename: 'taocan',
-                  userid: _this6.user.id,
+                  userid: _this7.user.id,
                   type: 1
                 });
-              case 5:
+              case 4:
                 res = _context4.sent;
-                if (!(res.data.list.length >= 1)) {
-                  _context4.next = 13;
-                  break;
-                }
-                storeupId = res.data.list[0].id;
-                _context4.next = 10;
-                return _this6.$api.del('storeup', JSON.stringify([storeupId]));
-              case 10:
-                _this6.$utils.msg('已取消收藏');
-                _this6.getStoreup();
-                return _context4.abrupt("return");
-              case 13:
-                cover = _this6.coverList.length ? _this6.coverList[0] : '';
-                _context4.next = 16;
-                return _this6.$api.add('storeup', {
-                  userid: _this6.user.id,
-                  name: _this6.detail.taocanmingcheng,
-                  picture: cover,
-                  refid: _this6.detail.id,
-                  tablename: 'taocan',
-                  type: 1,
-                  inteltype: _this6.detail.pinlei
-                });
-              case 16:
-                _this6.$utils.msg('收藏成功');
-                _this6.getStoreup();
-              case 18:
+                _this7.storeupFlag = res.data.list.length;
+              case 6:
               case "end":
                 return _context4.stop();
             }
@@ -563,53 +547,113 @@ var _default = {
         }, _callee4);
       }))();
     },
-    submitOrder: function submitOrder() {
-      var _this7 = this;
+    toggleStoreup: function toggleStoreup() {
+      var _this8 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee5() {
-        var data, res;
+        var res, storeupId, cover;
         return _regenerator.default.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                if (!(!_this7.user || !_this7.user.id)) {
+                if (!(!_this8.user || !_this8.user.id)) {
                   _context5.next = 3;
                   break;
                 }
-                _this7.$utils.msg('请先登录');
+                _this8.$utils.msg('请先登录');
                 return _context5.abrupt("return");
               case 3:
-                if (_this7.form.xingming) {
-                  _context5.next = 5;
-                  break;
-                }
-                return _context5.abrupt("return", _this7.$utils.msg('请填写联系人'));
+                _context5.next = 5;
+                return _this8.$api.list('storeup', {
+                  page: 1,
+                  limit: 1,
+                  refid: _this8.id,
+                  tablename: 'taocan',
+                  userid: _this8.user.id,
+                  type: 1
+                });
               case 5:
-                if (_this7.form.shoujihaoma) {
-                  _context5.next = 7;
+                res = _context5.sent;
+                if (!(res.data.list.length >= 1)) {
+                  _context5.next = 13;
                   break;
                 }
-                return _context5.abrupt("return", _this7.$utils.msg('请填写手机号'));
+                storeupId = res.data.list[0].id;
+                _context5.next = 10;
+                return _this8.$api.del('storeup', JSON.stringify([storeupId]));
+              case 10:
+                _this8.$utils.msg('已取消收藏');
+                _this8.getStoreup();
+                return _context5.abrupt("return");
+              case 13:
+                cover = _this8.coverList.length ? _this8.coverList[0] : '';
+                _context5.next = 16;
+                return _this8.$api.add('storeup', {
+                  userid: _this8.user.id,
+                  name: _this8.detail.taocanmingcheng,
+                  picture: cover,
+                  refid: _this8.detail.id,
+                  tablename: 'taocan',
+                  type: 1,
+                  inteltype: _this8.detail.pinlei
+                });
+              case 16:
+                _this8.$utils.msg('收藏成功');
+                _this8.getStoreup();
+              case 18:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5);
+      }))();
+    },
+    submitOrder: function submitOrder() {
+      var _this9 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee6() {
+        var data, res;
+        return _regenerator.default.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
+                if (!(!_this9.user || !_this9.user.id)) {
+                  _context6.next = 3;
+                  break;
+                }
+                _this9.$utils.msg('请先登录');
+                return _context6.abrupt("return");
+              case 3:
+                if (_this9.form.xingming) {
+                  _context6.next = 5;
+                  break;
+                }
+                return _context6.abrupt("return", _this9.$utils.msg('请填写联系人'));
+              case 5:
+                if (_this9.form.shoujihaoma) {
+                  _context6.next = 7;
+                  break;
+                }
+                return _context6.abrupt("return", _this9.$utils.msg('请填写手机号'));
               case 7:
-                if (_this7.form.yixiangdangqi) {
-                  _context5.next = 9;
+                if (_this9.form.yixiangdangqi) {
+                  _context6.next = 9;
                   break;
                 }
-                return _context5.abrupt("return", _this7.$utils.msg('请选择意向档期'));
+                return _context6.abrupt("return", _this9.$utils.msg('请选择意向档期'));
               case 9:
                 data = {
-                  taocanid: _this7.detail.id,
-                  zhanghao: _this7.user.zhanghao || _this7.user.username || '',
-                  xingming: _this7.form.xingming,
-                  shoujihaoma: _this7.form.shoujihaoma,
-                  paisherenshu: _this7.form.paisherenshu || 1,
-                  yixiangdangqi: _this7.form.yixiangdangqi,
-                  beizhu: _this7.form.beizhu
+                  taocanid: _this9.detail.id,
+                  zhanghao: _this9.user.zhanghao || _this9.user.username || '',
+                  xingming: _this9.form.xingming,
+                  shoujihaoma: _this9.form.shoujihaoma,
+                  paisherenshu: _this9.form.paisherenshu || 1,
+                  yixiangdangqi: _this9.form.yixiangdangqi,
+                  beizhu: _this9.form.beizhu
                 };
-                _context5.next = 12;
-                return _this7.$api.add('dingdan', data);
+                _context6.next = 12;
+                return _this9.$api.add('dingdan', data);
               case 12:
-                res = _context5.sent;
-                _this7.showForm = false;
+                res = _context6.sent;
+                _this9.showForm = false;
                 uni.showModal({
                   title: '预约成功',
                   content: "\u8BA2\u5355\u53F7\uFF1A".concat(res.dingdanbianhao, "\n\u5F53\u524D\u6392\u961F\u5E8F\u53F7\uFF1A").concat(res.paiduixuhao),
@@ -618,17 +662,17 @@ var _default = {
                     uni.switchTab({
                       url: '../dingdan/list',
                       fail: function fail() {
-                        _this7.$utils.jump('../dingdan/list');
+                        _this9.$utils.jump('../dingdan/list');
                       }
                     });
                   }
                 });
               case 15:
               case "end":
-                return _context5.stop();
+                return _context6.stop();
             }
           }
-        }, _callee5);
+        }, _callee6);
       }))();
     }
   }

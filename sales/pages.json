@@ -1,0 +1,50 @@
+{
+	"pages": [{
+		"path": "pages/login/login",
+		"style": {
+			"navigationStyle": "custom",
+			"navigationBarTextStyle": "black"
+		}
+	}, {
+		"path": "pages/workbench/workbench",
+		"style": {
+			"navigationStyle": "custom"
+		}
+	}, {
+		"path": "pages/selection/selection",
+		"style": {
+			"navigationStyle": "custom"
+		}
+	}, {
+		"path": "pages/material/material",
+		"style": {
+			"navigationStyle": "custom"
+		}
+	}, {
+		"path": "pages/customer/customer",
+		"style": {
+			"navigationStyle": "custom"
+		}
+	}, {
+		"path": "pages/customer/follow",
+		"style": {
+			"navigationStyle": "custom"
+		}
+	}, {
+		"path": "pages/order/order",
+		"style": {
+			"navigationStyle": "custom"
+		}
+	}, {
+		"path": "pages/message/message",
+		"style": {
+			"navigationStyle": "custom"
+		}
+	}],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "合意传媒-销售经理端",
+		"navigationBarBackgroundColor": "#FFFFFF",
+		"backgroundColor": "#F4F6FA"
+	}
+}

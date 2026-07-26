@@ -101,7 +101,7 @@ var components
 try {
   components = {
     tcSwiper: function () {
-      return __webpack_require__.e(/*! import() | components/tc-swiper/tc-swiper */ "components/tc-swiper/tc-swiper").then(__webpack_require__.bind(null, /*! @/components/tc-swiper/tc-swiper.vue */ 203))
+      return __webpack_require__.e(/*! import() | components/tc-swiper/tc-swiper */ "components/tc-swiper/tc-swiper").then(__webpack_require__.bind(null, /*! @/components/tc-swiper/tc-swiper.vue */ 219))
     },
   }
 } catch (e) {

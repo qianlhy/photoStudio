@@ -132,6 +132,7 @@
 				detail: {},
 				user: {},
 				storeupFlag: 0,
+				storePhone: '',
 				today: '',
 				showForm: false,
 				form: {
@@ -204,6 +205,7 @@
 				} catch (e) {}
 			}
 			await this.loadDetail();
+			this.loadStorePhone();
 			this.getStoreup();
 		},
 		onShareAppMessage() {
@@ -220,6 +222,13 @@
 				let res = await this.$api.info('taocan', this.id);
 				this.detail = res.data || {};
 			},
+			async loadStorePhone() {
+				try {
+					let res = await this.$api.page('config', { page: 1, limit: 100 });
+					let item = ((res.data && res.data.list) || []).find(i => i.name === 'storePhone');
+					if (item) this.storePhone = item.value || '';
+				} catch (e) {}
+			},
 			previewCover(idx) {
 				uni.previewImage({
 					current: idx,
@@ -233,14 +242,22 @@
 				});
 			},
 			contactService() {
+				if (!this.storePhone) {
+					uni.showModal({
+						title: '联系客服',
+						content: '门店暂未设置联系电话，请前往“我的-门店须知”查看联系方式',
+						showCancel: false
+					});
+					return;
+				}
 				uni.showModal({
 					title: '联系客服',
-					content: '拨打门店电话 400-000-0000 或在“我的-门店须知”查看更多联系方式',
+					content: '拨打门店电话 ' + this.storePhone + ' 或在“我的-门店须知”查看更多联系方式',
 					confirmText: '拨打',
 					success: (r) => {
 						if (r.confirm) {
 							uni.makePhoneCall({
-								phoneNumber: '4000000000',
+								phoneNumber: this.storePhone,
 								fail: () => {}
 							});
 						}

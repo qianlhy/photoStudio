@@ -21,6 +21,13 @@ import dingdan from '@/views/modules/dingdan/list'
 import chengpin from '@/views/modules/chengpin/list'
 import message from '@/views/modules/message/list'
 import storeconfig from '@/views/modules/storeconfig/list'
+import users from '@/views/modules/users/list'
+// 合意传媒三端系统 · 管理后台模块
+import hyCustomer from '@/views/modules/hyCustomer/list'
+import hyOrder from '@/views/modules/hyOrder/list'
+import hyMaterial from '@/views/modules/hyMaterial/list'
+import hyDeliverable from '@/views/modules/hyDeliverable/list'
+import hyEmployee from '@/views/modules/hyEmployee/list'
 
 Vue.use(VueRouter);
 
@@ -106,6 +113,36 @@ const routes = [{
             path: '/storeconfig',
             name: '门店与规则配置',
             component: storeconfig
+        }
+        , {
+            path: '/users',
+            name: '管理员账号',
+            component: users
+        }
+        , {
+            path: '/hyCustomer',
+            name: '客户管理',
+            component: hyCustomer
+        }
+        , {
+            path: '/hyOrder',
+            name: '订单管理',
+            component: hyOrder
+        }
+        , {
+            path: '/hyMaterial',
+            name: '素材内容',
+            component: hyMaterial
+        }
+        , {
+            path: '/hyDeliverable',
+            name: '成品与优质作品',
+            component: hyDeliverable
+        }
+        , {
+            path: '/hyEmployee',
+            name: '员工与系统',
+            component: hyEmployee
         }
     ]
 },

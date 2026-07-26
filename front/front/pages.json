@@ -120,6 +120,16 @@
 			"navigationBarTextStyle": "black",
 			"navigationBarTitleText": "门店须知"
 		}
+	}, {
+		"path": "pages/hy-service/service",
+		"style": {
+			"navigationStyle": "custom"
+		}
+	}, {
+		"path": "pages/hy-content/content",
+		"style": {
+			"navigationStyle": "custom"
+		}
 	}],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",

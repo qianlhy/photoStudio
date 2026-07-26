@@ -16,7 +16,9 @@
     "pages/chengpin/list",
     "pages/preference/preference",
     "pages/message/list",
-    "pages/store/notice"
+    "pages/store/notice",
+    "pages/hy-service/service",
+    "pages/hy-content/content"
   ],
   "subPackages": [],
   "window": {
