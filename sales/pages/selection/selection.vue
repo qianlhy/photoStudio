@@ -352,6 +352,7 @@ export default {
 	display: flex;
 	align-items: center;
 	padding: 0 32rpx;
+	box-shadow: 0 1rpx 0 rgba(31,39,51,.025);
 }
 .brand {
 	font-size: 30rpx;
@@ -377,7 +378,7 @@ export default {
 }
 .counter .hot {
 	color: $brand;
-	font-weight: 800;
+	font-weight: 700;
 }
 .avatar {
 	width: 56rpx;
@@ -426,6 +427,7 @@ export default {
 	border-radius: 20rpx;
 	overflow: hidden;
 	min-height: 420rpx;
+	box-shadow: 0 8rpx 26rpx rgba(18,25,35,.12);
 }
 .video {
 	width: 100%;
@@ -442,7 +444,7 @@ export default {
 }
 .ov-title {
 	font-size: 40rpx;
-	font-weight: 800;
+	font-weight: 700;
 	text-shadow: 0 2rpx 12rpx rgba(0,0,0,.5);
 }
 .ov-tag {
@@ -476,6 +478,8 @@ export default {
 	border-radius: 50%;
 	background: #fff;
 	border: 1rpx solid $line;
+	box-shadow: 0 5rpx 16rpx rgba(31,39,51,.055);
+	transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
 }
 .act .act-ic {
 	font-size: 40rpx;
@@ -496,8 +500,9 @@ export default {
 	background: $brand;
 	color: #fff;
 	border: none;
-	box-shadow: 0 14rpx 30rpx rgba(47,107,255,.35);
+	box-shadow: 0 12rpx 28rpx rgba(47,107,255,.28);
 }
+.act:active { transform:scale(.97); opacity:.9; }
 .act.like .act-tx {
 	color: #fff;
 }

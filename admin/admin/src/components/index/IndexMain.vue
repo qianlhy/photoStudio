@@ -1,5 +1,5 @@
 <template>
-  <el-main style="padding: 20px; background: #f0f2f5;">
+  <el-main>
     <router-view class="router-view"></router-view>
   </el-main>
 </template>
@@ -114,8 +114,8 @@ a:hover {
 }
 
 .el-main {
-  background-color: #f0f2f5;
-  padding: 20px;
+  background-color: #F7F9FC;
+  padding: 26px 20px 18px;
   min-height: calc(100vh - 60px);
 }
 

@@ -30,7 +30,8 @@
 
       <el-dropdown trigger="click" @command="handleCommand">
         <span class="user-info">
-          <span class="user-avatar">{{ avatarText }}</span>
+          <img v-if="user.avatar" class="user-avatar" :src="$base.url + user.avatar" alt="管理员头像"/>
+          <span v-else class="user-avatar">{{ avatarText }}</span>
           <span class="user-name">{{ this.$storage.get('adminName') || this.$storage.get('role') || '管理员' }}</span>
           <i class="el-icon-arrow-down"/>
         </span>
@@ -55,7 +56,8 @@ export default {
   },
   computed: {
     pageTitle() {
-      return (this.$route && this.$route.name) || '首页'
+      if (this.$route && (this.$route.path === '/index/' || this.$route.path === '/index')) return '经营总览'
+      return (this.$route && this.$route.name) || '经营总览'
     },
     avatarText() {
       let name = this.$storage.get('adminName') || this.$storage.get('role') || '管'
@@ -110,43 +112,30 @@ export default {
 .navbar {
   height: 60px;
   width: 100%;
-  padding: 0 24px;
+  padding: 0 22px 0 24px;
   box-sizing: border-box;
   background-color: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  border-bottom: 1px solid #EBEEF5;
+  box-shadow: none;
 
   .navbar-left {
     display: flex;
     align-items: center;
 
     .page-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: #303133;
-      position: relative;
-      padding-left: 12px;
-
-      &::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 4px;
-        height: 18px;
-        border-radius: 2px;
-        background: #2F6BFF;
-      }
+      font-size: 20px;
+      font-weight: 700;
+      color: #182033;
     }
   }
 
   .navbar-right {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
 
     .month-btn {
       display: flex;
@@ -168,7 +157,7 @@ export default {
     .nav-search {
       display: flex;
       align-items: center;
-      width: 300px;
+      width: 320px;
       height: 36px;
       padding: 0 14px;
       border-radius: 8px;
@@ -236,6 +225,9 @@ export default {
         display: flex;
         align-items: center;
         justify-content: center;
+        object-fit: cover;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(31, 39, 51, .14);
         margin-right: 10px;
       }
 

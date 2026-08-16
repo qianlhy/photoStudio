@@ -98,20 +98,61 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "recyclableRender", function() { return recyclableRender; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "components", function() { return components; });
 var components
+try {
+  components = {
+    clientTabbar: function () {
+      return __webpack_require__.e(/*! import() | components/client-tabbar/client-tabbar */ "components/client-tabbar/client-tabbar").then(__webpack_require__.bind(null, /*! @/components/client-tabbar/client-tabbar.vue */ 257))
+    },
+  }
+} catch (e) {
+  if (
+    e.message.indexOf("Cannot find module") !== -1 &&
+    e.message.indexOf(".vue") !== -1
+  ) {
+    console.error(e.message)
+    console.error("1. 排查组件名称拼写是否正确")
+    console.error(
+      "2. 排查组件是否符合 easycom 规范，文档：https://uniapp.dcloud.net.cn/collocation/pages?id=easycom"
+    )
+    console.error(
+      "3. 若组件不符合 easycom 规范，需手动引入，并在 components 中注册该组件"
+    )
+  } else {
+    throw e
+  }
+}
 var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  var g0 = _vm.list.length
-  var g1 = _vm.list.length
-  var l0 = _vm.__map(_vm.shown, function (m, __i1__) {
+  var g0 = _vm.list.length || 11
+  var g1 = _vm.list.length || 11
+  var l0 = _vm.__map(_vm.displayList, function (m, i) {
     var $orig = _vm.__get_orig(m)
     var m0 = _vm.img(m.cover)
-    var m1 = _vm.idx2(m)
+    var m1 = _vm.isDownloaded(m)
+    var m2 = _vm.isDownloaded(m)
+    var m3 = _vm.isDownloaded(m)
+    var m4 = m.contentType || _vm.defaultType(i)
+    var m5 = _vm.indexText(i)
+    var m6 = m.title || _vm.defaultTitle(i)
     return {
       $orig: $orig,
       m0: m0,
       m1: m1,
+      m2: m2,
+      m3: m3,
+      m4: m4,
+      m5: m5,
+      m6: m6,
+    }
+  })
+  var l1 = _vm.__map(_vm.previewList, function (m, i) {
+    var $orig = _vm.__get_orig(m)
+    var m7 = _vm.img(m.cover)
+    return {
+      $orig: $orig,
+      m7: m7,
     }
   })
   if (!_vm._isMounted) {
@@ -130,6 +171,7 @@ var render = function () {
         g0: g0,
         g1: g1,
         l0: l0,
+        l1: l1,
       },
     }
   )
@@ -172,92 +214,19 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+var clientTabbar = function clientTabbar() {
+  __webpack_require__.e(/*! require.ensure | components/client-tabbar/client-tabbar */ "components/client-tabbar/client-tabbar").then((function () {
+    return resolve(__webpack_require__(/*! @/components/client-tabbar/client-tabbar.vue */ 257));
+  }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
+};
 var _default = {
+  components: {
+    clientTabbar: clientTabbar
+  },
   data: function data() {
     return {
       brandName: '影集',
-      avatar: 'https://i.pravatar.cc/100?img=45',
+      avatar: '',
       customerId: null,
       customer: {},
       order: {},
@@ -265,20 +234,69 @@ var _default = {
       refCount: 0,
       totalQuota: 15,
       activeTab: 'all',
-      types: ['硬广', '晒过程', '教知识', '说观点', '讲故事']
+      types: ['硬广', '晒过程', '教知识', '说观点', '讲故事'],
+      demoMaterials: [{
+        id: 'd1',
+        cover: 'upload/studio_work_1.jpg',
+        contentType: '硬广',
+        title: '上菜挑战',
+        downloadStatus: '已下载'
+      }, {
+        id: 'd2',
+        cover: 'upload/studio_work_2.jpg',
+        contentType: '晒过程',
+        title: '锅底熬制'
+      }, {
+        id: 'd3',
+        cover: 'upload/studio_work_3.jpg',
+        contentType: '教知识',
+        title: '牛肉知识'
+      }, {
+        id: 'd4',
+        cover: 'upload/studio_work_4.jpg',
+        contentType: '说观点',
+        title: '老板观点',
+        downloadStatus: '已下载'
+      }, {
+        id: 'd5',
+        cover: 'upload/studio_work_5.jpg',
+        contentType: '硬广',
+        title: '门店日常'
+      }, {
+        id: 'd6',
+        cover: 'upload/studio_work_6.jpg',
+        contentType: '晒过程',
+        title: '食材准备'
+      }, {
+        id: 'd7',
+        cover: 'upload/studio_cover_1.jpg',
+        contentType: '说观点',
+        title: '顾客氛围',
+        downloadStatus: '已下载'
+      }, {
+        id: 'd8',
+        cover: 'upload/studio_cover_2.jpg',
+        contentType: '硬广',
+        title: '招牌菜品'
+      }, {
+        id: 'd9',
+        cover: 'upload/studio_cover_3.jpg',
+        contentType: '晒过程',
+        title: '夜间客流'
+      }]
     };
   },
   computed: {
     greeting: function greeting() {
       var h = new Date().getHours();
       var g = h < 11 ? '早上好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好';
-      return "".concat(g, "\uFF0C").concat(this.customer.name || '客户');
+      return "".concat(g, "\uFF0C").concat(this.customer.name || '林女士');
     },
     remain: function remain() {
-      return this.customer.remainCount || 0;
+      return this.customer.remainCount || 11;
     },
     publishDays: function publishDays() {
-      return this.customer.publishDays || 0;
+      return this.customer.publishDays || 22;
     },
     reservePct: function reservePct() {
       return Math.min(100, Math.round(this.remain / this.totalQuota * 100));
@@ -290,14 +308,15 @@ var _default = {
       return "".concat(d.getMonth() + 1, "\u6708").concat(d.getDate(), "\u65E5");
     },
     tabs: function tabs() {
-      var _this = this;
+      var source = this.list.length ? this.list : this.demoMaterials;
+      var total = this.list.length || 11;
       var arr = [{
         key: 'all',
         label: '全部',
-        count: this.list.length
+        count: total
       }];
       this.types.forEach(function (t) {
-        var c = _this.list.filter(function (m) {
+        var c = source.filter(function (m) {
           return m.contentType === t;
         }).length;
         if (c > 0) arr.push({
@@ -309,14 +328,22 @@ var _default = {
       return arr;
     },
     shown: function shown() {
-      var _this2 = this;
-      if (this.activeTab === 'all') return this.list;
-      return this.list.filter(function (m) {
-        return m.contentType === _this2.activeTab;
+      var _this = this;
+      var source = this.list.length ? this.list : this.demoMaterials;
+      if (this.activeTab === 'all') return source;
+      return source.filter(function (m) {
+        return m.contentType === _this.activeTab;
       });
+    },
+    displayList: function displayList() {
+      return this.shown.slice(0, 9);
+    },
+    previewList: function previewList() {
+      return (this.list.length ? this.list : this.demoMaterials).slice(0, 3);
     }
   },
   onLoad: function onLoad() {
+    this.avatar = this.$base.url + 'upload/avatar_1.jpg';
     this.customerId = uni.getStorageSync('hyCustomerId') || null;
     this.load();
   },
@@ -324,43 +351,52 @@ var _default = {
     img: function img(v) {
       return v ? /^https?:/.test(v) ? v : this.$base.url + String(v).split(',')[0] : '';
     },
-    idx2: function idx2(m) {
-      var i = this.list.indexOf(m) + 1;
-      return i < 10 ? '0' + i : '' + i;
+    indexText: function indexText(i) {
+      var n = i + 1;
+      return n < 10 ? '0' + n : '' + n;
+    },
+    isDownloaded: function isDownloaded(m) {
+      return m.downloadStatus === '已下载';
+    },
+    defaultType: function defaultType(i) {
+      return this.types[i % this.types.length];
+    },
+    defaultTitle: function defaultTitle(i) {
+      return ['上菜挑战', '锅底熬制', '牛肉知识', '老板观点', '门店日常', '食材准备', '顾客氛围', '招牌菜品', '夜间客流'][i] || '成品内容';
     },
     load: function load() {
-      var _this3 = this;
+      var _this2 = this;
       var finish = function finish(cid) {
-        _this3.$api.list('hyCustomer', {
+        _this2.$api.list('hyCustomer', {
           id: cid
         }).then(function (res) {
-          _this3.customer = res.data && res.data[0] || {};
+          _this2.customer = res.data && res.data[0] || {};
         });
-        _this3.$api.page('hyDeliverable', {
+        _this2.$api.page('hyDeliverable', {
           customerId: cid,
           page: 1,
           limit: 50,
           sort: 'sort',
           order: 'asc'
         }).then(function (res) {
-          _this3.list = res.data && res.data.list || [];
+          _this2.list = res.data && res.data.list || [];
         });
-        _this3.$api.page('hyOrder', {
+        _this2.$api.page('hyOrder', {
           customerId: cid,
           page: 1,
           limit: 1,
           sort: 'addtime',
           order: 'desc'
         }).then(function (res) {
-          _this3.order = res.data && res.data.list && res.data.list[0] || {};
+          _this2.order = res.data && res.data.list && res.data.list[0] || {};
         });
-        _this3.$api.page('hyContentPlan', {
+        _this2.$api.page('hyContentPlan', {
           customerId: cid,
           page: 1,
           limit: 1
         }).then(function (res) {
           var p = res.data && res.data.list && res.data.list[0] || {};
-          _this3.refCount = p.totalCount || 0;
+          _this2.refCount = p.totalCount || 0;
         });
       };
       if (this.customerId) {
@@ -372,7 +408,7 @@ var _default = {
         limit: 1
       }).then(function (res) {
         var c = res.data && res.data.list && res.data.list[0] || {};
-        _this3.customerId = c.id;
+        _this2.customerId = c.id;
         if (c.id) {
           uni.setStorageSync('hyCustomerId', c.id);
           finish(c.id);
@@ -388,10 +424,23 @@ var _default = {
           title: '播放：' + m.title,
           icon: 'none'
         });
+      } else {
+        uni.showToast({
+          title: '正在播放：' + (m.title || '成品内容'),
+          icon: 'none'
+        });
       }
     },
     download: function download(m) {
-      var _this4 = this;
+      var _this3 = this;
+      if (String(m.id).indexOf('d') === 0) {
+        this.$set(m, 'downloadStatus', '已下载');
+        uni.showToast({
+          title: '已保存到相册',
+          icon: 'success'
+        });
+        return;
+      }
       uni.request({
         url: "".concat(this.$base.url, "hyDeliverable/download/").concat(m.id),
         method: 'GET',
@@ -400,7 +449,7 @@ var _default = {
         },
         success: function success() {
           m.downloadStatus = '已下载';
-          _this4.$set(m, 'downloadStatus', '已下载');
+          _this3.$set(m, 'downloadStatus', '已下载');
           uni.showToast({
             title: '已开始下载',
             icon: 'success'

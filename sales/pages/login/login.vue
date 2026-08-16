@@ -5,11 +5,11 @@
 			<view class="slogan">{{ slogan }}</view>
 			<view class="form">
 				<view class="field">
-					<text class="ico">👤</text>
+					<text class="ico ico-user"></text>
 					<input v-model="username" class="input" placeholder="请输入账号 / 手机号" placeholder-class="ph" />
 				</view>
 				<view class="field">
-					<text class="ico">🔒</text>
+					<text class="ico ico-lock"></text>
 					<input v-model="password" class="input" password placeholder="请输入密码" placeholder-class="ph" />
 				</view>
 				<view class="btn-login" @click="doLogin">登 录</view>
@@ -77,7 +77,7 @@ export default {
 }
 .logo {
 	font-size: 52rpx;
-	font-weight: 800;
+	font-weight: 700;
 	color: $ink;
 	letter-spacing: 4rpx;
 }
@@ -98,8 +98,58 @@ export default {
 	background: #FAFBFD;
 }
 .field .ico {
-	font-size: 32rpx;
+	position: relative;
+	display: inline-block;
+	width: 32rpx;
+	height: 32rpx;
 	margin-right: 18rpx;
+	flex-shrink: 0;
+	color: #A6B0C0;
+}
+.ico-user::before {
+	content: "";
+	position: absolute;
+	left: 10rpx;
+	top: 3rpx;
+	width: 13rpx;
+	height: 13rpx;
+	box-sizing: border-box;
+	border: 3rpx solid currentColor;
+	border-radius: 50%;
+}
+.ico-user::after {
+	content: "";
+	position: absolute;
+	left: 4rpx;
+	bottom: 3rpx;
+	width: 25rpx;
+	height: 14rpx;
+	box-sizing: border-box;
+	border: 3rpx solid currentColor;
+	border-radius: 14rpx 14rpx 5rpx 5rpx;
+}
+.ico-lock::before {
+	content: "";
+	position: absolute;
+	left: 9rpx;
+	top: 3rpx;
+	width: 15rpx;
+	height: 13rpx;
+	box-sizing: border-box;
+	border: 3rpx solid currentColor;
+	border-bottom: 0;
+	border-radius: 8rpx 8rpx 0 0;
+}
+.ico-lock::after {
+	content: "";
+	position: absolute;
+	left: 4rpx;
+	bottom: 3rpx;
+	width: 25rpx;
+	height: 16rpx;
+	box-sizing: border-box;
+	border: 3rpx solid currentColor;
+	border-radius: 4rpx;
 }
 .input {
 	flex: 1;

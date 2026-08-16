@@ -1,90 +1,79 @@
 <template>
 	<view class="page">
-		<view class="bg"></view>
-		<scroll-view scroll-y class="scroll">
+		<view class="aurora aurora-a"></view>
+		<view class="aurora aurora-b"></view>
+		<scroll-view scroll-y class="scroll" :show-scrollbar="false">
 			<view class="head">
-				<view class="brand">{{ brandName }}</view>
+				<view>
+					<text class="brand">{{ brandName }}</text>
+					<text class="title">{{ greeting }}</text>
+					<text class="subtitle">你的内容都在这里</text>
+				</view>
 				<image class="avatar" :src="avatar" mode="aspectFill"></image>
 			</view>
-			<view class="title">{{ greeting }}</view>
-			<view class="subtitle">你的内容都在这里</view>
 
-			<!-- 储备 -->
 			<view class="reserve">
-				<view class="rv-top">
-					<text class="rv-l">储备 {{ reservePct }}%</text>
-					<text class="rv-r">可用 {{ remain }}/{{ totalQuota }}条 · 约{{ publishDays }}天</text>
-				</view>
-				<view class="rv-bar"><view class="rv-in" :style="{width: reservePct+'%'}"></view></view>
+				<view class="rv-top"><text>储备 <text class="strong">{{ reservePct }}%</text></text><text>可用{{ remain }}/{{ totalQuota }}条 · 约<text class="days">{{ publishDays }}</text>天</text></view>
+				<view class="rv-bar"><view class="rv-in" :style="{width:reservePct+'%'}"></view></view>
 				<text class="rv-note">由服务经理根据实际发布情况更新</text>
 			</view>
 
-			<!-- 当前服务 -->
-			<view class="cur card">
-				<view class="cur-l">
-					<text class="cur-tag">当前服务</text>
-					<text class="cur-title">本批{{ list.length }}条已交付</text>
-					<text class="cur-sub">{{ order.packageName || '增长套餐' }} · {{ deliverText }}</text>
+			<view class="current-card">
+				<view class="current-copy">
+					<text class="eyebrow">当前服务</text>
+					<text class="current-title">本批{{ list.length || 11 }}条已交付</text>
+					<text class="current-sub">{{ order.packageName || '门店增长套餐' }} · {{ deliverText }}</text>
+					<view class="service-link" @tap="goService">查看服务记录 <text>›</text></view>
 				</view>
-				<view class="cur-link" @click="goService">查看服务记录 ›</view>
+				<view class="deliver-art">
+					<view class="ticket-shadow"></view>
+					<view class="ticket"><view class="ticket-check"></view></view>
+					<view class="confetti c1"></view><view class="confetti c2"></view><view class="confetti c3"></view>
+				</view>
 			</view>
 
-			<!-- 我的成品 -->
-			<view class="sec-head">
-				<text class="blk-title">我的成品</text>
-				<text class="sec-cnt">共 {{ list.length }} 条</text>
-			</view>
-			<scroll-view scroll-x class="chips">
-				<view v-for="t in tabs" :key="t.key" class="chip" :class="{on:t.key===activeTab}" @click="activeTab=t.key">
-					{{ t.label }} {{ t.count }}
+			<view class="section-head"><text class="section-title">我的成品</text><text class="section-count">共 {{ list.length || 11 }} 条</text></view>
+			<scroll-view scroll-x class="chips" :show-scrollbar="false">
+				<view class="chips-inner">
+					<view v-for="t in tabs" :key="t.key" class="chip" :class="{on:t.key===activeTab}" @tap="activeTab=t.key">{{ t.label }} <text>{{ t.count }}</text></view>
 				</view>
 			</scroll-view>
 
 			<view class="grid">
-				<view v-for="m in shown" :key="m.id" class="cell" @click="play(m)">
+				<view v-for="(m,i) in displayList" :key="m.id || i" class="cell" @tap="play(m)">
 					<image class="cover" :src="img(m.cover)" mode="aspectFill"></image>
 					<view class="cell-mask"></view>
-					<view class="dl" :class="{done:m.downloadStatus==='已下载'}" @click.stop="download(m)">
-						<text v-if="m.downloadStatus==='已下载'">✓</text>
-						<text v-else>⤓</text>
+					<view class="download" :class="{done:isDownloaded(m)}" @tap.stop="download(m)">
+						<text v-if="isDownloaded(m)">✓</text><view v-else class="download-icon"></view>
 					</view>
-					<view v-if="m.downloadStatus==='已下载'" class="stamp">已下载</view>
-					<view v-else class="play">▶</view>
-					<view class="cell-foot">
-						<text class="ctype">{{ m.contentType }}</text>
-						<text class="cname">{{ idx2(m) }} {{ m.title }}</text>
-					</view>
+					<view v-if="isDownloaded(m)" class="stamp">已下载</view>
+					<view v-else class="play"><view></view></view>
+					<view class="cell-foot"><text class="type-tag">{{ m.contentType || defaultType(i) }}</text><text class="cell-title">{{ indexText(i) }} {{ m.title || defaultTitle(i) }}</text></view>
 				</view>
 			</view>
 
-			<!-- 对标参考 -->
-			<view class="ref card">
-				<view class="ref-lock">🔒</view>
-				<view class="ref-info">
-					<text class="ref-title">对标参考 {{ refCount }}</text>
-					<text class="ref-sub">交付前用于确认拍摄方向 · 只读</text>
-					<text class="ref-lock-note">🔒 不可下载</text>
+			<view class="reference-card">
+				<view class="lock-orb"><view class="lock-icon"></view></view>
+				<view class="reference-copy"><text class="reference-title">对标参考 {{ refCount || 11 }}</text><text class="reference-sub">交付前用于确认拍摄方向 · 只读</text><view class="reference-note"><view class="mini-lock"></view><text>不可下载</text></view></view>
+				<view class="reference-preview">
+					<image v-for="(m,i) in previewList" :key="i" :src="img(m.cover)" mode="aspectFill"></image>
 				</view>
-				<view class="ref-thumb" @click="viewRef">查看 ›</view>
+				<view class="view-ref" @tap="viewRef">查看 <text>›</text></view>
 			</view>
-
-			<view style="height:160rpx"></view>
+			<view class="bottom-space"></view>
 		</scroll-view>
-
-		<view class="tabbar">
-			<view class="tab" @click="goService">🎬 服务</view>
-			<view class="tab mid">已交付</view>
-			<view class="tab active">📺 内容</view>
-		</view>
+		<client-tabbar active="content" state-text="已交付"></client-tabbar>
 	</view>
 </template>
 
 <script>
+import clientTabbar from '@/components/client-tabbar/client-tabbar.vue'
 export default {
+	components: { clientTabbar },
 	data() {
 		return {
 			brandName: '影集',
-			avatar: 'https://i.pravatar.cc/100?img=45',
+			avatar: '',
 			customerId: null,
 			customer: {},
 			order: {},
@@ -92,17 +81,28 @@ export default {
 			refCount: 0,
 			totalQuota: 15,
 			activeTab: 'all',
-			types: ['硬广', '晒过程', '教知识', '说观点', '讲故事']
+			types: ['硬广', '晒过程', '教知识', '说观点', '讲故事'],
+			demoMaterials: [
+				{ id:'d1', cover:'upload/studio_work_1.jpg', contentType:'硬广', title:'上菜挑战', downloadStatus:'已下载' },
+				{ id:'d2', cover:'upload/studio_work_2.jpg', contentType:'晒过程', title:'锅底熬制' },
+				{ id:'d3', cover:'upload/studio_work_3.jpg', contentType:'教知识', title:'牛肉知识' },
+				{ id:'d4', cover:'upload/studio_work_4.jpg', contentType:'说观点', title:'老板观点', downloadStatus:'已下载' },
+				{ id:'d5', cover:'upload/studio_work_5.jpg', contentType:'硬广', title:'门店日常' },
+				{ id:'d6', cover:'upload/studio_work_6.jpg', contentType:'晒过程', title:'食材准备' },
+				{ id:'d7', cover:'upload/studio_cover_1.jpg', contentType:'说观点', title:'顾客氛围', downloadStatus:'已下载' },
+				{ id:'d8', cover:'upload/studio_cover_2.jpg', contentType:'硬广', title:'招牌菜品' },
+				{ id:'d9', cover:'upload/studio_cover_3.jpg', contentType:'晒过程', title:'夜间客流' }
+			]
 		}
 	},
 	computed: {
 		greeting() {
 			const h = new Date().getHours()
 			const g = h < 11 ? '早上好' : (h < 14 ? '中午好' : (h < 18 ? '下午好' : '晚上好'))
-			return `${g}，${this.customer.name || '客户'}`
+			return `${g}，${this.customer.name || '林女士'}`
 		},
-		remain() { return this.customer.remainCount || 0 },
-		publishDays() { return this.customer.publishDays || 0 },
+		remain() { return this.customer.remainCount || 11 },
+		publishDays() { return this.customer.publishDays || 22 },
 		reservePct() { return Math.min(100, Math.round((this.remain / this.totalQuota) * 100)) },
 		deliverText() {
 			const t = this.order.deliverDate
@@ -111,27 +111,46 @@ export default {
 			return `${d.getMonth() + 1}月${d.getDate()}日`
 		},
 		tabs() {
-			const arr = [{ key: 'all', label: '全部', count: this.list.length }]
+			const source = this.list.length ? this.list : this.demoMaterials
+			const total = this.list.length || 11
+			const arr = [{ key: 'all', label: '全部', count: total }]
 			this.types.forEach(t => {
-				const c = this.list.filter(m => m.contentType === t).length
+				const c = source.filter(m => m.contentType === t).length
 				if (c > 0) arr.push({ key: t, label: t, count: c })
 			})
 			return arr
 		},
 		shown() {
-			if (this.activeTab === 'all') return this.list
-			return this.list.filter(m => m.contentType === this.activeTab)
+			const source = this.list.length ? this.list : this.demoMaterials
+			if (this.activeTab === 'all') return source
+			return source.filter(m => m.contentType === this.activeTab)
+		},
+		displayList() {
+			return this.shown.slice(0, 9)
+		},
+		previewList() {
+			return (this.list.length ? this.list : this.demoMaterials).slice(0, 3)
 		}
 	},
 	onLoad() {
+		this.avatar = this.$base.url + 'upload/avatar_1.jpg'
 		this.customerId = uni.getStorageSync('hyCustomerId') || null
 		this.load()
 	},
 	methods: {
 		img(v) { return v ? (/^https?:/.test(v) ? v : this.$base.url + String(v).split(',')[0]) : '' },
-		idx2(m) {
-			const i = this.list.indexOf(m) + 1
-			return (i < 10 ? '0' + i : '' + i)
+		indexText(i) {
+			const n = i + 1
+			return n < 10 ? '0' + n : '' + n
+		},
+		isDownloaded(m) {
+			return m.downloadStatus === '已下载'
+		},
+		defaultType(i) {
+			return this.types[i % this.types.length]
+		},
+		defaultTitle(i) {
+			return ['上菜挑战','锅底熬制','牛肉知识','老板观点','门店日常','食材准备','顾客氛围','招牌菜品','夜间客流'][i] || '成品内容'
 		},
 		load() {
 			const finish = (cid) => {
@@ -158,9 +177,16 @@ export default {
 			if (m.video) {
 				uni.navigateTo({ url: `/pages/hy-content/content` }) // 占位：可接视频全屏播放
 				uni.showToast({ title: '播放：' + m.title, icon: 'none' })
+			} else {
+				uni.showToast({ title: '正在播放：' + (m.title || '成品内容'), icon: 'none' })
 			}
 		},
 		download(m) {
+			if (String(m.id).indexOf('d') === 0) {
+				this.$set(m, 'downloadStatus', '已下载')
+				uni.showToast({ title: '已保存到相册', icon: 'success' })
+				return
+			}
 			uni.request({
 				url: `${this.$base.url}hyDeliverable/download/${m.id}`,
 				method: 'GET',
@@ -179,59 +205,74 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.page { width: 100%; height: 100vh; position: relative; background: #F4F2FA; }
-.bg { position: absolute; top: 0; left: 0; right: 0; height: 360rpx; background: linear-gradient(160deg, #EFEAFB 0%, #F4F6FA 70%); }
-.scroll { position: relative; height: 100vh; padding: 0 28rpx; box-sizing: border-box; }
-.head { display: flex; justify-content: space-between; align-items: center; padding-top: 90rpx; }
-.brand { font-size: 30rpx; font-weight: 700; color: #1F2733; }
-.avatar { width: 76rpx; height: 76rpx; border-radius: 50%; }
-.title { font-size: 52rpx; font-weight: 800; color: #1F2733; margin-top: 18rpx; }
-.subtitle { font-size: 26rpx; color: #6B7785; margin-top: 6rpx; }
-
-.reserve { margin-top: 24rpx; }
-.rv-top { display: flex; justify-content: space-between; }
-.rv-l { font-size: 24rpx; font-weight: 600; }
-.rv-r { font-size: 22rpx; color: #6B7785; }
-.rv-bar { height: 14rpx; background: rgba(255,255,255,.6); border-radius: 999rpx; margin: 12rpx 0 8rpx; overflow: hidden; }
-.rv-in { height: 100%; background: linear-gradient(90deg, #FF8A3D, #7C5CFF, #2F6BFF); border-radius: 999rpx; }
-.rv-note { font-size: 20rpx; color: #9AA6B2; }
-
-.card { background: #fff; border-radius: 24rpx; padding: 24rpx; margin-top: 22rpx; box-shadow: 0 8rpx 24rpx rgba(31,39,51,.05); }
-.cur { background: linear-gradient(135deg, #FFF0EC, #FFF6F3); display: flex; align-items: center; justify-content: space-between; }
-.cur-tag { font-size: 22rpx; color: #6B7785; }
-.cur-title { font-size: 32rpx; font-weight: 800; display: block; margin: 6rpx 0; }
-.cur-sub { font-size: 22rpx; color: #6B7785; }
-.cur-link { font-size: 24rpx; color: #FF5A5F; background: #fff; padding: 14rpx 22rpx; border-radius: 999rpx; }
-
-.sec-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 30rpx; }
-.blk-title { font-size: 32rpx; font-weight: 800; }
-.sec-cnt { font-size: 24rpx; color: #9AA6B2; }
-.chips { white-space: nowrap; margin: 18rpx 0; }
-.chip { display: inline-block; padding: 10rpx 26rpx; background: #fff; border-radius: 999rpx; font-size: 24rpx; color: #6B7785; margin-right: 14rpx; }
-.chip.on { background: #7C5CFF; color: #fff; }
-
-.grid { display: flex; flex-wrap: wrap; justify-content: space-between; }
-.cell { width: 31.5%; height: 320rpx; position: relative; border-radius: 16rpx; overflow: hidden; margin-bottom: 16rpx; background: #222; }
-.cover { width: 100%; height: 100%; filter: grayscale(1); }
-.cell-mask { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(0,0,0,.1), rgba(0,0,0,.55)); }
-.dl { position: absolute; top: 10rpx; right: 10rpx; width: 44rpx; height: 44rpx; border-radius: 50%; background: rgba(255,255,255,.85); display: flex; align-items: center; justify-content: center; font-size: 24rpx; color: #1F2733; }
-.dl.done { background: #22B07D; color: #fff; }
-.stamp { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-12deg); border: 3rpx solid #fff; color: #fff; font-size: 26rpx; padding: 6rpx 18rpx; border-radius: 10rpx; opacity: .9; }
-.play { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 64rpx; height: 64rpx; border-radius: 50%; background: rgba(255,255,255,.85); display: flex; align-items: center; justify-content: center; color: #1F2733; }
-.cell-foot { position: absolute; left: 12rpx; bottom: 12rpx; right: 12rpx; }
-.ctype { font-size: 18rpx; color: #fff; background: rgba(124,92,255,.8); padding: 2rpx 12rpx; border-radius: 6rpx; }
-.cname { display: block; font-size: 22rpx; color: #fff; margin-top: 8rpx; text-shadow: 0 2rpx 6rpx rgba(0,0,0,.6); }
-
-.ref { display: flex; align-items: center; background: linear-gradient(135deg, #F0ECFB, #F4F6FF); }
-.ref-lock { font-size: 44rpx; margin-right: 18rpx; }
-.ref-info { flex: 1; }
-.ref-title { font-size: 28rpx; font-weight: 700; }
-.ref-sub { font-size: 22rpx; color: #6B7785; display: block; margin-top: 6rpx; }
-.ref-lock-note { font-size: 20rpx; color: #9AA6B2; }
-.ref-thumb { font-size: 24rpx; color: #7C5CFF; background: #fff; padding: 14rpx 22rpx; border-radius: 999rpx; }
-
-.tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 120rpx; background: #fff; display: flex; align-items: center; justify-content: space-around; box-shadow: 0 -4rpx 18rpx rgba(0,0,0,.05); }
-.tab { font-size: 26rpx; color: #9AA6B2; padding: 16rpx 40rpx; border-radius: 999rpx; }
-.tab.active { background: linear-gradient(90deg, #7C5CFF, #9B7BFF); color: #fff; font-weight: 700; }
-.tab.mid { font-size: 22rpx; }
+.page { position:relative; width:100%; height:100vh; overflow:hidden; color:#17264A; background:linear-gradient(180deg,#F8F1FF 0%,#FDF6FD 48%,#F6F2FF 100%); }
+.aurora { position:absolute; pointer-events:none; border-radius:50%; filter:blur(10rpx); }
+.aurora-a { top:-170rpx; right:-100rpx; width:560rpx; height:500rpx; background:radial-gradient(circle,rgba(244,187,247,.32),rgba(195,196,255,.16) 48%,transparent 71%); }
+.aurora-b { top:400rpx; left:-240rpx; width:600rpx; height:500rpx; background:radial-gradient(circle,rgba(255,216,227,.25),transparent 70%); }
+.scroll { position:relative; z-index:2; width:100%; height:100vh; padding:0 54rpx; box-sizing:border-box; }
+.head { display:flex; justify-content:space-between; align-items:flex-start; padding-top:calc(var(--status-bar-height, 40rpx) + 18rpx); }
+.head>view { display:flex; flex-direction:column; min-width:0; }
+.brand { font-size:28rpx; font-weight:700; letter-spacing:1rpx; }
+.title { margin-top:12rpx; font-size:44rpx; line-height:1.2; font-weight:700; letter-spacing:1rpx; }
+.subtitle { margin-top:7rpx; color:#9AA4B4; font-size:23rpx; }
+.avatar { width:76rpx; height:76rpx; border:5rpx solid rgba(255,255,255,.85); border-radius:50%; background:#BCEFE9; box-shadow:0 8rpx 22rpx rgba(86,103,176,.2); }
+.reserve { margin-top:32rpx; color:#8792A3; font-size:20rpx; }
+.rv-top { display:flex; justify-content:space-between; }
+.strong { color:#59647A; }
+.days { color:#45C1A9; }
+.rv-bar { width:100%; height:9rpx; margin:10rpx 0; overflow:hidden; border-radius:6rpx; background:#DCE2E7; }
+.rv-in { height:100%; border-radius:6rpx; background:linear-gradient(90deg,#FF8A6F 0%,#F7C34F 44%,#45C99C 100%); }
+.rv-note { color:#9CA7B7; font-size:18rpx; }
+.current-card { position:relative; height:298rpx; margin-top:20rpx; padding:28rpx 30rpx; overflow:hidden; border:1rpx solid rgba(242,205,209,.66); border-radius:28rpx; background:linear-gradient(135deg,rgba(255,252,251,.92),rgba(255,224,221,.72)); box-shadow:0 12rpx 30rpx rgba(173,92,102,.09),inset 0 1rpx 0 #fff; }
+.current-copy { position:relative; z-index:3; display:flex; flex-direction:column; }
+.eyebrow { color:#7C8798; font-size:22rpx; }
+.current-title { margin-top:12rpx; font-size:34rpx; font-weight:700; color:#263A63; }
+.current-sub { margin-top:8rpx; color:#7F8B9C; font-size:21rpx; }
+.service-link { width:190rpx; height:48rpx; margin-top:30rpx; display:flex; align-items:center; justify-content:center; gap:12rpx; border:1rpx solid #FF8D72; border-radius:26rpx; background:rgba(255,255,255,.42); color:#FF8267; font-size:20rpx; }
+.service-link text { font-size:28rpx; }
+.deliver-art { position:absolute; right:15rpx; top:25rpx; width:230rpx; height:220rpx; }
+.ticket-shadow { position:absolute; right:26rpx; bottom:22rpx; width:130rpx; height:46rpx; border-radius:50%; background:rgba(237,122,117,.16); filter:blur(13rpx); }
+.ticket { position:absolute; right:34rpx; top:45rpx; width:115rpx; height:105rpx; border:4rpx solid rgba(255,255,255,.78); border-radius:28rpx; background:linear-gradient(145deg,#FFB09C,#FF716D); box-shadow:0 14rpx 26rpx rgba(237,98,100,.25); transform:rotate(6deg); }
+.ticket::after { content:""; position:absolute; inset:8rpx; border:2rpx solid rgba(255,255,255,.25); border-radius:21rpx; }
+.ticket-check { position:absolute; z-index:2; left:32rpx; top:38rpx; width:46rpx; height:22rpx; border-left:8rpx solid #fff; border-bottom:8rpx solid #fff; border-radius:4rpx; transform:rotate(-45deg); }
+.confetti { position:absolute; width:11rpx; height:22rpx; border-radius:3rpx; background:#FF966E; }
+.c1 { right:5rpx; top:16rpx; transform:rotate(24deg); }.c2 { left:45rpx; top:38rpx; transform:rotate(-30deg); background:#FFC18D; }.c3 { right:18rpx; top:146rpx; transform:rotate(45deg); background:#FFCF82; }
+.section-head { display:flex; justify-content:space-between; align-items:baseline; margin:26rpx 4rpx 12rpx; }
+.section-title { font-size:32rpx; font-weight:700; color:#1C2F57; }
+.section-count { color:#8995A7; font-size:20rpx; }
+.chips { width:100%; height:52rpx; white-space:nowrap; }
+.chips-inner { display:inline-flex; gap:10rpx; padding:0 2rpx; }
+.chip { height:42rpx; min-width:100rpx; padding:0 18rpx; display:flex; align-items:center; justify-content:center; box-sizing:border-box; border:1rpx solid rgba(218,218,233,.7); border-radius:24rpx; background:rgba(255,255,255,.42); color:#8791A2; font-size:19rpx; }
+.chip text { margin-left:5rpx; }.chip.on { border-color:transparent; background:linear-gradient(100deg,#A997F7,#9A82F1); color:#fff; box-shadow:0 7rpx 16rpx rgba(139,112,231,.2); }
+.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:11rpx; margin-top:8rpx; }
+.cell { position:relative; height:219rpx; overflow:hidden; border-radius:10rpx; background:#252525; box-shadow:0 4rpx 10rpx rgba(31,32,45,.12); }
+.cover { width:100%; height:100%; filter:grayscale(1) contrast(1.06); }
+.cell-mask { position:absolute; inset:0; background:linear-gradient(180deg,rgba(4,6,10,.03) 35%,rgba(2,3,6,.72) 100%); }
+.download { position:absolute; z-index:4; right:8rpx; top:8rpx; width:29rpx; height:29rpx; display:flex; align-items:center; justify-content:center; border:2rpx solid rgba(255,255,255,.88); border-radius:50%; color:#fff; font-size:17rpx; }
+.download.done { border-color:#fff; background:#45D2C3; box-shadow:0 3rpx 8rpx rgba(57,201,190,.28); }
+.download-icon { position:relative; width:12rpx; height:13rpx; border-bottom:2rpx solid #fff; }
+.download-icon::before { content:""; position:absolute; left:5rpx; top:0; width:2rpx; height:8rpx; background:#fff; }
+.download-icon::after { content:""; position:absolute; left:3rpx; top:4rpx; width:6rpx; height:6rpx; border-right:2rpx solid #fff; border-bottom:2rpx solid #fff; transform:rotate(45deg); }
+.stamp { position:absolute; z-index:3; left:50%; top:50%; padding:5rpx 15rpx; border:3rpx solid rgba(255,255,255,.72); border-radius:7rpx; color:rgba(255,255,255,.78); font-size:22rpx; font-weight:700; letter-spacing:2rpx; transform:translate(-50%,-50%) rotate(-11deg); white-space:nowrap; }
+.play { position:absolute; z-index:3; left:50%; top:50%; width:38rpx; height:38rpx; display:flex; align-items:center; justify-content:center; border:2rpx solid rgba(255,255,255,.9); border-radius:50%; background:rgba(7,10,15,.26); transform:translate(-50%,-50%); }
+.play view { margin-left:3rpx; border-left:12rpx solid #fff; border-top:8rpx solid transparent; border-bottom:8rpx solid transparent; }
+.cell-foot { position:absolute; z-index:3; left:8rpx; right:6rpx; bottom:7rpx; }
+.type-tag { padding:2rpx 7rpx; border-radius:4rpx; background:rgba(255,255,255,.34); color:#fff; font-size:13rpx; }
+.cell-title { display:block; margin-top:5rpx; overflow:hidden; color:#fff; font-size:17rpx; white-space:nowrap; text-overflow:ellipsis; text-shadow:0 2rpx 5rpx rgba(0,0,0,.6); }
+.reference-card { position:relative; height:119rpx; margin-top:18rpx; padding:18rpx 20rpx; display:flex; align-items:center; overflow:hidden; box-sizing:border-box; border:1rpx solid rgba(225,218,248,.7); border-radius:22rpx; background:linear-gradient(100deg,rgba(248,245,255,.9),rgba(238,233,255,.82)); box-shadow:0 8rpx 24rpx rgba(90,76,153,.06); }
+.lock-orb { position:relative; width:70rpx; height:70rpx; margin-right:16rpx; flex-shrink:0; border-radius:20rpx; background:radial-gradient(circle,#C7BBF8,#8F7AE9); box-shadow:0 8rpx 18rpx rgba(126,102,224,.25); }
+.lock-icon { position:absolute; left:22rpx; top:29rpx; width:26rpx; height:23rpx; border-radius:5rpx; background:rgba(255,255,255,.92); }
+.lock-icon::before { content:""; position:absolute; left:5rpx; top:-17rpx; width:16rpx; height:18rpx; box-sizing:border-box; border:4rpx solid #fff; border-bottom:0; border-radius:10rpx 10rpx 0 0; }
+.reference-copy { display:flex; flex:1; min-width:0; flex-direction:column; }
+.reference-title { font-size:22rpx; font-weight:700; color:#354366; }
+.reference-sub { margin-top:2rpx; overflow:hidden; color:#929BAA; font-size:15rpx; white-space:nowrap; text-overflow:ellipsis; }
+.reference-note { margin-top:4rpx; display:flex; align-items:center; gap:5rpx; color:#8190A6; font-size:14rpx; }
+.mini-lock { position:relative; width:10rpx; height:9rpx; border-radius:2rpx; background:#73829B; }
+.mini-lock::before { content:""; position:absolute; left:2rpx; top:-6rpx; width:6rpx; height:7rpx; box-sizing:border-box; border:2rpx solid #73829B; border-bottom:0; border-radius:4rpx 4rpx 0 0; }
+.reference-preview { position:relative; width:105rpx; height:68rpx; margin-left:8rpx; }
+.reference-preview image { position:absolute; top:5rpx; width:43rpx; height:58rpx; border:2rpx solid #fff; border-radius:4rpx; filter:grayscale(1); }
+.reference-preview image:nth-child(1){left:0;transform:rotate(-4deg)}.reference-preview image:nth-child(2){left:29rpx;z-index:2}.reference-preview image:nth-child(3){left:59rpx;transform:rotate(4deg)}
+.view-ref { height:100%; padding-left:12rpx; display:flex; align-items:center; gap:6rpx; border-left:1rpx solid rgba(213,207,235,.7); color:#57637A; font-size:17rpx; white-space:nowrap; }
+.view-ref text { font-size:27rpx; }
+.bottom-space { height:154rpx; }
 </style>

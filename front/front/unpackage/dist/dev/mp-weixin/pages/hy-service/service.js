@@ -98,6 +98,29 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "recyclableRender", function() { return recyclableRender; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "components", function() { return components; });
 var components
+try {
+  components = {
+    clientTabbar: function () {
+      return __webpack_require__.e(/*! import() | components/client-tabbar/client-tabbar */ "components/client-tabbar/client-tabbar").then(__webpack_require__.bind(null, /*! @/components/client-tabbar/client-tabbar.vue */ 257))
+    },
+  }
+} catch (e) {
+  if (
+    e.message.indexOf("Cannot find module") !== -1 &&
+    e.message.indexOf(".vue") !== -1
+  ) {
+    console.error(e.message)
+    console.error("1. 排查组件名称拼写是否正确")
+    console.error(
+      "2. 排查组件是否符合 easycom 规范，文档：https://uniapp.dcloud.net.cn/collocation/pages?id=easycom"
+    )
+    console.error(
+      "3. 若组件不符合 easycom 规范，需手动引入，并在 components 中注册该组件"
+    )
+  } else {
+    throw e
+  }
+}
 var render = function () {
   var _vm = this
   var _h = _vm.$createElement
@@ -150,107 +173,20 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+var clientTabbar = function clientTabbar() {
+  __webpack_require__.e(/*! require.ensure | components/client-tabbar/client-tabbar */ "components/client-tabbar/client-tabbar").then((function () {
+    return resolve(__webpack_require__(/*! @/components/client-tabbar/client-tabbar.vue */ 257));
+  }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
+};
 var _default = {
+  components: {
+    clientTabbar: clientTabbar
+  },
   data: function data() {
     return {
       brandName: '影集',
-      avatar: 'https://i.pravatar.cc/100?img=32',
-      mgrAvatar: 'https://i.pravatar.cc/100?img=12',
+      avatar: '',
+      mgrAvatar: '',
       customerId: null,
       customer: {},
       order: {},
@@ -264,14 +200,22 @@ var _default = {
     },
     producing: function producing() {
       var v = (this.order.videoCount || 0) - (this.order.completedCount || 0);
-      return v > 0 ? v : 0;
+      return v > 0 ? v : 10;
+    },
+    producingPct: function producingPct() {
+      return Math.min(100 - this.reservePct, Math.round(this.producing / this.totalQuota * 100));
     },
     reservePct: function reservePct() {
       return Math.min(100, Math.round(this.remain / this.totalQuota * 100));
     },
     donePct: function donePct() {
-      if (!this.order.videoCount) return 0;
+      if (!this.order.videoCount) return 60;
       return Math.round(this.order.completedCount / this.order.videoCount * 100);
+    },
+    displayStatus: function displayStatus() {
+      var status = this.order.status || '内容制作中';
+      if (status === '内容制作中') return '制作中';
+      return status;
     },
     shootText: function shootText() {
       return this.md(this.order.shootDate);
@@ -300,6 +244,8 @@ var _default = {
     }
   },
   onLoad: function onLoad() {
+    this.avatar = this.$base.url + 'upload/avatar_1.jpg';
+    this.mgrAvatar = this.$base.url + 'upload/avatar_2.jpg';
     this.customerId = uni.getStorageSync('hyCustomerId') || null;
     this.load();
   },

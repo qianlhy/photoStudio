@@ -149,17 +149,11 @@
 				});
 				this.$utils.msg('偏好已保存，将为你优先推荐');
 				setTimeout(() => {
-					uni.switchTab({
-						url: '../index/index',
-						fail: () => this.$utils.jump('../index/index')
-					});
+					uni.reLaunch({ url: '../hy-service/service' });
 				}, 800);
 			},
 			skip() {
-				uni.switchTab({
-					url: '../index/index',
-					fail: () => this.$utils.jump('../index/index')
-				});
+				uni.reLaunch({ url: '../hy-service/service' });
 			}
 		}
 	};

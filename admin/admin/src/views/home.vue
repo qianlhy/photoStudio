@@ -1,7 +1,5 @@
 <template>
   <div class="overview">
-    <div class="page-title">经营总览</div>
-
     <!-- 指标卡 -->
     <el-row :gutter="16" class="stat-row">
       <el-col :span="6" v-for="c in cards" :key="c.label">
@@ -16,7 +14,7 @@
       </el-col>
     </el-row>
 
-    <el-row :gutter="16">
+    <el-row :gutter="16" class="business-row">
       <!-- 业务经理业绩 -->
       <el-col :span="12">
         <el-card shadow="never" class="blk">
@@ -58,7 +56,7 @@
       <el-col :span="12">
         <el-card shadow="never" class="blk">
           <div slot="header" class="blk-head"><b>成交趋势</b></div>
-          <div ref="trendChart" style="height: 220px"></div>
+          <div ref="trendChart" class="trend-chart"></div>
         </el-card>
         <el-card shadow="never" class="blk" style="margin-top:16px">
           <div slot="header" class="blk-head"><b>交付情况</b></div>
@@ -76,7 +74,7 @@
     </el-row>
 
     <!-- 重点待办 -->
-    <el-row :gutter="16">
+    <el-row :gutter="16" class="todo-row">
       <el-col :span="14">
         <el-card shadow="never" class="blk">
           <div slot="header" class="blk-head"><b>重点待办 · 待付款客户（{{ unpaidList.length }}）</b></div>
@@ -259,11 +257,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.overview { padding: 4px; }
-.page-title { font-size: 22px; font-weight: 800; color: #1F2733; margin-bottom: 18px; }
+.overview { padding: 0; }
 .stat-row { margin-bottom: 18px; }
 .stat-card {
-  background: #fff; border: 1px solid #EEF1F5; border-radius: 14px; padding: 20px;
+  min-height: 116px; box-sizing: border-box;
+  background: #fff; border: 1px solid #E7ECF3; border-radius: 12px; padding: 20px 22px;
   display: flex; align-items: center; box-shadow: 0 6px 18px rgba(31,39,51,.05);
   border-top: 3px solid #2F6BFF;
 }
@@ -282,7 +280,12 @@ export default {
 .stat-delta .up { color: #22B07D; }
 .stat-delta .down { color: #FF5A5F; }
 
-.blk { margin-bottom: 16px; border-radius: 12px; }
+.blk { margin-bottom: 0; border-radius: 10px; }
+.business-row { margin-bottom: 16px; }
+.trend-chart { height: 110px; }
+.todo-row { margin-top: 0; }
+.blk ::v-deep .el-card__header { padding: 14px 16px; }
+.blk ::v-deep .el-card__body { padding: 10px 16px; }
 .blk-head { display: flex; justify-content: space-between; align-items: center; }
 .more { font-size: 12px; color: #2F6BFF; cursor: pointer; }
 .pf-cell { display: flex; align-items: center; }
@@ -299,7 +302,7 @@ export default {
 .red { color: #FF5A5F; font-weight: 600; }
 
 .deliver { display: flex; align-items: center; }
-.ring-chart { width: 130px; height: 130px; flex-shrink: 0; }
+.ring-chart { width: 82px; height: 82px; flex-shrink: 0; }
 .deliver-stats { flex: 1; display: flex; flex-wrap: wrap; }
 .ds { width: 50%; padding: 8px 12px; display: flex; align-items: center; gap: 10px; }
 .ds-ic { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; color: #fff; flex-shrink: 0; }

@@ -161,12 +161,12 @@ $aside-blue: #2F6BFF;
   }
 
   ::v-deep .el-menu-item {
-    height: 46px;
-    line-height: 46px;
+    height: 48px;
+    line-height: 48px;
     font-size: 14px;
-    margin: 6px 14px;
-    padding: 0 16px !important;
-    border-radius: 10px;
+    margin: 6px 4px;
+    padding: 0 24px !important;
+    border-radius: 5px;
     color: #9aa7bd !important;
     background-color: transparent !important;
 
@@ -187,7 +187,7 @@ $aside-blue: #2F6BFF;
       background: linear-gradient(135deg, #4f8bff, #2F6BFF) !important;
       color: #ffffff !important;
       font-weight: 600;
-      box-shadow: 0 6px 16px rgba(47, 107, 255, 0.35);
+      box-shadow: 0 5px 16px rgba(47, 107, 255, 0.28);
 
       i { color: #ffffff; }
     }

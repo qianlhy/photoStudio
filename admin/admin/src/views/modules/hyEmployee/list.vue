@@ -336,10 +336,11 @@ export default {
 </script>
 
 <style scoped>
+.main-content { padding-right: 356px; }
 .emp-actions { display: flex; gap: 10px; margin: 12px 0 14px; }
 .emp-body { display: flex; gap: 16px; align-items: flex-start; }
 .emp-left { flex: 1; min-width: 0; }
-.emp-right { width: 300px; flex-shrink: 0; }
+.emp-right { position:fixed; top:60px; right:0; bottom:0; z-index:30; width:340px; overflow:auto; background:#F7F9FC; border-left:1px solid #E7ECF3; }
 
 .emp-name { display: flex; align-items: center; gap: 8px; }
 .emp-av { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
@@ -347,7 +348,8 @@ export default {
 .perm-tag { margin: 2px; background: #EAF1FF; color: #2F6BFF; }
 .more-link { color: #2F6BFF; cursor: pointer; font-size: 13px; }
 
-.side-panel { background: #fff; border: 1px solid #EEF1F5; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,21,41,.05); overflow: hidden; margin-bottom: 16px; }
+.side-panel { background: #fff; border: none; border-bottom:1px solid #E7ECF3; border-radius:0; box-shadow:none; overflow: hidden; margin-bottom: 16px; }
+.emp-right > .side-panel:first-child { min-height:580px; }
 .sp-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; font-size: 15px; font-weight: 700; color: #1F2733; border-bottom: 1px solid #EEF1F5; }
 .sp-head.sm { font-size: 14px; padding: 12px 16px; }
 .sp-head i { cursor: pointer; color: #a8b0bd; }

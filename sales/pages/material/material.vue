@@ -1,7 +1,7 @@
 <template>
 	<sales-shell active="material" title="素材星球" subtitle="点选行业，发现适合客户的高表现案例">
 		<view slot="search" class="searchbar">
-			<text class="s-ico">🔍</text>
+			<text class="s-ico"></text>
 			<input v-model="keyword" class="s-input" placeholder="搜索行业、业态或关键词" @confirm="doSearch" />
 		</view>
 		<view slot="actions" class="total">全部 {{ total }} 条</view>
@@ -24,7 +24,7 @@
 						<text class="b-cnt" :style="{fontSize: cntSize(b.size)}">{{ b.materialCount }}</text>
 					</view>
 				</view>
-				<view class="hint">🖐 拖动画布浏览 · 双指缩放 · 点击气泡进入</view>
+				<view class="hint">拖动画布浏览 · 双指缩放 · 点击气泡进入</view>
 			</view>
 
 			<!-- 右详情 -->
@@ -38,7 +38,7 @@
 				<view class="dt-vids">
 					<view v-for="m in detailMaterials" :key="m.id" class="dv">
 						<image class="dv-img" :src="$img(m.cover)" mode="aspectFill"></image>
-						<view class="dv-play">▶</view>
+						<view class="dv-play"></view>
 					</view>
 					<view v-if="detailMaterials.length===0" class="dv-empty">暂无案例</view>
 				</view>
@@ -227,36 +227,37 @@ export default {
 	border-radius:20rpx;
 }
 .halo { position:absolute; z-index:1; border-radius:50%; pointer-events:none; }
-.cluster-label { position:absolute; z-index:3; font-size:28rpx; font-weight:800; }
+.cluster-label { position:absolute; z-index:3; font-size:28rpx; font-weight:700; letter-spacing:-.5rpx; }
 .bubble {
 	position:absolute;
 	border-radius:50%;
 	overflow:hidden;
-	border:3rpx solid #ccc;
+	border:3rpx solid rgba(255,255,255,.92);
 	display:flex;
 	align-items:flex-end;
 	justify-content:center;
-	box-shadow:0 6rpx 20rpx rgba(31,39,51,.16);
+	box-shadow:0 7rpx 22rpx rgba(31,39,51,.14);
 	z-index:2;
 }
-.bubble.on { box-shadow:0 0 0 5rpx rgba(47,107,255,.3), 0 8rpx 24rpx rgba(31,39,51,.2); z-index:4; }
+.bubble.on { box-shadow:0 0 0 5rpx rgba(47,107,255,.24), 0 10rpx 26rpx rgba(31,39,51,.18); z-index:4; }
 .b-img { position:absolute; width:100%; height:100%; top:0; left:0; }
 .b-mask { position:absolute; width:100%; height:100%; top:0; left:0; background:linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.58)); }
 .b-txt { position:relative; z-index:2; text-align:center; padding-bottom:12%; width:100%; }
 .b-name { color:#fff; font-weight:700; display:block; text-shadow:0 1px 3px rgba(0,0,0,.6); line-height:1.2; }
-.b-cnt { color:#fff; font-weight:800; display:block; line-height:1.2; text-shadow:0 1px 3px rgba(0,0,0,.6); }
+.b-cnt { color:#fff; font-weight:700; display:block; line-height:1.2; text-shadow:0 1px 3px rgba(0,0,0,.52); }
 .hint { position:absolute; left:0; right:0; bottom:14rpx; z-index:3; text-align:center; font-size:22rpx; color:$muted; }
 
 .detail { width:360rpx; flex-shrink:0; padding:24rpx; min-height:0; overflow-y:auto; }
 .dt-head { display:flex; justify-content:space-between; align-items:center; }
-.dt-name { font-size:32rpx; font-weight:800; }
+.dt-name { font-size:32rpx; font-weight:700; }
 .dt-close { font-size:40rpx; color:$muted; }
 .dt-cnt { font-size:24rpx; color:$ink-2; display:block; margin-top:8rpx; }
 .dt-hot { font-size:22rpx; color:#FF5A5F; display:block; margin:6rpx 0 16rpx; }
 .dt-vids { display:flex; flex-direction:column; gap:14rpx; }
-.dv { position:relative; width:100%; height:170rpx; border-radius:14rpx; overflow:hidden; background:#eee; }
+.dv { position:relative; width:100%; height:170rpx; border-radius:14rpx; overflow:hidden; background:#eee; box-shadow:0 4rpx 14rpx rgba(31,39,51,.06); }
 .dv-img { width:100%; height:100%; }
-.dv-play { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:56rpx; height:56rpx; border-radius:50%; background:rgba(255,255,255,.85); display:flex; align-items:center; justify-content:center; color:$brand; }
+.dv-play { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:56rpx; height:56rpx; border-radius:50%; background:rgba(255,255,255,.92); color:$brand; box-shadow:0 4rpx 14rpx rgba(31,39,51,.16); }
+.dv-play::after { content:""; position:absolute; left:22rpx; top:16rpx; border-left:16rpx solid currentColor; border-top:12rpx solid transparent; border-bottom:12rpx solid transparent; }
 .dv-empty { color:$muted; font-size:24rpx; padding:30rpx 0; text-align:center; }
 .dt-tags { display:flex; gap:12rpx; margin:18rpx 0; flex-wrap:wrap; }
 .dt-tag { padding:6rpx 18rpx; background:#F1F3F6; border-radius:999rpx; font-size:22rpx; color:$ink-2; }

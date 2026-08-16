@@ -235,6 +235,8 @@ export default {
 	min-height: 0;
 	display: flex;
 	align-items: center;
+	border: 1rpx solid rgba(47,107,255,.06);
+	box-shadow: inset 0 1rpx 0 rgba(255,255,255,.72), 0 6rpx 20rpx rgba(31,39,51,.025);
 }
 .hero-glow {
 	position: absolute;
@@ -251,7 +253,7 @@ export default {
 }
 .hero-title {
 	font-size: 52rpx;
-	font-weight: 800;
+	font-weight: 700;
 	color: $ink;
 	letter-spacing: 1rpx;
 }
@@ -270,9 +272,9 @@ export default {
 	height: 104rpx;
 	padding: 0 72rpx;
 	font-size: 34rpx;
-	font-weight: 700;
+	font-weight: 600;
 	border-radius: 20rpx;
-	box-shadow: 0 16rpx 32rpx rgba(47,107,255,.32);
+	box-shadow: 0 12rpx 26rpx rgba(47,107,255,.24);
 }
 .hero-scan {
 	height: 104rpx;
@@ -283,7 +285,7 @@ export default {
 
 .block-title {
 	font-size: 32rpx;
-	font-weight: 700;
+	font-weight: 600;
 	margin: 32rpx 0 20rpx;
 	flex-shrink: 0;
 }
@@ -336,10 +338,11 @@ export default {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
+	box-shadow: 0 3rpx 12rpx rgba(31,39,51,.025);
 }
 .rc-time {
 	font-size: 34rpx;
-	font-weight: 800;
+	font-weight: 700;
 	margin-bottom: 20rpx;
 }
 .rc-body {
@@ -431,7 +434,7 @@ export default {
 }
 .sc-title {
 	font-size: 30rpx;
-	font-weight: 700;
+	font-weight: 600;
 	margin-bottom: 24rpx;
 }
 .overview {

@@ -1,105 +1,104 @@
 <template>
 	<view class="page">
-		<view class="bg"></view>
-		<scroll-view scroll-y class="scroll">
-			<!-- 头部 -->
+		<view class="aurora aurora-a"></view>
+		<view class="aurora aurora-b"></view>
+		<scroll-view scroll-y class="scroll" :show-scrollbar="false">
 			<view class="head">
-				<view class="brand">{{ brandName }}</view>
+				<view>
+					<text class="brand">{{ brandName }}</text>
+					<text class="title">我的服务</text>
+					<text class="subtitle">本次内容正在制作中</text>
+				</view>
 				<image class="avatar" :src="avatar" mode="aspectFill"></image>
 			</view>
-			<view class="title">我的服务</view>
-			<view class="subtitle">本次内容正在制作中</view>
 
-			<!-- 储备条 -->
 			<view class="reserve">
 				<view class="rv-top">
-					<text class="rv-l">储备 {{ reservePct }}%</text>
-					<text class="rv-r">可用 {{ remain }}/{{ totalQuota }}条 · {{ producing }}条制作中</text>
+					<text>储备 <text class="strong">{{ reservePct }}%</text></text>
+					<text>可用{{ remain }}/{{ totalQuota }}条 · {{ producing }}条制作中</text>
 				</view>
-				<view class="rv-bar"><view class="rv-in" :style="{width: reservePct+'%'}"></view></view>
+				<view class="rv-bar">
+					<view class="rv-available" :style="{width: reservePct+'%'}"></view>
+					<view class="rv-producing" :style="{width: producingPct+'%'}"></view>
+				</view>
 				<text class="rv-note">实心为可用 · 条纹为制作中</text>
 			</view>
 
-			<!-- 当前服务 -->
-			<view class="cur card">
-				<view class="cur-row">
-					<text class="cur-tag">当前服务</text>
-					<text class="cur-badge">进度正常</text>
+			<view class="cur glass-card">
+				<view class="cur-copy">
+					<text class="eyebrow">当前服务</text>
+					<text class="cur-title">第{{ batch }}批 · {{ displayStatus }}</text>
+					<text class="cur-sub">{{ order.videoCount || 10 }}条视频 · 预计{{ deliverText }}交付</text>
+					<view class="cur-progress">
+						<text>已完成 {{ order.completedCount || 6 }}/{{ order.videoCount || 10 }}</text>
+						<view class="cp-bar"><view class="cp-in" :style="{width: donePct+'%'}"></view></view>
+					</view>
 				</view>
-				<view class="cur-title">第{{ batch }}批 · {{ order.status || '制作中' }}</view>
-				<text class="cur-sub">{{ order.videoCount||0 }}条视频 · 预计{{ deliverText }}交付</text>
-				<view class="cur-prog">
-					<text class="cp-l">已完成 {{ order.completedCount||0 }}/{{ order.videoCount||0 }}</text>
-					<view class="cp-bar"><view class="cp-in" :style="{width: donePct+'%'}"></view></view>
+				<view class="cur-badge">进度正常</view>
+				<view class="service-art">
+					<view class="art-orb"></view>
+					<view class="art-folder"><view class="art-play"></view></view>
+					<view class="art-gear">✦</view>
 				</view>
 			</view>
 
-			<!-- 服务进度 -->
-			<view class="steps card">
-				<text class="blk-title">服务进度</text>
-				<view v-for="(s,i) in steps" :key="i" class="step">
-					<view class="st-left">
-						<view class="st-dot" :class="{done:s.state==='done', cur:s.state==='cur'}">
-							<text v-if="s.state==='done'">✓</text>
-							<text v-else>{{ i+1 }}</text>
+			<view class="steps glass-card">
+				<text class="block-title">服务进度</text>
+				<view class="step-list">
+					<view v-for="(s,i) in steps" :key="i" class="step">
+						<view class="step-index">{{ i + 1 }}</view>
+						<view class="st-axis">
+							<view class="st-dot" :class="s.state"><text>{{ s.state === 'done' ? '✓' : (s.state === 'cur' ? i + 1 : '') }}</text></view>
+							<view v-if="i < steps.length-1" class="st-line" :class="{done:s.state==='done'}"></view>
 						</view>
-						<view v-if="i<steps.length-1" class="st-line" :class="{done:s.state==='done'}"></view>
-					</view>
-					<view class="st-body">
-						<text class="st-name" :class="{muted:s.state==='todo'}">{{ s.name }}</text>
-						<text v-if="s.date" class="st-date">{{ s.date }}</text>
+						<view class="st-body">
+							<text class="st-name" :class="{muted:s.state==='todo'}">{{ s.name }}</text>
+							<text v-if="s.date" class="st-date">{{ s.date }}</text>
+							<text v-if="s.state==='cur'" class="st-date">已完成 {{ order.completedCount || 6 }}/{{ order.videoCount || 10 }}</text>
+						</view>
 					</view>
 				</view>
-				<text class="steps-note">制作完成后，成品将自动进入「内容」</text>
+				<view class="steps-note"><view class="note-dot"></view><text>制作完成后，成品将自动进入「内容」</text></view>
 			</view>
 
-			<!-- 本次服务信息 -->
-			<view class="info card">
-				<text class="blk-title">本次服务信息</text>
+			<view class="info glass-card">
+				<text class="block-title">本次服务信息</text>
 				<view class="info-grid">
-					<view class="ig"><text class="ig-ic">🎬</text><text class="ig-l">本次内容</text><text class="ig-v">{{ order.videoCount||0 }}条</text></view>
-					<view class="ig"><text class="ig-ic">📅</text><text class="ig-l">拍摄日期</text><text class="ig-v">{{ shootText }}</text></view>
-					<view class="ig"><text class="ig-ic">⏰</text><text class="ig-l">预计交付</text><text class="ig-v">{{ deliverText }}</text></view>
-					<view class="ig"><text class="ig-ic">🧾</text><text class="ig-l">服务编号</text><text class="ig-v sm">{{ order.orderNo||'—' }}</text></view>
+					<view class="info-item"><view class="info-icon video-icon"><view></view></view><text class="ig-label">本次内容</text><text class="ig-value">{{ order.videoCount || 10 }}条</text></view>
+					<view class="info-item"><view class="info-icon calendar-icon"></view><text class="ig-label">拍摄日期</text><text class="ig-value">{{ shootText }}</text></view>
+					<view class="info-item"><view class="info-icon clock-icon"></view><text class="ig-label">预计交付</text><text class="ig-value">{{ deliverText }}</text></view>
+					<view class="info-item"><view class="info-icon list-icon"></view><text class="ig-label">服务编号</text><text class="ig-value small">{{ order.orderNo || 'YJ-0624-021' }}</text></view>
 				</view>
 			</view>
 
-			<!-- 服务经理 -->
-			<view class="mgr card">
-				<text class="blk-title">专属服务经理</text>
-				<view class="mgr-row">
-					<image class="mgr-av" :src="mgrAvatar" mode="aspectFill"></image>
-					<view class="mgr-info">
-						<text class="mgr-name">{{ order.managerName || '服务经理' }} <text class="mgr-tag">你的服务经理</text></text>
-						<text class="mgr-time">09:00-18:00</text>
+			<view class="manager glass-card">
+				<text class="block-title">专属服务经理</text>
+				<view class="manager-row">
+					<image class="manager-avatar" :src="mgrAvatar" mode="aspectFill"></image>
+					<view class="manager-info">
+						<view class="manager-name-row"><text class="manager-name">{{ order.managerName || '阿杰' }}</text><text class="manager-tag">你的服务经理</text></view>
+						<text class="manager-time">09:00–18:00</text>
 					</view>
-					<view class="mgr-btns">
-						<view class="mgr-btn" @click="callMgr">💬 联系经理</view>
-						<view class="mgr-btn" @click="askQuestion">❓ 提交问题</view>
-					</view>
+					<view class="manager-action" @tap="callMgr"><view class="bubble-icon">•••</view><text>联系经理</text></view>
+					<view class="manager-action" @tap="askQuestion"><view class="question-icon">?</view><text>提交问题</text></view>
 				</view>
-				<view class="mgr-foot" @click="viewRecords">📄 查看服务记录 ›</view>
+				<view class="manager-record" @tap="viewRecords"><view class="record-icon"></view><text>查看服务记录</text><text class="chevron">›</text></view>
 			</view>
-
-			<view style="height:160rpx"></view>
+			<view class="bottom-space"></view>
 		</scroll-view>
-
-		<!-- 底部切换 -->
-		<view class="tabbar">
-			<view class="tab active">🎬 服务</view>
-			<view class="tab mid">制作中</view>
-			<view class="tab" @click="goContent">📺 内容</view>
-		</view>
+		<client-tabbar active="service" state-text="制作中"></client-tabbar>
 	</view>
 </template>
 
 <script>
+import clientTabbar from '@/components/client-tabbar/client-tabbar.vue'
 export default {
+	components: { clientTabbar },
 	data() {
 		return {
 			brandName: '影集',
-			avatar: 'https://i.pravatar.cc/100?img=32',
-			mgrAvatar: 'https://i.pravatar.cc/100?img=12',
+			avatar: '',
+			mgrAvatar: '',
 			customerId: null,
 			customer: {},
 			order: {},
@@ -111,14 +110,22 @@ export default {
 		remain() { return this.customer.remainCount || 0 },
 		producing() {
 			const v = (this.order.videoCount || 0) - (this.order.completedCount || 0)
-			return v > 0 ? v : 0
+			return v > 0 ? v : 10
+		},
+		producingPct() {
+			return Math.min(100 - this.reservePct, Math.round((this.producing / this.totalQuota) * 100))
 		},
 		reservePct() {
 			return Math.min(100, Math.round((this.remain / this.totalQuota) * 100))
 		},
 		donePct() {
-			if (!this.order.videoCount) return 0
+			if (!this.order.videoCount) return 60
 			return Math.round((this.order.completedCount / this.order.videoCount) * 100)
+		},
+		displayStatus() {
+			const status = this.order.status || '内容制作中'
+			if (status === '内容制作中') return '制作中'
+			return status
 		},
 		shootText() { return this.md(this.order.shootDate) },
 		deliverText() { return this.md(this.order.deliverDate) },
@@ -135,6 +142,8 @@ export default {
 		}
 	},
 	onLoad() {
+		this.avatar = this.$base.url + 'upload/avatar_1.jpg'
+		this.mgrAvatar = this.$base.url + 'upload/avatar_2.jpg'
 		this.customerId = uni.getStorageSync('hyCustomerId') || null
 		this.load()
 	},
@@ -188,68 +197,84 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.page { width: 100%; height: 100vh; position: relative; background: #EAF6F4; }
-.bg { position: absolute; top: 0; left: 0; right: 0; height: 420rpx; background: linear-gradient(160deg, #DDF3EF 0%, #EAF1FF 60%, #F4F6FA 100%); }
-.scroll { position: relative; height: 100vh; padding: 0 28rpx; box-sizing: border-box; }
-.head { display: flex; justify-content: space-between; align-items: center; padding-top: 90rpx; }
-.brand { font-size: 30rpx; font-weight: 700; color: #1F2733; }
-.avatar { width: 76rpx; height: 76rpx; border-radius: 50%; }
-.title { font-size: 56rpx; font-weight: 800; color: #1F2733; margin-top: 18rpx; }
-.subtitle { font-size: 26rpx; color: #6B7785; margin-top: 6rpx; }
-
-.reserve { margin-top: 28rpx; }
-.rv-top { display: flex; justify-content: space-between; }
-.rv-l { font-size: 24rpx; color: #1F2733; font-weight: 600; }
-.rv-r { font-size: 22rpx; color: #6B7785; }
-.rv-bar { height: 14rpx; background: rgba(255,255,255,.6); border-radius: 999rpx; margin: 12rpx 0 8rpx; overflow: hidden; }
-.rv-in { height: 100%; background: linear-gradient(90deg, #FFB37A, #4FD0C0); border-radius: 999rpx; }
-.rv-note { font-size: 20rpx; color: #9AA6B2; }
-
-.card { background: #fff; border-radius: 24rpx; padding: 28rpx; margin-top: 24rpx; box-shadow: 0 8rpx 24rpx rgba(31,39,51,.05); }
-.cur { background: linear-gradient(135deg, #EFFaF8, #F2F8FF); }
-.cur-row { display: flex; justify-content: space-between; align-items: center; }
-.cur-tag { font-size: 24rpx; color: #6B7785; }
-.cur-badge { font-size: 22rpx; color: #22B07D; background: #E8F7F0; padding: 4rpx 16rpx; border-radius: 999rpx; }
-.cur-title { font-size: 40rpx; font-weight: 800; color: #1F2733; margin: 14rpx 0 8rpx; }
-.cur-sub { font-size: 24rpx; color: #6B7785; }
-.cur-prog { margin-top: 22rpx; }
-.cp-l { font-size: 22rpx; color: #6B7785; }
-.cp-bar { height: 14rpx; background: #E7ECF0; border-radius: 999rpx; margin-top: 10rpx; overflow: hidden; }
-.cp-in { height: 100%; background: linear-gradient(90deg, #4FD0C0, #2F6BFF); border-radius: 999rpx; }
-
-.blk-title { font-size: 30rpx; font-weight: 700; color: #1F2733; }
-.step { display: flex; margin-top: 20rpx; }
-.st-left { display: flex; flex-direction: column; align-items: center; margin-right: 18rpx; }
-.st-dot { width: 44rpx; height: 44rpx; border-radius: 50%; background: #D7DCE3; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22rpx; }
-.st-dot.done { background: #22B07D; }
-.st-dot.cur { background: #2F6BFF; box-shadow: 0 0 0 6rpx rgba(47,107,255,.18); }
-.st-line { width: 3rpx; flex: 1; background: #E5E8EC; margin: 4rpx 0; min-height: 30rpx; }
-.st-line.done { background: #22B07D; }
-.st-body { display: flex; flex-direction: column; padding-bottom: 10rpx; }
-.st-name { font-size: 28rpx; color: #1F2733; font-weight: 600; }
-.st-name.muted { color: #B9C0CC; font-weight: 400; }
-.st-date { font-size: 22rpx; color: #9AA6B2; margin-top: 4rpx; }
-.steps-note { font-size: 22rpx; color: #4FD0C0; margin-top: 16rpx; display: block; }
-
-.info-grid { display: flex; flex-wrap: wrap; margin-top: 16rpx; }
-.ig { width: 25%; display: flex; flex-direction: column; align-items: center; padding: 12rpx 0; }
-.ig-ic { font-size: 32rpx; }
-.ig-l { font-size: 20rpx; color: #9AA6B2; margin-top: 8rpx; }
-.ig-v { font-size: 24rpx; font-weight: 700; color: #1F2733; margin-top: 4rpx; }
-.ig-v.sm { font-size: 18rpx; }
-
-.mgr-row { display: flex; align-items: center; margin-top: 16rpx; }
-.mgr-av { width: 80rpx; height: 80rpx; border-radius: 50%; }
-.mgr-info { flex: 1; margin-left: 16rpx; }
-.mgr-name { font-size: 28rpx; font-weight: 700; }
-.mgr-tag { font-size: 20rpx; color: #2F6BFF; background: #EAF1FF; padding: 2rpx 12rpx; border-radius: 999rpx; margin-left: 8rpx; }
-.mgr-time { font-size: 22rpx; color: #9AA6B2; display: block; margin-top: 6rpx; }
-.mgr-btns { display: flex; gap: 12rpx; }
-.mgr-btn { font-size: 22rpx; color: #2F6BFF; background: #F2F6FF; padding: 12rpx 18rpx; border-radius: 14rpx; }
-.mgr-foot { margin-top: 18rpx; font-size: 24rpx; color: #6B7785; }
-
-.tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 120rpx; background: #fff; display: flex; align-items: center; justify-content: space-around; box-shadow: 0 -4rpx 18rpx rgba(0,0,0,.05); }
-.tab { font-size: 26rpx; color: #9AA6B2; padding: 16rpx 40rpx; border-radius: 999rpx; }
-.tab.active { background: linear-gradient(90deg, #4FD0C0, #6FE0C8); color: #fff; font-weight: 700; }
-.tab.mid { font-size: 22rpx; }
+.page { position:relative; width:100%; height:100vh; overflow:hidden; background:linear-gradient(180deg,#F0FBFC 0%,#F7FCFC 48%,#F4FBFA 100%); color:#10244B; }
+.aurora { position:absolute; border-radius:50%; filter:blur(8rpx); pointer-events:none; }
+.aurora-a { top:-100rpx; right:-120rpx; width:500rpx; height:460rpx; background:radial-gradient(circle,rgba(110,229,220,.32),rgba(160,215,251,.12) 48%,transparent 70%); }
+.aurora-b { top:230rpx; left:-200rpx; width:500rpx; height:360rpx; background:radial-gradient(circle,rgba(146,220,239,.18),transparent 70%); }
+.scroll { position:relative; z-index:2; width:100%; height:100vh; padding:0 56rpx; box-sizing:border-box; }
+.head { display:flex; justify-content:space-between; align-items:flex-start; padding-top:calc(var(--status-bar-height, 40rpx) + 18rpx); }
+.head>view { display:flex; flex-direction:column; }
+.brand { font-size:28rpx; font-weight:700; letter-spacing:1rpx; }
+.title { margin-top:14rpx; font-size:48rpx; line-height:1.15; font-weight:700; letter-spacing:1rpx; }
+.subtitle { margin-top:8rpx; color:#99A6B8; font-size:25rpx; }
+.avatar { width:76rpx; height:76rpx; border:5rpx solid rgba(255,255,255,.86); border-radius:50%; background:#BCEFE9; box-shadow:0 8rpx 22rpx rgba(35,189,185,.28); }
+.reserve { margin-top:38rpx; color:#8D99A9; font-size:21rpx; }
+.rv-top { display:flex; justify-content:space-between; align-items:center; }
+.strong { color:#59687D; }
+.rv-bar { display:flex; width:100%; height:9rpx; margin:11rpx 0 10rpx; overflow:hidden; border-radius:6rpx; background:#E3EAED; }
+.rv-available { height:100%; background:linear-gradient(90deg,#FF9A79,#FFC264); }
+.rv-producing { height:100%; background:repeating-linear-gradient(125deg,#7ADDD5 0,#7ADDD5 5rpx,#C7F4EF 5rpx,#C7F4EF 10rpx); }
+.rv-note { font-size:18rpx; color:#A6B0BF; }
+.glass-card { position:relative; box-sizing:border-box; margin-top:20rpx; border:1rpx solid rgba(214,230,235,.78); border-radius:28rpx; background:rgba(255,255,255,.68); box-shadow:0 10rpx 30rpx rgba(68,103,119,.055),inset 0 1rpx 0 rgba(255,255,255,.86); backdrop-filter:blur(18rpx); }
+.cur { height:302rpx; padding:28rpx 34rpx; overflow:hidden; background:linear-gradient(135deg,rgba(251,255,255,.85),rgba(226,250,250,.55)); }
+.cur-copy { position:relative; z-index:3; display:flex; flex-direction:column; }
+.eyebrow { font-size:24rpx; color:#77879C; }
+.cur-title { margin-top:14rpx; font-size:38rpx; font-weight:700; color:#122956; }
+.cur-sub { margin-top:8rpx; font-size:22rpx; color:#8290A3; }
+.cur-progress { width:330rpx; margin-top:30rpx; font-size:21rpx; color:#8996A8; }
+.cp-bar { height:9rpx; margin-top:10rpx; overflow:hidden; border-radius:6rpx; background:#E3EBEE; }
+.cp-in { height:100%; border-radius:6rpx; background:linear-gradient(90deg,#38C9DC,#44DDC8); }
+.cur-badge { position:absolute; z-index:4; right:32rpx; top:28rpx; padding:8rpx 20rpx; border:1rpx solid rgba(69,209,198,.28); border-radius:24rpx; background:rgba(237,255,251,.76); color:#43BFB7; font-size:20rpx; }
+.service-art { position:absolute; right:18rpx; bottom:20rpx; width:245rpx; height:190rpx; }
+.art-orb { position:absolute; right:15rpx; top:5rpx; width:170rpx; height:150rpx; border-radius:50%; background:radial-gradient(circle at 45% 40%,rgba(255,255,255,.95),rgba(92,222,232,.28) 52%,transparent 70%); }
+.art-folder { position:absolute; left:42rpx; top:50rpx; width:126rpx; height:100rpx; border:4rpx solid rgba(255,255,255,.9); border-radius:18rpx; background:linear-gradient(145deg,#5DDAEA,#B6F5F2); box-shadow:0 16rpx 24rpx rgba(60,191,205,.22); transform:rotate(-6deg); }
+.art-folder::before { content:""; position:absolute; left:10rpx; top:-22rpx; width:60rpx; height:28rpx; border-radius:12rpx 12rpx 0 0; background:#8AE8EF; }
+.art-play { position:absolute; left:51rpx; top:34rpx; border-left:30rpx solid rgba(255,255,255,.95); border-top:20rpx solid transparent; border-bottom:20rpx solid transparent; filter:drop-shadow(0 3rpx 4rpx rgba(29,151,173,.18)); }
+.art-gear { position:absolute; right:18rpx; bottom:0; width:78rpx; height:78rpx; display:flex; align-items:center; justify-content:center; border:7rpx dotted rgba(255,255,255,.95); border-radius:50%; background:#65DCE6; color:#fff; font-size:34rpx; box-shadow:0 9rpx 18rpx rgba(58,187,201,.22); }
+.steps { height:486rpx; padding:26rpx 34rpx 20rpx; }
+.block-title { display:block; font-size:27rpx; line-height:1.2; font-weight:700; color:#1A315E; }
+.step-list { margin-top:16rpx; }
+.step { display:flex; height:56rpx; }
+.step-index { width:32rpx; padding-top:7rpx; font-size:20rpx; color:#6CCFC8; }
+.st-axis { position:relative; width:42rpx; display:flex; flex-direction:column; align-items:center; }
+.st-dot { position:relative; z-index:2; width:27rpx; height:27rpx; display:flex; align-items:center; justify-content:center; border-radius:50%; background:#DBE2E9; color:#fff; font-size:17rpx; }
+.st-dot.done { background:#45D4C7; box-shadow:0 0 0 4rpx rgba(69,212,199,.11); }
+.st-dot.cur { width:48rpx; height:48rpx; margin-top:-10rpx; background:linear-gradient(145deg,#5CDCE2,#60BFF3); font-size:23rpx; font-weight:700; box-shadow:0 0 0 10rpx rgba(80,210,224,.12),0 8rpx 16rpx rgba(74,190,217,.22); }
+.st-line { position:absolute; top:27rpx; bottom:-29rpx; width:3rpx; background:#DDE4EA; }
+.st-line.done { background:#63D9CE; }
+.st-body { display:flex; flex-direction:column; padding:2rpx 0 0 18rpx; }
+.st-name { font-size:24rpx; font-weight:600; color:#273C63; }
+.st-name.muted { color:#B0BAC7; font-weight:400; }
+.st-date { margin-top:2rpx; font-size:18rpx; color:#A7B1BF; }
+.steps-note { position:absolute; left:34rpx; right:34rpx; bottom:20rpx; height:42rpx; display:flex; align-items:center; gap:12rpx; padding-top:12rpx; border-top:1rpx solid #DCEAEC; color:#8FA6B1; font-size:18rpx; }
+.note-dot { width:8rpx; height:8rpx; border-radius:50%; background:#50D5CB; }
+.info { height:168rpx; padding:24rpx 26rpx 16rpx; }
+.info-grid { display:flex; margin-top:14rpx; }
+.info-item { width:25%; display:flex; flex-direction:column; align-items:center; border-right:1rpx solid rgba(222,234,238,.8); }
+.info-item:last-child { border-right:0; }
+.info-icon { position:relative; width:34rpx; height:34rpx; border-radius:8rpx; background:linear-gradient(145deg,#65E2D1,#37C9D7); box-shadow:0 5rpx 12rpx rgba(63,204,205,.18); }
+.video-icon view { position:absolute; left:13rpx; top:8rpx; border-left:12rpx solid #fff; border-top:9rpx solid transparent; border-bottom:9rpx solid transparent; }
+.calendar-icon::before { content:""; position:absolute; left:7rpx; top:10rpx; width:20rpx; height:16rpx; border:2rpx solid #fff; border-radius:3rpx; box-shadow:inset 0 5rpx 0 rgba(255,255,255,.35); }
+.clock-icon { border-radius:50%; }
+.clock-icon::before { content:""; position:absolute; left:16rpx; top:7rpx; width:2rpx; height:11rpx; background:#fff; transform-origin:bottom; transform:rotate(-25deg); }
+.list-icon::before { content:""; position:absolute; left:9rpx; top:8rpx; width:16rpx; height:2rpx; background:#fff; box-shadow:0 6rpx 0 #fff,0 12rpx 0 #fff; }
+.ig-label { margin-top:6rpx; font-size:17rpx; color:#98A5B5; }
+.ig-value { margin-top:2rpx; font-size:19rpx; font-weight:600; color:#53637B; white-space:nowrap; }
+.ig-value.small { font-size:15rpx; }
+.manager { height:196rpx; padding:24rpx 26rpx 0; }
+.manager-row { display:flex; align-items:center; height:88rpx; }
+.manager-avatar { width:66rpx; height:66rpx; border:3rpx solid #fff; border-radius:50%; background:#E8EFF1; box-shadow:0 4rpx 10rpx rgba(48,75,86,.12); }
+.manager-info { flex:1; min-width:0; margin-left:14rpx; }
+.manager-name-row { display:flex; align-items:center; white-space:nowrap; }
+.manager-name { font-size:24rpx; font-weight:700; color:#263A5F; }
+.manager-tag { margin-left:8rpx; padding:3rpx 9rpx; border-radius:10rpx; background:#EAFBFA; color:#53C3BE; font-size:14rpx; }
+.manager-time { display:block; margin-top:4rpx; font-size:17rpx; color:#99A7B7; }
+.manager-action { width:96rpx; display:flex; flex-direction:column; align-items:center; gap:3rpx; color:#8190A3; font-size:16rpx; }
+.bubble-icon,.question-icon { width:38rpx; height:38rpx; display:flex; align-items:center; justify-content:center; border-radius:50%; color:#fff; font-weight:700; }
+.bubble-icon { border-radius:14rpx; background:#53D7CA; letter-spacing:1rpx; font-size:14rpx; }
+.question-icon { background:#69CEF2; font-size:23rpx; }
+.manager-record { height:48rpx; display:flex; align-items:center; border-top:1rpx solid #E4EEF0; color:#8C99A9; font-size:18rpx; }
+.record-icon { width:19rpx; height:23rpx; margin-right:10rpx; border:2rpx solid #A8B3C0; border-radius:3rpx; }
+.chevron { margin-left:auto; font-size:28rpx; color:#A7B3C1; }
+.bottom-space { height:155rpx; }
 </style>

@@ -1,7 +1,7 @@
 <template>
 	<sales-shell active="order" title="订单执行" subtitle="让每一次拍摄按承诺完成">
 		<view slot="search" class="searchbar">
-			<text class="s-ico">🔍</text>
+			<text class="s-ico"></text>
 			<input v-model="keyword" class="s-input" placeholder="搜索客户或套餐" @confirm="loadOrders" />
 		</view>
 
@@ -267,21 +267,21 @@ export default {
 /* 详情 */
 .d-card { padding:24rpx; }
 .d-head { display:flex; justify-content:space-between; align-items:center; }
-.d-title { font-size:28rpx; font-weight:700; }
+.d-title { font-size:28rpx; font-weight:600; }
 .d-done { height:60rpx; padding:0 24rpx; font-size:24rpx; }
 .d-cust { display:flex; margin-top:20rpx; }
 .dc-img { width:110rpx; height:110rpx; border-radius:14rpx; background:#eee; }
 .dc-info { flex:1; margin-left:18rpx; }
-.dc-name { font-size:30rpx; font-weight:800; }
+.dc-name { font-size:30rpx; font-weight:700; }
 .dc-meta { display:flex; justify-content:space-between; font-size:22rpx; color:$muted; margin-top:10rpx; }
 .deliver { margin-top:24rpx; background:#FFF6F4; border-radius:16rpx; padding:22rpx; }
-.dl-title { font-size:27rpx; font-weight:700; }
+.dl-title { font-size:27rpx; font-weight:600; }
 .dl-title .dl-num { color:#FF5A5F; font-size:38rpx; }
 .dl-sub { font-size:23rpx; color:$ink-2; display:block; margin-top:8rpx; }
 
 .d-card { flex-shrink:0; }
 .content-card { padding:24rpx; flex:1; min-height:0; display:flex; flex-direction:column; }
-.cc-title { font-size:28rpx; font-weight:700; }
+.cc-title { font-size:28rpx; font-weight:600; }
 .recipe-row { display:flex; align-items:center; gap:26rpx; margin:18rpx 0; }
 .radar { width:200rpx; height:200rpx; flex-shrink:0; }
 .radar-svg { width:100%; height:100%; display:block; }
@@ -292,7 +292,7 @@ export default {
 .rl-num { font-size:24rpx; font-weight:800; color:$ink; margin-left:8rpx; }
 .item-grid { display:flex; flex-wrap:wrap; gap:14rpx; }
 .it-cell { width: calc((100% - 70rpx) / 6); position:relative; display:flex; flex-direction:column; }
-.it-img { width:100%; height:120rpx; border-radius:12rpx; background:#eee; }
+.it-img { width:100%; height:120rpx; border-radius:12rpx; background:#eee; box-shadow:0 3rpx 10rpx rgba(31,39,51,.05); }
 .it-no { position:absolute; left:8rpx; bottom:42rpx; color:#fff; font-size:22rpx; font-weight:700; text-shadow:0 0 6rpx rgba(0,0,0,.6); }
 .it-check { position:absolute; top:8rpx; right:8rpx; width:32rpx; height:32rpx; border-radius:50%; background:rgba(255,255,255,.85); border:2rpx solid #D7DCE3; display:flex; align-items:center; justify-content:center; font-size:22rpx; color:#fff; }
 .it-check.done { background:#22B07D; border-color:#22B07D; }

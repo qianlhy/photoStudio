@@ -1,4 +1,6 @@
 {
   "navigationStyle": "custom",
-  "usingComponents": {}
+  "usingComponents": {
+    "client-tabbar": "/components/client-tabbar/client-tabbar"
+  }
 }

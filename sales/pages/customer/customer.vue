@@ -1,7 +1,7 @@
 <template>
 	<sales-shell active="customer" title="客户经营" subtitle="管理客户的内容生命周期">
 		<view slot="search" class="searchbar">
-			<text class="s-ico">🔍</text>
+			<text class="s-ico"></text>
 			<input v-model="keyword" class="s-input" placeholder="搜索客户、行业或门店" @confirm="loadCustomers" />
 		</view>
 		<view slot="actions" class="btn btn-danger new-btn" @click="newCustomer">＋ 新建客户</view>
@@ -347,7 +347,7 @@ export default {
 .col-center { flex: 1.4; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 20rpx; overflow-y: auto; }
 .col-side { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 20rpx; overflow-y: auto; }
 
-.cl-title, .sc-title { font-size: 28rpx; font-weight: 700; margin-bottom: 16rpx; flex-shrink: 0; }
+.cl-title, .sc-title { font-size: 28rpx; font-weight: 600; margin-bottom: 16rpx; flex-shrink: 0; }
 .cl-scroll { flex: 1; min-height: 0; }
 .cl-card {
 	display: flex;
@@ -358,7 +358,7 @@ export default {
 	padding: 18rpx;
 	margin-bottom: 16rpx;
 }
-.cl-card.on { border-color: $brand; box-shadow: 0 8rpx 22rpx rgba(47,107,255,.12); }
+.cl-card.on { border-color: rgba(47,107,255,.55); background:#FBFDFF; box-shadow: 0 8rpx 22rpx rgba(47,107,255,.10); }
 .cl-img { width: 110rpx; height: 110rpx; border-radius: 14rpx; background: #eee; flex-shrink:0; }
 .cl-body { flex: 1; margin-left: 16rpx; min-width: 0; }
 .cl-name { font-size: 27rpx; font-weight: 700; }
@@ -377,9 +377,9 @@ export default {
 .profile { overflow: hidden; }
 .pf-cover { width: 100%; height: 180rpx; }
 .pf-head { display:flex; align-items:center; padding: 0 24rpx; margin-top:-40rpx; }
-.pf-avatar { width: 96rpx; height: 96rpx; border-radius: 50%; border: 4rpx solid #fff; background:#eee; }
+.pf-avatar { width: 96rpx; height: 96rpx; border-radius: 50%; border: 4rpx solid #fff; background:#eee; box-shadow:0 4rpx 12rpx rgba(31,39,51,.12); }
 .pf-name-block { flex:1; margin-left: 18rpx; }
-.pf-name { font-size: 32rpx; font-weight: 800; }
+.pf-name { font-size: 32rpx; font-weight: 700; }
 .pf-tags { margin-top: 8rpx; }
 .chip-mini { display:inline-block; padding:4rpx 14rpx; background:#F1F3F6; color:$ink-2; border-radius:999rpx; font-size:20rpx; margin-right:10rpx; }
 .chip-mini.blue { background:#EAF1FF; color:#2F6BFF; }
@@ -391,7 +391,7 @@ export default {
 /* 完成度 */
 .progress-card { padding: 24rpx; }
 .pc-head { display:flex; justify-content:space-between; align-items:center; margin-bottom: 24rpx; }
-.pc-title { font-size: 27rpx; font-weight: 700; }
+.pc-title { font-size: 27rpx; font-weight: 600; }
 .pc-pct { font-size: 40rpx; font-weight: 800; color: #22B07D; }
 .steps { display:flex; align-items:center; }
 .step { display:flex; flex-direction:column; align-items:center; }

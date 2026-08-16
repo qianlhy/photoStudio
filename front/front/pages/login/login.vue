@@ -182,12 +182,13 @@
 					uni.navigateTo({
 						url: '../preference/preference',
 						fail: () => {
-							this.$utils.tab('../index/index')
+							uni.reLaunch({ url: '../hy-service/service' });
 						}
 					})
 					return
 				}
-				this.$utils.tab('../index/index')
+				// 新版客户小程序正式入口是服务模块，旧商城首页保留为兼容页面
+				uni.reLaunch({ url: '../hy-service/service' });
 			}
 		}
 	}

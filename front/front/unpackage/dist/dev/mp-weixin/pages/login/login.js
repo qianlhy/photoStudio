@@ -470,12 +470,17 @@ var _default = {
                 uni.navigateTo({
                   url: '../preference/preference',
                   fail: function fail() {
-                    _this5.$utils.tab('../index/index');
+                    uni.reLaunch({
+                      url: '../hy-service/service'
+                    });
                   }
                 });
                 return _context5.abrupt("return");
               case 16:
-                _this5.$utils.tab('../index/index');
+                // 新版客户小程序正式入口是服务模块，旧商城首页保留为兼容页面
+                uni.reLaunch({
+                  url: '../hy-service/service'
+                });
               case 17:
               case "end":
                 return _context5.stop();

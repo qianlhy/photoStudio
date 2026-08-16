@@ -290,7 +290,7 @@ export default {
 <style lang="scss" scoped>
 .cm-body { display: flex; gap: 16px; align-items: flex-start; }
 .cm-left { flex: 1; min-width: 0; }
-.cm-right { width: 300px; flex-shrink: 0; }
+.cm-right { width: 270px; flex-shrink: 0; }
 
 .stat-row { margin: 0 0 16px; }
 .stat { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #EEF1F5; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,21,41,.05); }
@@ -309,14 +309,14 @@ export default {
 .cm-actions { display: flex; gap: 10px; margin-bottom: 14px; }
 .cm-actions .el-button { flex: 1; }
 
-.side-panel { background: #fff; border: 1px solid #EEF1F5; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,21,41,.05); overflow: hidden; }
+.side-panel { min-height: calc(100vh - 228px); display:flex; flex-direction:column; background: #fff; border: 1px solid #E7ECF3; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,21,41,.04); overflow: hidden; }
 .sp-head { padding: 14px 18px; font-size: 15px; font-weight: 700; color: #1F2733; border-bottom: 1px solid #EEF1F5; }
-.sp-body { padding: 16px 18px; }
+.sp-body { padding: 16px 18px; flex:1; display:flex; flex-direction:column; }
 .sp-field { margin-bottom: 16px; }
 .sp-label { font-size: 13px; color: #8A94A6; margin-bottom: 8px; }
 .sp-cust { font-size: 15px; font-weight: 700; color: #1F2733; }
 .sp-mgr { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #1F2733; }
-.sp-foot { display: flex; gap: 10px; margin-top: 20px; }
+.sp-foot { display: flex; gap: 10px; margin-top: auto; padding-top:20px; }
 .sp-foot .el-button { flex: 1; }
 .sp-empty { padding: 50px 24px; text-align: center; color: #a8b0bd; }
 .sp-empty i { font-size: 40px; margin-bottom: 12px; }

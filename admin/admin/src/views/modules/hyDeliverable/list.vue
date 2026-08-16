@@ -226,6 +226,7 @@ export default {
 </script>
 
 <style scoped>
+.main-content { padding-right: 316px; }
 .small { font-size: 12px; color: #8A94A6; }
 .dl-tabs { display: flex; gap: 28px; padding: 0 4px 12px; border-bottom: 1px solid #EBEEF5; margin-bottom: 14px; }
 .dt { position: relative; font-size: 15px; color: #5a6473; cursor: pointer; padding-bottom: 12px; margin-bottom: -13px; }
@@ -236,7 +237,7 @@ export default {
 
 .dl-body { display: flex; gap: 16px; align-items: flex-start; }
 .dl-left { flex: 1; min-width: 0; }
-.dl-right { width: 320px; flex-shrink: 0; }
+.dl-right { position:fixed; top:60px; right:0; bottom:0; z-index:30; width:300px; background:#fff; border-left:1px solid #E7ECF3; }
 
 .dl-work { display: flex; align-items: center; gap: 10px; }
 .dl-thumb { position: relative; width: 54px; height: 40px; border-radius: 6px; overflow: hidden; background: #1F2733; flex-shrink: 0; }
@@ -245,10 +246,10 @@ export default {
 .dl-dur { position: absolute; right: 3px; bottom: 2px; background: rgba(0,0,0,.65); color: #fff; font-size: 10px; padding: 0 3px; border-radius: 3px; }
 .dl-wt { font-weight: 500; color: #1F2733; }
 
-.side-panel { background: #fff; border: 1px solid #EEF1F5; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,21,41,.05); overflow: hidden; }
+.side-panel { height:100%; box-sizing:border-box; display:flex; flex-direction:column; background:#fff; border:none; border-radius:0; box-shadow:none; overflow:hidden; }
 .sp-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; font-size: 15px; font-weight: 700; color: #1F2733; border-bottom: 1px solid #EEF1F5; }
 .sp-head i { cursor: pointer; color: #a8b0bd; }
-.sp-body { padding: 16px 18px; }
+.sp-body { padding: 16px 18px; flex:1; overflow:auto; }
 .sp-label { font-size: 13px; color: #8A94A6; }
 .dw-head { display: flex; gap: 12px; margin-bottom: 8px; }
 .dw-title { font-size: 15px; font-weight: 700; color: #1F2733; margin-bottom: 4px; }

@@ -1,7 +1,7 @@
 <template>
 	<sales-shell active="material" title="行业素材库" subtitle="按行业快速找到适合客户的案例">
 		<view slot="search" class="searchbar">
-			<text class="s-ico">⌕</text>
+			<text class="s-ico"></text>
 			<input v-model="keyword" class="s-input" placeholder="搜索行业、业态或关键词" @confirm="search" />
 		</view>
 		<view slot="actions" class="total">全部 {{ total }} 条 ›</view>
@@ -36,7 +36,7 @@
 							<text class="category-count">{{ c.materialCount || materialCount(c.name) }}</text>
 						</view>
 						<text v-if="i===0" class="hot">热门</text>
-						<view v-if="i===0" class="play">▷</view>
+						<view v-if="i===0" class="play"></view>
 					</view>
 				</view>
 
@@ -49,7 +49,7 @@
 					<view class="featured-list">
 						<view v-for="m in featured" :key="m.id" class="featured-item">
 							<image class="featured-img" :src="$img(m.cover)" mode="aspectFill"></image>
-							<view class="featured-play">▷</view>
+							<view class="featured-play"></view>
 							<text class="featured-duration">{{ dur(m.duration) }}</text>
 						</view>
 					</view>
@@ -186,30 +186,32 @@ export default {
 .total { font-size:24rpx; color:$ink-2; }
 .library { flex:1; min-height:0; display:flex; flex-direction:column; gap:18rpx; }
 .industry-row { height:300rpx; display:flex; gap:18rpx; flex-shrink:0; }
-.industry-card { position:relative; overflow:hidden; border-radius:18rpx; border:1rpx solid $line; }
+.industry-card { position:relative; overflow:hidden; border-radius:18rpx; border:1rpx solid $line; box-shadow:0 4rpx 14rpx rgba(31,39,51,.035); }
+.industry-card.on { border-color:rgba(47,107,255,.5); box-shadow:0 0 0 3rpx rgba(47,107,255,.08),0 6rpx 18rpx rgba(31,39,51,.055); }
 .industry-card.g0 { flex:668; }
 .industry-card.g1 { flex:311; }
 .industry-card.g2 { flex:238; }
 .industry-bg,.category-bg { position:absolute; inset:0; width:100%; height:100%; }
 .industry-mask { position:absolute; inset:0; background:linear-gradient(90deg,rgba(255,255,255,.94),rgba(255,255,255,.15)); }
 .industry-copy { position:absolute; left:30rpx; top:28rpx; z-index:2; display:flex; flex-direction:column; }
-.industry-name { font-size:42rpx; font-weight:800; color:$ink; }
+.industry-name { font-size:42rpx; font-weight:700; color:$ink; letter-spacing:-1rpx; }
 .industry-count { font-size:27rpx; color:$brand; margin-left:14rpx; }
 .industry-subs { margin-top:12rpx; font-size:24rpx; color:$ink-2; }
 .industry-check { position:absolute; right:18rpx; top:16rpx; z-index:3; width:38rpx; height:38rpx; border-radius:50%; background:#fff; color:$brand; display:flex; align-items:center; justify-content:center; }
 .category-head { display:flex; align-items:center; height:48rpx; flex-shrink:0; }
-.category-title { font-size:30rpx; font-weight:800; }
+.category-title { font-size:30rpx; font-weight:700; }
 .category-path { margin-left:28rpx; font-size:22rpx; color:$muted; }
 .category-area { flex:1; min-height:0; display:flex; gap:18rpx; }
 /* 14 列可同时整除上排 2 张(各 4 列)与下排 4 张(各 2 列)，大卡占 6 列两行 */
 .category-grid { flex:825; min-width:0; display:grid; grid-template-columns:repeat(14,1fr); grid-template-rows:1fr 1fr; gap:12rpx; }
 .category-card { position:relative; overflow:hidden; border-radius:14rpx; border:1rpx solid $line; }
+.category-card.on { border-color:rgba(47,107,255,.45); box-shadow:inset 0 0 0 2rpx rgba(47,107,255,.08); }
 .category-card.c0 { grid-column:span 6; grid-row:span 2; }
 .category-card.c1,.category-card.c2 { grid-column:span 4; }
 .category-card.c3,.category-card.c4,.category-card.c5,.category-card.c6 { grid-column:span 2; }
 .category-mask { position:absolute; inset:0; background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(255,255,255,.05) 58%); }
 .category-copy { position:absolute; left:18rpx; top:16rpx; z-index:2; display:flex; flex-direction:column; }
-.category-name { font-size:28rpx; font-weight:800; color:$ink; }
+.category-name { font-size:28rpx; font-weight:700; color:$ink; }
 .category-count { font-size:22rpx; color:$ink-2; }
 .category-card.c0 .category-name { font-size:32rpx; }
 .category-card.c3,.category-card.c4,.category-card.c5,.category-card.c6 {
@@ -218,23 +220,26 @@ export default {
 	.category-count { font-size:20rpx; }
 }
 .hot { position:absolute; right:12rpx; top:12rpx; z-index:3; padding:4rpx 12rpx; border-radius:999rpx; background:#FF7A59; color:#fff; font-size:18rpx; }
-.play,.featured-play { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:54rpx; height:54rpx; border:2rpx solid #fff; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; z-index:3; }
+.play,.featured-play { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:54rpx; height:54rpx; border:2rpx solid rgba(255,255,255,.9); border-radius:50%; background:rgba(20,28,40,.18); box-shadow:0 3rpx 12rpx rgba(0,0,0,.16); z-index:3; }
+.play::after,.featured-play::after { content:""; position:absolute; left:21rpx; top:15rpx; border-left:16rpx solid #fff; border-top:11rpx solid transparent; border-bottom:11rpx solid transparent; }
 .featured { flex:467; min-width:0; padding:22rpx; display:flex; flex-direction:column; }
 .featured-head { display:flex; align-items:center; }
-.featured-title { font-size:28rpx; font-weight:800; white-space:nowrap; }
+.featured-title { font-size:28rpx; font-weight:700; white-space:nowrap; }
 .featured-sub { font-size:22rpx; color:$ink-2; margin-left:8rpx; white-space:nowrap; }
 .featured-close { margin-left:auto; font-size:32rpx; color:$muted; }
 .featured-list { flex:1; min-height:0; display:flex; gap:12rpx; margin:16rpx 0; }
-.featured-item { flex:1; position:relative; overflow:hidden; border-radius:12rpx; }
+.featured-item { flex:1; position:relative; overflow:hidden; border-radius:12rpx; background:#EEF1F5; }
+.featured-item::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg,transparent 55%,rgba(16,24,36,.34)); pointer-events:none; }
 .featured-img { width:100%; height:100%; }
 .featured-duration { position:absolute; right:8rpx; bottom:6rpx; color:#fff; font-size:18rpx; }
 .featured-btn { height:70rpx; font-size:24rpx; flex-shrink:0; }
 .recent { height:100rpx; flex-shrink:0; padding:14rpx 24rpx; display:flex; align-items:center; gap:18rpx; }
-.recent-title { width:120rpx; font-size:28rpx; font-weight:800; }
-.recent-item { flex:1; height:100%; position:relative; overflow:hidden; border-radius:12rpx; }
+.recent-title { width:120rpx; font-size:28rpx; font-weight:700; }
+.recent-item { flex:1; height:100%; position:relative; overflow:hidden; border-radius:12rpx; background:#EEF1F5; }
+.recent-item::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,rgba(16,24,36,.18),rgba(16,24,36,.04)); pointer-events:none; }
 .recent-img { width:100%; height:100%; }
-.recent-name { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:#fff; font-size:24rpx; font-weight:700; white-space:nowrap; text-shadow:0 2rpx 8rpx rgba(0,0,0,.65); }
-.recent-clock { position:absolute; right:10rpx; top:8rpx; color:#fff; }
+.recent-name { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:#fff; font-size:24rpx; font-weight:600; white-space:nowrap; text-shadow:0 2rpx 8rpx rgba(0,0,0,.5); z-index:2; }
+.recent-clock { position:absolute; right:10rpx; top:8rpx; color:#fff; z-index:2; }
 
 @media (min-width:900px) and (orientation:landscape) {
 	.searchbar { width:25vw; height:5.2vh; padding:0 1.2vw; }

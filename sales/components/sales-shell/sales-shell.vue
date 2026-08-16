@@ -17,7 +17,7 @@
 			<view class="right">
 				<slot name="actions"></slot>
 				<text class="date" v-if="align==='center'">{{ dateText }}</text>
-				<view class="bell"><text>🔔</text><view class="dot"></view></view>
+				<view class="bell" aria-label="消息通知"><view class="bell-shape"></view><view class="dot"></view></view>
 				<image class="avatar" :src="avatar" mode="aspectFill"></image>
 			</view>
 		</view>
@@ -26,7 +26,7 @@
 			<view class="nav">
 				<view v-for="item in navs" :key="item.key" class="nav-item" :class="{active: item.key===active}"
 					@click="go(item)">
-					<view class="nav-icon">{{ item.icon }}</view>
+					<view class="nav-icon" :class="'icon-' + item.key"><view class="icon-core"></view></view>
 					<text class="nav-label">{{ item.label }}</text>
 				</view>
 			</view>
@@ -51,11 +51,11 @@ export default {
 			brandName: '合意传媒',
 			avatar: 'https://i.pravatar.cc/100?img=47',
 			navs: [
-				{ key: 'workbench', label: '工作台', icon: '🧩', url: '/pages/workbench/workbench' },
-				{ key: 'customer', label: '客户', icon: '👥', url: '/pages/customer/customer' },
-				{ key: 'order', label: '订单', icon: '🧾', url: '/pages/order/order' },
-				{ key: 'material', label: '素材库', icon: '🎬', url: '/pages/material/material' },
-				{ key: 'message', label: '消息', icon: '💬', url: '/pages/message/message' }
+				{ key: 'workbench', label: '工作台', url: '/pages/workbench/workbench' },
+				{ key: 'customer', label: '客户', url: '/pages/customer/customer' },
+				{ key: 'order', label: '订单', url: '/pages/order/order' },
+				{ key: 'material', label: '素材库', url: '/pages/material/material' },
+				{ key: 'message', label: '消息', url: '/pages/message/message' }
 			]
 		}
 	},
@@ -97,10 +97,11 @@ export default {
 	align-items: center;
 	padding: 0 40rpx;
 	flex-shrink: 0;
+	box-shadow: 0 1rpx 0 rgba(31, 39, 51, .025);
 }
 .brand {
 	font-size: 34rpx;
-	font-weight: 800;
+	font-weight: 700;
 	color: $ink;
 	letter-spacing: 2rpx;
 }
@@ -128,7 +129,7 @@ export default {
 }
 .page-title .pt-title {
 	font-size: 36rpx;
-	font-weight: 800;
+	font-weight: 700;
 	color: $ink;
 }
 .page-title .pt-sub {
@@ -153,7 +154,41 @@ export default {
 }
 .bell {
 	position: relative;
-	font-size: 30rpx;
+	width: 42rpx;
+	height: 42rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #667085;
+}
+.bell-shape {
+	position: relative;
+	width: 19rpx;
+	height: 22rpx;
+	border: 3rpx solid currentColor;
+	border-top-left-radius: 12rpx;
+	border-top-right-radius: 12rpx;
+	border-bottom: 0;
+}
+.bell-shape::before {
+	content: "";
+	position: absolute;
+	left: -6rpx;
+	bottom: -5rpx;
+	width: 25rpx;
+	height: 3rpx;
+	border-radius: 3rpx;
+	background: currentColor;
+}
+.bell-shape::after {
+	content: "";
+	position: absolute;
+	left: 6rpx;
+	bottom: -10rpx;
+	width: 7rpx;
+	height: 7rpx;
+	border-radius: 50%;
+	background: currentColor;
 }
 .bell .dot {
 	position: absolute;
@@ -169,6 +204,8 @@ export default {
 	height: 56rpx;
 	border-radius: 50%;
 	background: #eee;
+	border: 2rpx solid #fff;
+	box-shadow: 0 3rpx 12rpx rgba(31, 39, 51, .12);
 }
 
 .body {
@@ -183,7 +220,8 @@ export default {
 	padding: 24rpx 14rpx;
 	background: #fff;
 	border-radius: 28rpx;
-	box-shadow: 0 4rpx 18rpx rgba(31, 39, 51, .05);
+	border: 1rpx solid rgba(31, 39, 51, .035);
+	box-shadow: 0 6rpx 24rpx rgba(31, 39, 51, .055);
 	display: flex;
 	flex-direction: column;
 	gap: 18rpx;
@@ -196,12 +234,73 @@ export default {
 	padding: 22rpx 0;
 	border-radius: 24rpx;
 	color: $muted;
+	transition: background-color .18s ease, color .18s ease, transform .18s ease;
 }
 .nav-item .nav-icon {
-	font-size: 40rpx;
-	line-height: 1;
-	/* 彩色 emoji 统一压成单色，未选中灰、选中白，贴近设计稿的极简图标 */
-	filter: grayscale(1) opacity(.42);
+	position: relative;
+	width: 40rpx;
+	height: 40rpx;
+	color: #98A2B3;
+}
+.nav-icon .icon-core,
+.nav-icon::before,
+.nav-icon::after,
+.nav-icon .icon-core::before,
+.nav-icon .icon-core::after {
+	position: absolute;
+	box-sizing: border-box;
+	content: "";
+}
+.nav-icon .icon-core {
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+}
+.icon-workbench::before, .icon-workbench::after,
+.icon-workbench .icon-core::before, .icon-workbench .icon-core::after {
+	width: 15rpx;
+	height: 15rpx;
+	border: 3rpx solid currentColor;
+	border-radius: 4rpx;
+}
+.icon-workbench::before { left: 2rpx; top: 2rpx; }
+.icon-workbench::after { right: 2rpx; top: 2rpx; }
+.icon-workbench .icon-core::before { left: 2rpx; bottom: 2rpx; }
+.icon-workbench .icon-core::after { right: 2rpx; bottom: 2rpx; }
+.icon-customer::before {
+	left: 14rpx; top: 2rpx; width: 14rpx; height: 14rpx;
+	border: 3rpx solid currentColor; border-radius: 50%;
+}
+.icon-customer::after {
+	left: 8rpx; bottom: 2rpx; width: 26rpx; height: 17rpx;
+	border: 3rpx solid currentColor; border-radius: 16rpx 16rpx 6rpx 6rpx;
+}
+.icon-order::before {
+	left: 7rpx; top: 1rpx; width: 27rpx; height: 36rpx;
+	border: 3rpx solid currentColor; border-radius: 4rpx;
+}
+.icon-order::after {
+	left: 14rpx; top: 11rpx; width: 14rpx; height: 3rpx;
+	background: currentColor; box-shadow: 0 8rpx 0 currentColor, 0 16rpx 0 currentColor;
+}
+.icon-material::before {
+	left: 3rpx; top: 6rpx; width: 34rpx; height: 28rpx;
+	border: 3rpx solid currentColor; border-radius: 5rpx;
+}
+.icon-material::after {
+	left: 16rpx; top: 14rpx;
+	border-left: 10rpx solid currentColor;
+	border-top: 6rpx solid transparent;
+	border-bottom: 6rpx solid transparent;
+}
+.icon-message::before {
+	left: 3rpx; top: 5rpx; width: 34rpx; height: 27rpx;
+	border: 3rpx solid currentColor; border-radius: 8rpx;
+}
+.icon-message::after {
+	left: 10rpx; bottom: 2rpx; width: 10rpx; height: 10rpx;
+	border-left: 3rpx solid currentColor; transform: skewY(-35deg);
 }
 .nav-item .nav-label {
 	font-size: 22rpx;
@@ -210,10 +309,10 @@ export default {
 .nav-item.active {
 	background: $brand;
 	color: #fff;
-	box-shadow: 0 8rpx 20rpx rgba(47, 107, 255, .28);
+	box-shadow: 0 10rpx 24rpx rgba(47, 107, 255, .24);
 }
 .nav-item.active .nav-icon {
-	filter: brightness(0) invert(1);
+	color: #fff;
 }
 .nav-item.active .nav-label {
 	color: #fff;
@@ -257,7 +356,8 @@ export default {
 		font-size: clamp(12px, .95vw, 15px);
 	}
 	.bell {
-		font-size: clamp(18px, 1.55vw, 25px);
+		width: clamp(26px, 2.2vw, 34px);
+		height: clamp(26px, 2.2vw, 34px);
 	}
 	.avatar {
 		width: clamp(34px, 3vw, 46px);
@@ -276,7 +376,7 @@ export default {
 		border-radius: 14px;
 	}
 	.nav-item .nav-icon {
-		font-size: clamp(22px, 2.25vw, 34px);
+		transform: scale(.88);
 	}
 	.nav-item .nav-label {
 		font-size: clamp(12px, .95vw, 15px);

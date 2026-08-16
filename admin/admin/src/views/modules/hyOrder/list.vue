@@ -205,6 +205,7 @@ export default {
 </script>
 
 <style scoped>
+.main-content { padding-right: 284px; }
 .small { font-size: 12px; color: #8A94A6; }
 .red { color: #FF5A5F; font-weight: 600; }
 .green { color: #22B07D; }
@@ -218,12 +219,12 @@ export default {
 
 .ord-body { display: flex; gap: 16px; align-items: flex-start; }
 .ord-left { flex: 1; min-width: 0; }
-.ord-right { width: 300px; flex-shrink: 0; }
+.ord-right { position:fixed; top:60px; right:0; bottom:0; z-index:30; width:268px; background:#fff; border-left:1px solid #E7ECF3; }
 
-.side-panel { background: #fff; border: 1px solid #EEF1F5; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,21,41,.05); overflow: hidden; }
+.side-panel { height:100%; box-sizing:border-box; display:flex; flex-direction:column; background: #fff; border: none; border-radius: 0; box-shadow:none; overflow: hidden; }
 .sp-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; font-size: 15px; font-weight: 700; color: #1F2733; border-bottom: 1px solid #EEF1F5; }
 .sp-head i { cursor: pointer; color: #a8b0bd; }
-.sp-body { padding: 8px 18px 16px; }
+.sp-body { padding: 8px 18px 16px; flex:1; overflow:auto; }
 .d-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px dashed #F0F2F5; font-size: 13px; }
 .d-l { color: #8A94A6; }
 .d-v { color: #1F2733; font-weight: 500; display: flex; align-items: center; gap: 6px; }

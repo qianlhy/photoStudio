@@ -362,7 +362,7 @@ export default {
 .mt-filter { padding: 12px 14px; }
 
 .mt-body { display: flex; gap: 14px; align-items: flex-start; }
-.mt-tree { width: 190px; flex-shrink: 0; background: #fff; border: 1px solid #EEF1F5; border-radius: 12px; padding: 12px; box-shadow: 0 1px 4px rgba(0,21,41,.05); }
+.mt-tree { width: 160px; flex-shrink: 0; background: #fff; border: 1px solid #E7ECF3; border-radius: 10px; padding: 12px 10px; box-shadow: 0 1px 4px rgba(0,21,41,.04); }
 .tree-head { display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: #1F2733; padding: 4px 4px 10px; border-bottom: 1px solid #F0F2F5; margin-bottom: 6px; }
 .tree-head a { color: #2F6BFF; cursor: pointer; font-size: 12px; font-weight: 400; }
 .tree-node { display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 13px; padding-right: 6px; }

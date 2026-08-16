@@ -1,10 +1,10 @@
 <template>
 	<sales-shell active="message" title="销售行动中心" subtitle="只处理真正需要你介入的事情">
 		<view slot="search" class="searchbar">
-			<text class="s-ico">🔍</text>
+			<text class="s-ico"></text>
 			<input v-model="keyword" class="s-input" placeholder="搜索客户或事项" />
 		</view>
-		<view slot="actions" class="done-link" @click="viewDone">🕘 已完成</view>
+		<view slot="actions" class="done-link" @click="viewDone"><text class="clock-ico"></text>已完成</view>
 
 		<view class="ac">
 			<view class="col-main">
@@ -46,7 +46,7 @@
 						</view>
 						<view class="a-actions">
 							<template v-if="a.type==='待付款'">
-								<view class="btn btn-danger ab" @click="contact(a)">🔔 联系客户</view>
+								<view class="btn btn-danger ab" @click="contact(a)">联系客户</view>
 								<view class="btn btn-ghost ab" @click="recordFollow(a)">记录跟进</view>
 								<view class="btn btn-ghost ab" @click="viewPlan(a)">查看内容方案</view>
 							</template>
@@ -84,7 +84,7 @@
 			<!-- 右：客户消息 + 智能摘要 -->
 			<view class="col-side">
 				<view class="card msg-card grow">
-					<view class="msg-head">💬 客户消息 <text class="m-num">{{ messages.length }}</text> <text class="m-dot"></text></view>
+					<view class="msg-head"><text class="chat-ico"></text>客户消息 <text class="m-num">{{ messages.length }}</text> <text class="m-dot"></text></view>
 					<view v-for="m in messages" :key="m.id" class="msg">
 						<image class="msg-av" :src="$img(coverOfMsg(m))" mode="aspectFill"></image>
 						<view class="msg-body">
@@ -189,7 +189,9 @@ export default {
 .searchbar { width:520rpx; height:64rpx; background:#F4F6FA; border-radius:999rpx; display:flex; align-items:center; padding:0 24rpx; }
 .s-ico { font-size:26rpx; margin-right:12rpx; }
 .s-input { flex:1; font-size:26rpx; }
-.done-link { font-size:25rpx; color:$ink-2; }
+.done-link { font-size:25rpx; color:$ink-2; display:flex; align-items:center; gap:8rpx; }
+.clock-ico { width:22rpx; height:22rpx; border:2rpx solid currentColor; border-radius:50%; position:relative; }
+.clock-ico::before { content:""; position:absolute; left:9rpx; top:4rpx; width:2rpx; height:7rpx; background:currentColor; transform-origin:bottom; transform:rotate(-25deg); }
 
 .ac { flex:1; min-height:0; height:100%; display:flex; gap:24rpx; align-items:stretch; }
 .col-main { flex:2; min-width:0; min-height:0; display:flex; flex-direction:column; }
@@ -202,7 +204,7 @@ export default {
 .f { padding:10rpx 26rpx; background:#fff; border:1rpx solid $line; border-radius:999rpx; font-size:24rpx; color:$ink-2; }
 .f.on { background:$brand; color:#fff; border:none; }
 
-.a-card { background:#fff; border:1rpx solid $line; border-radius:18rpx; padding:24rpx; margin-bottom:18rpx; display:flex; align-items:flex-start; }
+.a-card { background:#fff; border:1rpx solid $line; border-radius:18rpx; padding:24rpx; margin-bottom:18rpx; display:flex; align-items:flex-start; box-shadow:0 3rpx 12rpx rgba(31,39,51,.025); }
 .a-thumb { width:96rpx; height:96rpx; border-radius:14rpx; background:#eee; flex-shrink:0; margin-right:20rpx; }
 .a-content { flex:1; min-width:0; }
 .a-chev { color:#C7CDD8; font-size:34rpx; margin-left:12rpx; align-self:center; }
@@ -242,7 +244,9 @@ export default {
 .msg-card { padding:24rpx; flex-shrink:0; }
 .msg-card.grow { max-height:70%; overflow-y:auto; }
 .sum-card { flex-shrink:0; }
-.msg-head { font-size:27rpx; font-weight:700; }
+.msg-head { font-size:27rpx; font-weight:700; display:flex; align-items:center; gap:8rpx; }
+.chat-ico { width:25rpx; height:20rpx; border:2rpx solid $brand; border-radius:6rpx; position:relative; flex-shrink:0; }
+.chat-ico::after { content:""; position:absolute; left:4rpx; bottom:-6rpx; width:7rpx; height:7rpx; border-left:2rpx solid $brand; transform:skewY(-35deg); }
 .m-num { color:$brand; }
 .msg { display:flex; margin-top:18rpx; }
 .msg-av { width:70rpx; height:70rpx; border-radius:14rpx; background:#eee; flex-shrink:0; }

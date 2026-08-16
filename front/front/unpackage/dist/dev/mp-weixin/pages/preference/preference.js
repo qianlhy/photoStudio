@@ -414,11 +414,8 @@ var _default = {
               case 9:
                 _this4.$utils.msg('偏好已保存，将为你优先推荐');
                 setTimeout(function () {
-                  uni.switchTab({
-                    url: '../index/index',
-                    fail: function fail() {
-                      return _this4.$utils.jump('../index/index');
-                    }
+                  uni.reLaunch({
+                    url: '../hy-service/service'
                   });
                 }, 800);
               case 11:
@@ -430,12 +427,8 @@ var _default = {
       }))();
     },
     skip: function skip() {
-      var _this5 = this;
-      uni.switchTab({
-        url: '../index/index',
-        fail: function fail() {
-          return _this5.$utils.jump('../index/index');
-        }
+      uni.reLaunch({
+        url: '../hy-service/service'
       });
     }
   }
