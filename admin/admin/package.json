@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "serve": "cross-env NODE_OPTIONS=--openssl-legacy-provider vue-cli-service serve",
+    "dev": "vue-cli-service serve",
     "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider vue-cli-service build",
+    "build:node14": "vue-cli-service build",
     "svgo": "svgo -f src/icons/svg --config=src/icons/svgo.yml",
     "lint": "vue-cli-service lint"
   },

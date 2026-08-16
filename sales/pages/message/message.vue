@@ -15,7 +15,10 @@
 					</view>
 				</view>
 
+				<scroll-view scroll-y class="a-scroll">
 				<view v-for="a in shownActions" :key="a.id" class="a-card">
+					<image class="a-thumb" :src="$img(coverOfAction(a))" mode="aspectFill"></image>
+					<view class="a-content">
 					<view class="a-top">
 						<text class="a-tag" :class="tagClass(a.type)">{{ tagText(a.type) }}</text>
 						<text class="a-cust">{{ a.customerName }}</text>
@@ -62,8 +65,11 @@
 							</template>
 						</view>
 					</view>
+					</view>
+					<text class="a-chev">›</text>
 				</view>
 				<view v-if="shownActions.length===0" class="empty">暂无需要处理的事项</view>
+				</scroll-view>
 
 				<!-- 闭环步骤 -->
 				<view class="loop card">
@@ -77,7 +83,7 @@
 
 			<!-- 右：客户消息 + 智能摘要 -->
 			<view class="col-side">
-				<view class="card msg-card">
+				<view class="card msg-card grow">
 					<view class="msg-head">💬 客户消息 <text class="m-num">{{ messages.length }}</text> <text class="m-dot"></text></view>
 					<view v-for="m in messages" :key="m.id" class="msg">
 						<image class="msg-av" :src="$img(coverOfMsg(m))" mode="aspectFill"></image>
@@ -158,6 +164,11 @@ export default {
 		tagText(t) { return ({ '待付款': '待付款', '制作预警': '允许干预', '客诉': '客户投诉', '库存不足': '内容库存不足' })[t] || t },
 		tagClass(t) { return ({ '待付款': 'orange', '制作预警': 'green', '客诉': 'red', '库存不足': 'blue' })[t] || 'blue' },
 		coverOfMsg(m) { return 'upload/studio_cover_1.jpg' },
+		coverOfAction(a) {
+			if (a.cover) return a.cover
+			const n = (Number(a.customerId) || 0) % 4 + 1
+			return `upload/studio_cover_${n}.jpg`
+		},
 		resolve(a, msg) {
 			this.$api.update('hyActionItem', { id: a.id, status: '已完成' }).then(() => {
 				uni.showToast({ title: msg, icon: 'success' })
@@ -180,17 +191,21 @@ export default {
 .s-input { flex:1; font-size:26rpx; }
 .done-link { font-size:25rpx; color:$ink-2; }
 
-.ac { display:flex; gap:24rpx; align-items:flex-start; }
-.col-main { flex:2; min-width:0; }
-.col-side { flex:1; min-width:0; display:flex; flex-direction:column; gap:20rpx; }
+.ac { flex:1; min-height:0; height:100%; display:flex; gap:24rpx; align-items:stretch; }
+.col-main { flex:2; min-width:0; min-height:0; display:flex; flex-direction:column; }
+.col-side { flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; justify-content:space-between; gap:20rpx; overflow-y:auto; }
+.a-scroll { flex:1; min-height:0; }
 
-.todo-head { font-size:30rpx; font-weight:800; margin-bottom:16rpx; }
+.todo-head { font-size:30rpx; font-weight:800; margin-bottom:16rpx; flex-shrink:0; }
 .th-num { color:$brand; }
-.filters { display:flex; gap:14rpx; margin-bottom:20rpx; flex-wrap:wrap; }
+.filters { display:flex; gap:14rpx; margin-bottom:20rpx; flex-wrap:wrap; flex-shrink:0; }
 .f { padding:10rpx 26rpx; background:#fff; border:1rpx solid $line; border-radius:999rpx; font-size:24rpx; color:$ink-2; }
 .f.on { background:$brand; color:#fff; border:none; }
 
-.a-card { background:#fff; border:1rpx solid $line; border-radius:18rpx; padding:24rpx; margin-bottom:18rpx; }
+.a-card { background:#fff; border:1rpx solid $line; border-radius:18rpx; padding:24rpx; margin-bottom:18rpx; display:flex; align-items:flex-start; }
+.a-thumb { width:96rpx; height:96rpx; border-radius:14rpx; background:#eee; flex-shrink:0; margin-right:20rpx; }
+.a-content { flex:1; min-width:0; }
+.a-chev { color:#C7CDD8; font-size:34rpx; margin-left:12rpx; align-self:center; }
 .a-top { display:flex; align-items:center; gap:14rpx; margin-bottom:14rpx; }
 .a-tag { padding:6rpx 18rpx; border-radius:999rpx; font-size:21rpx; }
 .a-tag.orange { background:#FFF1E6; color:#FF8A3D; }
@@ -198,12 +213,12 @@ export default {
 .a-tag.red { background:#FDECEC; color:#FF5A5F; }
 .a-tag.blue { background:#EAF1FF; color:#2F6BFF; }
 .a-cust { font-size:25rpx; color:$ink-2; }
-.a-mid { display:flex; justify-content:space-between; gap:24rpx; }
+.a-mid { display:flex; justify-content:space-between; align-items:flex-start; gap:24rpx; }
 .a-left { flex:1; min-width:0; }
 .a-title { font-size:28rpx; font-weight:700; display:block; }
 .a-meta { font-size:23rpx; color:$muted; display:block; margin-top:10rpx; }
-.a-actions { display:flex; flex-direction:column; gap:12rpx; width:300rpx; flex-shrink:0; }
-.ab { height:72rpx; font-size:25rpx; }
+.a-actions { display:flex; flex-direction:row; flex-wrap:wrap; justify-content:flex-end; gap:12rpx; flex-shrink:0; max-width:440rpx; }
+.ab { height:64rpx; padding:0 26rpx; font-size:24rpx; }
 .intervene { background:#E8F7F0; color:#22B07D; }
 .renew { background:#EAF1FF; color:#2F6BFF; }
 
@@ -215,7 +230,7 @@ export default {
 .th-labels { display:flex; justify-content:space-between; font-size:20rpx; color:$muted; }
 .th-note { font-size:21rpx; color:$muted; margin-top:10rpx; display:block; }
 
-.loop { display:flex; align-items:center; padding:26rpx; margin-top:8rpx; }
+.loop { display:flex; align-items:center; padding:26rpx; margin-top:16rpx; flex-shrink:0; }
 .lp { display:flex; align-items:center; flex:1; }
 .lp-dot { width:40rpx; height:40rpx; border-radius:50%; background:#E5E8EC; color:#fff; display:flex; align-items:center; justify-content:center; font-size:22rpx; flex-shrink:0; }
 .lp-dot.on { background:#22B07D; }
@@ -224,7 +239,9 @@ export default {
 .lp-line { flex:1; height:2rpx; background:#E5E8EC; }
 .lp-line.on { background:#22B07D; }
 
-.msg-card { padding:24rpx; }
+.msg-card { padding:24rpx; flex-shrink:0; }
+.msg-card.grow { max-height:70%; overflow-y:auto; }
+.sum-card { flex-shrink:0; }
 .msg-head { font-size:27rpx; font-weight:700; }
 .m-num { color:$brand; }
 .msg { display:flex; margin-top:18rpx; }
@@ -242,4 +259,144 @@ export default {
 .spark { color:#FF8A3D; }
 .sum-text { font-size:25rpx; color:$ink-2; line-height:1.6; display:block; margin-top:14rpx; }
 .empty { color:$muted; text-align:center; padding:40rpx 0; }
+
+/* 1-6 标注稿：主行动区约 1014，右侧消息栏约 254 */
+@media (min-width: 900px) and (orientation: landscape) {
+	.searchbar {
+		width: 22vw;
+		height: 5.2vh;
+		padding: 0 1.2vw;
+	}
+	.s-input, .done-link {
+		font-size: clamp(12px, .95vw, 15px);
+	}
+	.ac {
+		gap: .75vw;
+	}
+	.col-main {
+		flex: 1014;
+	}
+	.col-side {
+		flex: 254;
+		gap: 1.2vh;
+	}
+	.todo-head {
+		font-size: clamp(17px, 1.4vw, 22px);
+		margin-bottom: .6vh;
+	}
+	.filters {
+		gap: .55vw;
+		margin-bottom: 1vh;
+		flex-wrap: nowrap;
+	}
+	.f {
+		padding: .55vh 1.15vw;
+		font-size: clamp(11px, .85vw, 14px);
+	}
+	.a-card {
+		min-height: 13.8vh;
+		box-sizing: border-box;
+		padding: 1.15vh .9vw;
+		margin-bottom: .75vh;
+		border-radius: 12px;
+		align-items: center;
+	}
+	.a-thumb {
+		width: 4.8vw;
+		height: 4.8vw;
+		margin-right: .9vw;
+		border-radius: 50%;
+	}
+	.a-top {
+		gap: .65vw;
+		margin-bottom: .55vh;
+	}
+	.a-tag {
+		padding: .3vh .75vw;
+		font-size: clamp(10px, .76vw, 12px);
+	}
+	.a-cust, .a-meta {
+		font-size: clamp(11px, .85vw, 14px);
+	}
+	.a-title {
+		font-size: clamp(16px, 1.28vw, 20px);
+	}
+	.a-mid {
+		gap: 1vw;
+	}
+	.a-actions {
+		max-width: 25vw;
+		gap: .55vw;
+	}
+	.ab {
+		height: 4.8vh;
+		padding: 0 1vw;
+		font-size: clamp(11px, .85vw, 14px);
+	}
+	.thresh {
+		margin-top: .9vh;
+	}
+	.th-bar {
+		height: 5px;
+		margin: .7vh 0;
+	}
+	.th-labels, .th-note {
+		font-size: clamp(9px, .68vw, 11px);
+	}
+	.loop {
+		height: 10.8vh;
+		box-sizing: border-box;
+		padding: 1.4vh 1.2vw;
+		margin-top: 1vh;
+		border-radius: 13px;
+	}
+	.lp-dot {
+		width: 30px;
+		height: 30px;
+		font-size: 14px;
+	}
+	.lp-l {
+		font-size: clamp(10px, .76vw, 12px);
+		margin: 0 .55vw;
+	}
+	.msg-card {
+		padding: 1.5vh 1vw;
+		border-radius: 13px;
+	}
+	.msg-card.grow {
+		height: 73%;
+		max-height: none;
+		box-sizing: border-box;
+	}
+	.msg-head, .sum-title {
+		font-size: clamp(14px, 1.1vw, 18px);
+	}
+	.msg {
+		margin-top: 1.2vh;
+	}
+	.msg-av {
+		width: 3.7vw;
+		height: 3.7vw;
+		border-radius: 50%;
+	}
+	.msg-body {
+		margin-left: .65vw;
+	}
+	.msg-name, .msg-text {
+		font-size: clamp(11px, .85vw, 14px);
+	}
+	.msg-flag, .msg-foot {
+		font-size: clamp(9px, .7vw, 11px);
+	}
+	.sum-card {
+		height: 14%;
+		box-sizing: border-box;
+		padding: 1.2vh 1vw;
+		border-radius: 13px;
+	}
+	.sum-text {
+		font-size: clamp(10px, .78vw, 13px);
+		margin-top: .55vh;
+	}
+}
 </style>

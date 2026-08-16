@@ -22,20 +22,33 @@
         <el-card shadow="never" class="blk">
           <div slot="header" class="blk-head"><b>业务经理业绩</b><span class="more">查看全部 ›</span></div>
           <el-table :data="perf" class="hy-table" :show-header="true">
-            <el-table-column label="业务经理" min-width="160">
+            <el-table-column label="业务经理" min-width="170">
               <template slot-scope="s">
-                <span class="rank" :class="'r'+(s.$index+1)">{{ s.$index + 1 }}</span>
-                <span class="pf-name">{{ s.row.name }}</span>
+                <div class="pf-cell">
+                  <span class="rank" :class="'r'+(s.$index+1)">{{ s.$index + 1 }}</span>
+                  <span class="pf-av">{{ (s.row.name||'').charAt(0) }}</span>
+                  <span class="pf-name">{{ s.row.name }}</span>
+                </div>
               </template>
             </el-table-column>
-            <el-table-column prop="following" label="跟进中" width="90"></el-table-column>
-            <el-table-column prop="dealCust" label="已成交" width="90"></el-table-column>
-            <el-table-column prop="dealCount" label="成交数量" width="100"></el-table-column>
-            <el-table-column label="成交额 (元)" width="130">
+            <el-table-column label="跟进中" width="110">
+              <template slot-scope="s">
+                <div class="pf-num">{{ s.row.following }}</div>
+                <div class="pf-bar"><i :style="{width: barW(s.row.following, maxFollow), background:'#2F6BFF'}"></i></div>
+              </template>
+            </el-table-column>
+            <el-table-column label="已成交" width="110">
+              <template slot-scope="s">
+                <div class="pf-num">{{ s.row.dealCust }}</div>
+                <div class="pf-bar"><i :style="{width: barW(s.row.dealCust, maxDeal), background:'#22B07D'}"></i></div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="dealCount" label="成交数量" width="90" align="center"></el-table-column>
+            <el-table-column label="成交额 (元)" width="120" align="right">
               <template slot-scope="s">{{ fmt(s.row.amount) }}</template>
             </el-table-column>
-            <el-table-column label="预计提成 (元)" width="130">
-              <template slot-scope="s">{{ fmt(s.row.commission) }}</template>
+            <el-table-column label="预计提成 (元)" width="120" align="right">
+              <template slot-scope="s"><span class="pf-comm">{{ fmt(s.row.commission) }}</span></template>
             </el-table-column>
           </el-table>
         </el-card>
@@ -52,10 +65,10 @@
           <div class="deliver">
             <div ref="deliverRing" class="ring-chart"></div>
             <div class="deliver-stats">
-              <div class="ds"><div class="ds-num">{{ deliver.total }}</div><div class="ds-l">本月应交付</div></div>
-              <div class="ds"><div class="ds-num green">{{ deliver.done }}</div><div class="ds-l">已完成 {{ deliver.donePct }}%</div></div>
-              <div class="ds"><div class="ds-num orange">{{ deliver.undone }}</div><div class="ds-l">未完成 {{ deliver.undonePct }}%</div></div>
-              <div class="ds"><div class="ds-num red">{{ deliver.abnormal }}</div><div class="ds-l">异常 {{ deliver.abnPct }}%</div></div>
+              <div class="ds"><i class="ds-ic el-icon-date b1"></i><div><div class="ds-num">{{ deliver.total }}</div><div class="ds-l">本月应交付</div></div></div>
+              <div class="ds"><i class="ds-ic el-icon-circle-check b2"></i><div><div class="ds-num green">{{ deliver.done }}</div><div class="ds-l">已完成 {{ deliver.donePct }}%</div></div></div>
+              <div class="ds"><i class="ds-ic el-icon-time b3"></i><div><div class="ds-num orange">{{ deliver.undone }}</div><div class="ds-l">未完成 {{ deliver.undonePct }}%</div></div></div>
+              <div class="ds"><i class="ds-ic el-icon-warning-outline b4"></i><div><div class="ds-num red">{{ deliver.abnormal }}</div><div class="ds-l">异常 {{ deliver.abnPct }}%</div></div></div>
             </div>
           </div>
         </el-card>
@@ -117,6 +130,10 @@ export default {
       deliverRing: null
     }
   },
+  computed: {
+    maxFollow() { return Math.max(1, ...this.perf.map(p => p.following || 0)) },
+    maxDeal() { return Math.max(1, ...this.perf.map(p => p.dealCust || 0)) }
+  },
   mounted() {
     if (!this.$storage.get('Token')) {
       router.push({name: 'login'})
@@ -129,6 +146,7 @@ export default {
       n = Number(n || 0)
       return n.toLocaleString('zh-CN')
     },
+    barW(v, max) { return Math.round((v || 0) / max * 100) + '%' },
     load() {
       // 客户
       this.$http({url: 'hyCustomer/page', method: 'get', params: {page: 1, limit: 1000}}).then(({data}) => {
@@ -267,18 +285,26 @@ export default {
 .blk { margin-bottom: 16px; border-radius: 12px; }
 .blk-head { display: flex; justify-content: space-between; align-items: center; }
 .more { font-size: 12px; color: #2F6BFF; cursor: pointer; }
-.rank { display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 6px; background: #EEF1F5; color: #8A94A6; font-size: 12px; margin-right: 8px; }
+.pf-cell { display: flex; align-items: center; }
+.rank { display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; border-radius: 6px; background: #EEF1F5; color: #8A94A6; font-size: 12px; margin-right: 8px; flex-shrink: 0; }
 .rank.r1 { background: #FFE6B0; color: #B8791F; }
 .rank.r2 { background: #E3E8EF; color: #6B7785; }
 .rank.r3 { background: #F8D8C0; color: #C2683A; }
+.pf-av { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg,#4f8bff,#2F6BFF); color: #fff; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; flex-shrink: 0; }
 .pf-name { font-weight: 600; }
+.pf-num { font-weight: 600; color: #1F2733; line-height: 1.2; }
+.pf-bar { height: 4px; border-radius: 3px; background: #EEF1F5; margin-top: 4px; overflow: hidden; }
+.pf-bar i { display: block; height: 100%; border-radius: 3px; }
+.pf-comm { color: #FF8A3D; font-weight: 600; }
 .red { color: #FF5A5F; font-weight: 600; }
 
 .deliver { display: flex; align-items: center; }
 .ring-chart { width: 130px; height: 130px; flex-shrink: 0; }
 .deliver-stats { flex: 1; display: flex; flex-wrap: wrap; }
-.ds { width: 50%; padding: 8px 12px; }
-.ds-num { font-size: 24px; font-weight: 800; color: #1F2733; }
+.ds { width: 50%; padding: 8px 12px; display: flex; align-items: center; gap: 10px; }
+.ds-ic { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; color: #fff; flex-shrink: 0; }
+.ds-ic.b1 { background: #2F6BFF; } .ds-ic.b2 { background: #22B07D; } .ds-ic.b3 { background: #FF8A3D; } .ds-ic.b4 { background: #FF5A5F; }
+.ds-num { font-size: 22px; font-weight: 800; color: #1F2733; line-height: 1.1; }
 .ds-num.green { color: #22B07D; }
 .ds-num.orange { color: #FF8A3D; }
 .ds-num.red { color: #FF5A5F; }

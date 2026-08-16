@@ -9,7 +9,7 @@ const base = {
     },
     getProjectName() {
         return {
-            projectName: "合意传媒运营管理后台"
+            projectName: "合意传媒"
         }
     }
 }

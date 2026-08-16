@@ -57,15 +57,15 @@
 /* ===================================================== */
 /* 照相馆 · 后台商用品牌样式（与小程序同级：白底留白 + 香槟驼金） */
 /* ===================================================== */
-$brand-primary: #B49A6B;
-$brand-primary-deep: #8C7853;
-$brand-primary-soft: #F3EEE4;
-$brand-ink: #222222;
-$brand-ink-2: #666666;
-$brand-line: #ECECEC;
-$brand-bg-soft: #F6F5F2;
+$brand-primary: #2F6BFF;
+$brand-primary-deep: #2456d6;
+$brand-primary-soft: #EAF1FF;
+$brand-ink: #1f2733;
+$brand-ink-2: #5a6473;
+$brand-line: #EBEEF5;
+$brand-bg-soft: #F0F2F5;
 $brand-radius: 12px;
-$brand-shadow: 0 6px 24px rgba(60, 50, 30, 0.06);
+$brand-shadow: 0 6px 24px rgba(20, 40, 80, 0.06);
 
 body {
   background: $brand-bg-soft;
@@ -91,8 +91,8 @@ body {
 
   th,
   th.el-table__cell {
-    background: #FAF9F6 !important;
-    color: #5c5345 !important;
+    background: #F7F9FC !important;
+    color: #5a6473 !important;
     font-weight: 600;
   }
 
@@ -108,21 +108,21 @@ body {
   }
 
   tbody tr:hover > td {
-    background: #FAF7F1 !important;
+    background: #F5F8FF !important;
   }
 }
 
 /* ===================================================== */
 /* 按钮：商用标准（实心高对比 + 统一圆角/高度，!important 压过列表页注入的浅色内联样式） */
 /* ===================================================== */
-$btn-primary: #B49A6B;
-$btn-primary-deep: #8C7853;
-$btn-success: #2F9E72;
-$btn-success-deep: #268560;
-$btn-danger: #E8423F;
-$btn-danger-deep: #C9302C;
-$btn-warning: #E0992B;
-$btn-warning-deep: #C9851F;
+$btn-primary: #2F6BFF;
+$btn-primary-deep: #2456d6;
+$btn-success: #22B07D;
+$btn-success-deep: #1c9268;
+$btn-danger: #FF5A5F;
+$btn-danger-deep: #e8423f;
+$btn-warning: #FF8A3D;
+$btn-warning-deep: #e5701f;
 
 .el-button {
   border-radius: 6px !important;
@@ -186,7 +186,7 @@ $btn-warning-deep: #C9851F;
 /* 朴素/默认按钮：白底描边，hover 主色 */
 .el-button--default {
   background-color: #fff !important;
-  border-color: #DCD6C8 !important;
+  border-color: #DCDFE6 !important;
   color: $brand-ink-2 !important;
 
   &:not(.is-disabled):hover,
@@ -252,7 +252,7 @@ $btn-warning-deep: #C9851F;
 
 .el-table .el-button.el-button--primary:hover {
   color: $btn-primary !important;
-  background-color: rgba(180, 154, 107, 0.12) !important;
+  background-color: rgba(47, 107, 255, 0.10) !important;
 }
 
 .el-table .el-button.el-button--danger:hover {
@@ -314,12 +314,12 @@ $btn-warning-deep: #C9851F;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(140, 120, 83, 0.28);
+  background: rgba(47, 107, 255, 0.22);
   border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(140, 120, 83, 0.45);
+  background: rgba(47, 107, 255, 0.38);
 }
 
 /* ===================================================== */
@@ -344,7 +344,7 @@ $btn-warning-deep: #C9851F;
 .el-input__inner,
 .el-textarea__inner {
   background-color: #fff !important;
-  border: 1px solid #DCD6C8 !important;
+  border: 1px solid #DCDFE6 !important;
   border-radius: 8px !important;
   color: $brand-ink !important;
 }
@@ -353,12 +353,12 @@ $btn-warning-deep: #C9851F;
 .el-textarea__inner:focus,
 .el-select .el-input.is-focus .el-input__inner {
   border-color: $brand-primary !important;
-  box-shadow: 0 0 0 2px rgba(180, 154, 107, 0.15);
+  box-shadow: 0 0 0 2px rgba(47, 107, 255, 0.15);
 }
 
 .el-input__inner::placeholder,
 .el-textarea__inner::placeholder {
-  color: #b3aa97 !important;
+  color: #a8b0bd !important;
 }
 
 .el-range-editor.el-input__inner {
@@ -388,7 +388,7 @@ $btn-warning-deep: #C9851F;
 }
 
 .el-tag--info {
-  background-color: #EFECE4;
+  background-color: #EEF1F5;
   color: $brand-ink-2;
 }
 
@@ -422,7 +422,7 @@ $btn-warning-deep: #C9851F;
 
 .el-pagination.is-background .el-pager li {
   border-radius: 6px;
-  background-color: #F1EEE7;
+  background-color: #EEF1F5;
   color: $brand-ink-2;
 }
 
@@ -438,7 +438,7 @@ $btn-warning-deep: #C9851F;
 .el-pagination.is-background .btn-prev,
 .el-pagination.is-background .btn-next {
   border-radius: 6px;
-  background-color: #F1EEE7;
+  background-color: #EEF1F5;
 }
 
 /* 表单项标签更清晰 */
@@ -477,7 +477,7 @@ $btn-warning-deep: #C9851F;
 }
 .addEdit-block .addEdit-head .back-arrow:hover {
   color: $brand-primary;
-  background-color: #FAF7F1;
+  background-color: #EAF1FF;
 }
 .addEdit-block .addEdit-head .addEdit-title {
   font-size: 16px;

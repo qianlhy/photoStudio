@@ -651,5 +651,157 @@ export default {
 	height: 100rpx;
 	font-size: 30rpx;
 	border-radius: 18rpx;
+	margin-top: auto;
+	flex-shrink: 0;
+}
+
+/* 1-2 标注稿：主舞台 1027、右栏 374、栏间距 16 */
+@media (min-width: 900px) and (orientation: landscape) {
+	.topbar {
+		height: 8vh;
+		padding: 0 4.2vw;
+		box-sizing: border-box;
+	}
+	.brand, .cust {
+		font-size: clamp(19px, 1.65vw, 26px);
+	}
+	.counter {
+		font-size: clamp(13px, 1.05vw, 17px);
+	}
+	.avatar {
+		width: 3.2vw;
+		height: 3.2vw;
+	}
+	.chips {
+		height: 7.2vh;
+		box-sizing: border-box;
+		padding: 1.2vh 4.2vw .8vh;
+		gap: .7vw;
+		flex-wrap: nowrap;
+	}
+	.chip {
+		min-width: 5.5vw;
+		box-sizing: border-box;
+		text-align: center;
+		padding: .8vh 1.35vw;
+		font-size: clamp(12px, .95vw, 15px);
+	}
+	.main {
+		gap: 1vw;
+		padding: 0 4.2vw 2.1vh;
+	}
+	.stage {
+		flex: 2.746;
+	}
+	.side {
+		flex: 1;
+		gap: 1.1vh;
+	}
+	.player {
+		min-height: 0;
+		border-radius: 15px;
+	}
+	.overlay {
+		left: 1.8vw;
+		bottom: 10vh;
+	}
+	.ov-title {
+		font-size: clamp(24px, 2.25vw, 36px);
+	}
+	.ov-tag {
+		margin-top: 1vh;
+		padding: .55vh .9vw;
+		font-size: clamp(12px, .9vw, 15px);
+	}
+	.actions {
+		height: 17.6vh;
+		box-sizing: border-box;
+		padding: 0;
+		gap: 1.2vw;
+	}
+	.act.dislike {
+		width: 8.8vh;
+		height: 8.8vh;
+	}
+	.act.like {
+		width: 10.8vh;
+		height: 10.8vh;
+	}
+	.act.skip {
+		height: 5.5vh;
+		padding: 0 1.3vw;
+	}
+	.act .act-ic {
+		font-size: clamp(21px, 1.9vw, 30px);
+	}
+	.act .act-tx, .hint {
+		font-size: clamp(11px, .85vw, 14px);
+	}
+	.act.skip .act-ic,
+	.act.skip .act-tx {
+		font-size: clamp(11px, .9vw, 15px);
+	}
+	.side .card {
+		padding: 1.5vh 1.15vw;
+		box-sizing: border-box;
+		border-radius: 13px;
+	}
+	.sc1 {
+		height: 26.8%;
+	}
+	.sc2 {
+		height: 20%;
+		gap: 1vw;
+	}
+	.sc3 {
+		height: 22%;
+	}
+	.sc-label {
+		font-size: clamp(12px, .95vw, 15px);
+	}
+	.sc-big {
+		font-size: clamp(16px, 1.3vw, 21px);
+		margin: .5vh 0 1.2vh;
+	}
+	.sc-big .num {
+		font-size: clamp(27px, 2.5vw, 40px);
+	}
+	.rp-num {
+		font-size: clamp(13px, 1.05vw, 17px);
+		margin-bottom: .4vh;
+	}
+	.rp-bar {
+		width: 1.3vw;
+		height: 4.6vh;
+	}
+	.rp-label {
+		font-size: clamp(10px, .76vw, 12px);
+		margin-top: .35vh;
+	}
+	.pentagon {
+		width: 7.1vw;
+		height: 7.1vw;
+	}
+	.ad-title {
+		font-size: clamp(16px, 1.3vw, 21px);
+	}
+	.ad-sub {
+		font-size: clamp(12px, .92vw, 15px);
+		margin-top: .5vh;
+	}
+	.liked-row {
+		margin-top: .8vh;
+	}
+	.lk {
+		width: 5.4vw;
+		height: 8.2vh;
+		margin-right: .55vw;
+		border-radius: 8px;
+	}
+	.finish {
+		height: 7.4vh;
+		font-size: clamp(16px, 1.3vw, 21px);
+		border-radius: 13px;
+	}
 }
 </style>

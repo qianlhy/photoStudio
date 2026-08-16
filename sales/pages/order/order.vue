@@ -71,8 +71,22 @@
 				<view class="card content-card">
 					<text class="cc-title">本次内容</text>
 					<view class="recipe-row">
-						<view class="pentagon"></view>
-						<text class="recipe-text">{{ selected.recipe }}</text>
+						<view class="radar">
+							<svg class="radar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+								<polygon :points="radar.outerStr" fill="#FFFFFF" stroke="#D9E0EA" stroke-width="0.9"></polygon>
+								<polygon :points="radar.midStr" fill="none" stroke="#E9ECF1" stroke-width="0.6"></polygon>
+								<line v-for="(p,i) in radar.outer" :key="'ax'+i" x1="50" y1="50" :x2="p[0]" :y2="p[1]" stroke="#EDF0F4" stroke-width="0.5"></line>
+								<polygon :points="radar.dataStr" fill="rgba(47,107,255,0.16)" stroke="#2F6BFF" stroke-width="1.2"></polygon>
+								<circle v-for="(p,i) in radar.data" :key="'pt'+i" :cx="p[0]" :cy="p[1]" r="1.6" fill="#2F6BFF"></circle>
+							</svg>
+						</view>
+						<view class="recipe-list">
+							<view v-for="(a,i) in radar.axes" :key="i" class="rl-item">
+								<text class="rl-dot" :style="{background: radarColors[i]}"></text>
+								<text class="rl-name">{{ a }}</text>
+								<text class="rl-num">{{ radar.counts[i] }}</text>
+							</view>
+						</view>
 					</view>
 					<view class="item-grid">
 						<view v-for="(it,i) in items" :key="it.id" class="it-cell">
@@ -108,13 +122,27 @@ export default {
 			],
 			orders: [],
 			selected: null,
-			items: []
+			items: [],
+			radarColors: ['#FF5A5F', '#FF9F45', '#22B07D', '#2F6BFF', '#7C5CFF']
 		}
 	},
 	computed: {
 		activeLabel() {
 			const t = this.tabs.find(t => t.key === this.activeTab)
 			return t ? t.label : ''
+		},
+		radar() {
+			const axes = ['硬广', '厨过程', '教知识', '说观点', '讲故事']
+			const counts = axes.map(a => this.distCount(a))
+			const max = Math.max(1, ...counts)
+			const cx = 50, cy = 50, R = 33
+			const ang = i => (-90 + i * 72) * Math.PI / 180
+			const P = (r, i) => [+(cx + r * Math.cos(ang(i))).toFixed(2), +(cy + r * Math.sin(ang(i))).toFixed(2)]
+			const outer = axes.map((a, i) => P(R, i))
+			const mid = axes.map((a, i) => P(R * 0.6, i))
+			const data = counts.map((v, i) => P((v / max) * R, i))
+			const str = pts => pts.map(p => p.join(',')).join(' ')
+			return { axes, counts, outer, data, outerStr: str(outer), midStr: str(mid), dataStr: str(data) }
 		}
 	},
 	onShow() {
@@ -149,6 +177,15 @@ export default {
 		pickTab(t) {
 			this.activeTab = t.key
 			this.loadOrders()
+		},
+		// 统计本次内容各类型数量：优先解析 recipe 文案，其次统计明细
+		distCount(axis) {
+			if (this.selected && this.selected.recipe) {
+				const m = String(this.selected.recipe).match(new RegExp(axis + '\\s*(\\d+)'))
+				if (m) return Number(m[1])
+			}
+			const key = axis.slice(0, 2)
+			return (this.items || []).filter(it => String(it.contentType || '').indexOf(key) >= 0).length
 		},
 		coverOf(o) {
 			return o.cover || 'upload/studio_cover_1.jpg'
@@ -198,20 +235,20 @@ export default {
 .s-ico { font-size:26rpx; margin-right:12rpx; }
 .s-input { flex:1; font-size:26rpx; }
 
-.tabs { display:flex; gap:16rpx; margin-bottom:22rpx; }
+.tabs { display:flex; gap:16rpx; margin-bottom:22rpx; flex-shrink:0; }
 .tab { padding:14rpx 36rpx; background:#fff; border:1rpx solid $line; border-radius:999rpx; font-size:26rpx; color:$ink-2; }
 .tab.on { background:$brand; color:#fff; border:none; }
 
-.om { display:flex; gap:24rpx; align-items:flex-start; }
-.col-list { flex:1.1; min-width:0; }
-.col-detail { flex:1.1; min-width:0; display:flex; flex-direction:column; gap:20rpx; }
-.cl-title { font-size:28rpx; font-weight:700; margin-bottom:16rpx; }
-.cl-scroll { max-height: calc(100vh - 300rpx); }
+.om { flex:1; min-height:0; height:100%; display:flex; gap:24rpx; align-items:stretch; }
+.col-list { flex:1.1; min-width:0; min-height:0; display:flex; flex-direction:column; }
+.col-detail { flex:1.1; min-width:0; min-height:0; display:flex; flex-direction:column; gap:20rpx; overflow-y:auto; }
+.cl-title { font-size:28rpx; font-weight:700; margin-bottom:16rpx; flex-shrink:0; }
+.cl-scroll { flex:1; min-height:0; }
 
-.o-card { background:#fff; border:1rpx solid $line; border-radius:18rpx; padding:22rpx; margin-bottom:18rpx; }
+.o-card { background:#fff; border:1rpx solid $line; border-radius:18rpx; padding:24rpx; margin-bottom:18rpx; }
 .o-card.on { border-color:#FF7A59; box-shadow:0 8rpx 22rpx rgba(255,90,95,.12); }
 .o-top { display:flex; align-items:center; }
-.o-img { width:96rpx; height:96rpx; border-radius:14rpx; background:#eee; }
+.o-img { width:112rpx; height:112rpx; border-radius:14rpx; background:#eee; flex-shrink:0; }
 .o-info { flex:1; margin-left:16rpx; display:flex; flex-direction:column; min-width:0; }
 .o-name { font-size:28rpx; font-weight:700; }
 .o-pkg { font-size:23rpx; color:$ink-2; margin-top:4rpx; }
@@ -242,11 +279,17 @@ export default {
 .dl-title .dl-num { color:#FF5A5F; font-size:38rpx; }
 .dl-sub { font-size:23rpx; color:$ink-2; display:block; margin-top:8rpx; }
 
-.content-card { padding:24rpx; }
+.d-card { flex-shrink:0; }
+.content-card { padding:24rpx; flex:1; min-height:0; display:flex; flex-direction:column; }
 .cc-title { font-size:28rpx; font-weight:700; }
-.recipe-row { display:flex; align-items:center; gap:18rpx; margin:18rpx 0; }
-.pentagon { width:80rpx; height:80rpx; flex-shrink:0; clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); background: conic-gradient(from -90deg,#7C5CFF,#2F6BFF,#B9C0CC,#22B07D,#FF5A5F,#7C5CFF); opacity:.85; }
-.recipe-text { font-size:25rpx; color:$ink-2; }
+.recipe-row { display:flex; align-items:center; gap:26rpx; margin:18rpx 0; }
+.radar { width:200rpx; height:200rpx; flex-shrink:0; }
+.radar-svg { width:100%; height:100%; display:block; }
+.recipe-list { flex:1; display:flex; flex-wrap:wrap; gap:12rpx 26rpx; }
+.rl-item { display:flex; align-items:center; }
+.rl-dot { width:16rpx; height:16rpx; border-radius:50%; margin-right:10rpx; }
+.rl-name { font-size:24rpx; color:$ink-2; }
+.rl-num { font-size:24rpx; font-weight:800; color:$ink; margin-left:8rpx; }
 .item-grid { display:flex; flex-wrap:wrap; gap:14rpx; }
 .it-cell { width: calc((100% - 70rpx) / 6); position:relative; display:flex; flex-direction:column; }
 .it-img { width:100%; height:120rpx; border-radius:12rpx; background:#eee; }
@@ -254,8 +297,183 @@ export default {
 .it-check { position:absolute; top:8rpx; right:8rpx; width:32rpx; height:32rpx; border-radius:50%; background:rgba(255,255,255,.85); border:2rpx solid #D7DCE3; display:flex; align-items:center; justify-content:center; font-size:22rpx; color:#fff; }
 .it-check.done { background:#22B07D; border-color:#22B07D; }
 .it-name { font-size:20rpx; color:$ink-2; margin-top:8rpx; text-align:center; }
-.cc-foot { display:flex; gap:18rpx; margin-top:24rpx; }
+.cc-foot { display:flex; gap:18rpx; margin-top:auto; padding-top:24rpx; }
 .cc-foot .btn { flex:1; height:84rpx; font-size:26rpx; }
 
 .empty-center { display:flex; align-items:center; justify-content:center; color:$muted; min-height:400rpx; }
+
+/* 1-4 标注稿：订单列表 663、详情 609，卡片高约 210 */
+@media (min-width: 900px) and (orientation: landscape) {
+	.searchbar {
+		width: 27.7vw;
+		height: 5.2vh;
+		padding: 0 1.2vw;
+	}
+	.s-input {
+		font-size: clamp(12px, .95vw, 15px);
+	}
+	.tabs {
+		height: 6vh;
+		margin-bottom: 1.2vh;
+		gap: .7vw;
+	}
+	.tab {
+		width: 13.7vw;
+		box-sizing: border-box;
+		text-align: center;
+		padding: .9vh .8vw;
+		font-size: clamp(12px, .95vw, 15px);
+	}
+	.om {
+		gap: .75vw;
+	}
+	.col-list {
+		flex: 663;
+	}
+	.col-detail {
+		flex: 609;
+		gap: 1.1vh;
+		overflow: hidden;
+	}
+	.cl-title {
+		font-size: clamp(15px, 1.2vw, 19px);
+		margin-bottom: .8vh;
+	}
+	.o-card {
+		min-height: 18.5vh;
+		box-sizing: border-box;
+		padding: 1.3vh 1.1vw;
+		margin-bottom: 1vh;
+		border-radius: 13px;
+	}
+	.o-img {
+		width: 5.5vw;
+		height: 5.5vw;
+		border-radius: 50%;
+	}
+	.o-info {
+		margin-left: .9vw;
+	}
+	.o-name {
+		font-size: clamp(16px, 1.3vw, 21px);
+	}
+	.o-pkg, .o-cnt, .ow-name, .o-prog-text, .o-days {
+		font-size: clamp(11px, .86vw, 14px);
+	}
+	.o-days .d-num {
+		font-size: clamp(23px, 1.9vw, 30px);
+	}
+	.o-bottom {
+		margin: 1vh 0 .7vh;
+	}
+	.ow-av {
+		width: 2.3vw;
+		height: 2.3vw;
+	}
+	.o-bar {
+		height: 6px;
+	}
+	.d-card {
+		height: 28%;
+		box-sizing: border-box;
+		padding: 1.4vh 1.2vw;
+		border-radius: 13px;
+	}
+	.d-title, .cc-title {
+		font-size: clamp(15px, 1.2vw, 19px);
+	}
+	.d-done {
+		height: 4.5vh;
+		padding: 0 1.1vw;
+		font-size: clamp(11px, .85vw, 14px);
+	}
+	.d-cust {
+		margin-top: 1vh;
+	}
+	.dc-img {
+		width: 5.4vw;
+		height: 5.4vw;
+		border-radius: 50%;
+	}
+	.dc-info {
+		margin-left: 1vw;
+	}
+	.dc-name {
+		font-size: clamp(18px, 1.5vw, 24px);
+	}
+	.dc-meta, .dl-sub {
+		font-size: clamp(10px, .78vw, 13px);
+		margin-top: .5vh;
+	}
+	.deliver {
+		margin-top: 1vh;
+		padding: 1vh 1vw;
+		border-radius: 10px;
+	}
+	.dl-title {
+		font-size: clamp(13px, 1vw, 16px);
+	}
+	.dl-title .dl-num {
+		font-size: clamp(23px, 1.9vw, 30px);
+	}
+	.o-bar.big {
+		height: 7px;
+		margin-top: .7vh;
+	}
+	.content-card {
+		padding: 1.4vh 1.2vw;
+		border-radius: 13px;
+	}
+	.recipe-row {
+		gap: 1.1vw;
+		margin: .8vh 0;
+		height: 12vh;
+	}
+	.radar {
+		width: 7.8vw;
+		height: 7.8vw;
+	}
+	.recipe-list {
+		gap: .55vh 1vw;
+	}
+	.rl-dot {
+		width: 8px;
+		height: 8px;
+		margin-right: .45vw;
+	}
+	.rl-name, .rl-num {
+		font-size: clamp(11px, .86vw, 14px);
+	}
+	.item-grid {
+		gap: .75vh .55vw;
+	}
+	.it-cell {
+		width: calc((100% - 2.75vw) / 6);
+	}
+	.it-img {
+		height: 8.2vh;
+		border-radius: 8px;
+	}
+	.it-name {
+		font-size: clamp(9px, .7vw, 11px);
+		margin-top: .35vh;
+	}
+	.it-no {
+		bottom: 2.6vh;
+		font-size: 12px;
+	}
+	.it-check {
+		width: 18px;
+		height: 18px;
+		font-size: 12px;
+	}
+	.cc-foot {
+		padding-top: 1vh;
+		gap: .8vw;
+	}
+	.cc-foot .btn {
+		height: 5.7vh;
+		font-size: clamp(12px, .95vw, 15px);
+	}
+}
 </style>

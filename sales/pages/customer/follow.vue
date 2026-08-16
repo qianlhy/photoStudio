@@ -185,6 +185,8 @@ export default {
 .modal {
 	width: 1000rpx;
 	max-width: 94%;
+	max-height: 94vh;
+	overflow-y: auto;
 	background: #fff;
 	border-radius: 24rpx;
 	padding: 36rpx 40rpx 28rpx;

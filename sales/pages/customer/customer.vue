@@ -82,19 +82,28 @@
 
 				<!-- 内容生命值 -->
 				<view class="card life-card">
-					<view class="life-left">
-						<view class="ring" :style="ringStyle">
-							<view class="ring-hole">
-								<text class="ring-num">剩 <text class="big">{{ selected.remainCount||0 }}</text></text>
-								<text class="ring-sub">预计可发布 {{ selected.publishDays||0 }} 天</text>
+					<view class="life-top">
+						<view class="life-left">
+							<view class="ring" :style="ringStyle">
+								<view class="ring-hole">
+									<text class="ring-num">剩 <text class="big">{{ selected.remainCount||0 }}</text></text>
+									<text class="ring-sub">预计可发布 {{ selected.publishDays||0 }} 天</text>
+								</view>
 							</view>
 						</view>
+						<view class="life-right">
+							<text class="life-label">内容预计发布至</text>
+							<text class="life-date">{{ selected.publishDeadline || '—' }}</text>
+							<text v-if="(selected.publishDays||0)<=8" class="life-warn">⚠ 即将断更</text>
+							<view class="btn btn-danger life-btn" @click="recommendRenew">推荐续拍方案</view>
+						</view>
 					</view>
-					<view class="life-right">
-						<text class="life-label">内容预计发布至</text>
-						<text class="life-date">{{ selected.publishDeadline || '—' }}</text>
-						<text v-if="(selected.publishDays||0)<=8" class="life-warn">⚠ 即将断更</text>
-						<view class="btn btn-danger life-btn" @click="recommendRenew">推荐续拍方案</view>
+					<view class="life-week">
+						<view v-for="(d,i) in weekDays" :key="i" class="lw">
+							<text class="lw-l">{{ d.label }}</text>
+							<text class="lw-d">{{ d.day }}</text>
+							<view class="lw-dot" :style="{background:d.color}"></view>
+						</view>
 					</view>
 				</view>
 			</view>
@@ -113,7 +122,7 @@
 					<view class="btn btn-danger act-btn" @click="goFollow">记录本次跟进</view>
 				</view>
 
-				<view class="card tl-card">
+				<view class="card tl-card grow">
 					<text class="sc-title">跟进时间线</text>
 					<view v-if="timeline.length===0" class="empty sm">暂无跟进记录</view>
 					<view v-for="(t,i) in timeline" :key="t.id" class="tl-item">
@@ -186,6 +195,21 @@ export default {
 			const prefs = this.prefList(this.selected)
 			const main = prefs[0] || '硬广'
 			return `客户偏好${main}，建议下周增加 2 条讲故事，提升品牌温度`
+		},
+		weekDays() {
+			const days = (this.selected && this.selected.publishDays) || 0
+			const wk = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+			const out = []
+			for (let i = 0; i < 8; i++) {
+				const d = new Date()
+				d.setDate(d.getDate() + i)
+				const label = i === 0 ? '今天' : (i === 1 ? '明天' : (i === 2 ? '后天' : wk[d.getDay()]))
+				let color = '#22B07D'
+				if (i >= days) color = '#E2E6EC'
+				else if (i >= days - 2) color = '#FF8A3D'
+				out.push({ label, day: d.getDate(), color })
+			}
+			return out
 		}
 	},
 	onLoad(opt) {
@@ -294,6 +318,7 @@ export default {
 	gap: 16rpx;
 	margin-bottom: 22rpx;
 	flex-wrap: wrap;
+	flex-shrink: 0;
 }
 .tab {
 	padding: 12rpx 28rpx;
@@ -311,16 +336,19 @@ export default {
 .t-dot { display:inline-block; width:12rpx; height:12rpx; border-radius:50%; margin-right:8rpx; }
 
 .cm {
+	flex: 1;
+	min-height: 0;
+	height: 100%;
 	display: flex;
 	gap: 24rpx;
-	align-items: flex-start;
+	align-items: stretch;
 }
-.col-list { flex: 1.1; min-width: 0; }
-.col-center { flex: 1.4; min-width: 0; display: flex; flex-direction: column; gap: 20rpx; }
-.col-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 20rpx; }
+.col-list { flex: 1.1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.col-center { flex: 1.4; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 20rpx; overflow-y: auto; }
+.col-side { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 20rpx; overflow-y: auto; }
 
-.cl-title, .sc-title { font-size: 28rpx; font-weight: 700; margin-bottom: 16rpx; }
-.cl-scroll { max-height: calc(100vh - 320rpx); }
+.cl-title, .sc-title { font-size: 28rpx; font-weight: 700; margin-bottom: 16rpx; flex-shrink: 0; }
+.cl-scroll { flex: 1; min-height: 0; }
 .cl-card {
 	display: flex;
 	align-items: center;
@@ -374,7 +402,8 @@ export default {
 .step-line.done { background:#22B07D; }
 
 /* 生命值 */
-.life-card { padding: 24rpx; display:flex; align-items:center; gap: 28rpx; }
+.life-card { padding: 24rpx; display:flex; flex-direction:column; }
+.life-top { display:flex; align-items:center; gap: 28rpx; }
 .ring { width: 180rpx; height: 180rpx; border-radius: 50%; display:flex; align-items:center; justify-content:center; }
 .ring-hole { width: 130rpx; height: 130rpx; border-radius:50%; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; }
 .ring-num { font-size: 22rpx; color:$ink-2; }
@@ -385,9 +414,15 @@ export default {
 .life-date { font-size: 48rpx; font-weight: 800; color: #FF5A5F; margin:4rpx 0; }
 .life-warn { font-size: 22rpx; color:#FF5A5F; margin-bottom:12rpx; }
 .life-btn { height: 72rpx; font-size: 26rpx; }
+.life-week { display:flex; justify-content:space-between; margin-top:24rpx; padding-top:20rpx; border-top:1rpx solid #F0F2F5; }
+.lw { display:flex; flex-direction:column; align-items:center; flex:1; }
+.lw-l { font-size:19rpx; color:$muted; }
+.lw-d { font-size:22rpx; color:$ink-2; margin:4rpx 0 8rpx; }
+.lw-dot { width:14rpx; height:14rpx; border-radius:50%; }
 
 /* 右栏 */
-.act-card, .tl-card, .sug-card { padding: 24rpx; }
+.act-card, .tl-card, .sug-card { padding: 24rpx; flex-shrink: 0; }
+.tl-card.grow { max-height: 52%; overflow-y: auto; }
 .act-box { background:#FDF1F0; border-radius:14rpx; padding:20rpx; margin:14rpx 0; }
 .act-main { font-size:27rpx; font-weight:700; display:block; }
 .act-sub { font-size:23rpx; color:$ink-2; margin-top:8rpx; display:block; }
@@ -401,4 +436,232 @@ export default {
 .empty { color:$muted; font-size:26rpx; text-align:center; padding:30rpx 0; }
 .empty.sm { padding: 20rpx 0; }
 .empty-center { display:flex; align-items:center; justify-content:center; color:$muted; min-height:400rpx; }
+
+/* 1-3 标注稿：左/中/右约 337 / 591 / 353 */
+@media (min-width: 900px) and (orientation: landscape) {
+	.searchbar {
+		width: 25vw;
+		height: 5.2vh;
+		padding: 0 1.2vw;
+	}
+	.s-input, .new-btn {
+		font-size: clamp(12px, .95vw, 15px);
+	}
+	.new-btn {
+		height: 5.4vh;
+		padding: 0 1.5vw;
+	}
+	.tabs {
+		height: 6.4vh;
+		margin-bottom: 1.2vh;
+		gap: .75vw;
+		flex-wrap: nowrap;
+	}
+	.tab {
+		flex: 1;
+		box-sizing: border-box;
+		text-align: center;
+		padding: .9vh .8vw;
+		font-size: clamp(12px, .95vw, 15px);
+	}
+	.cm {
+		gap: .75vw;
+	}
+	.col-list {
+		flex: 337;
+	}
+	.col-center {
+		flex: 591;
+		gap: 1.2vh;
+		overflow: hidden;
+	}
+	.col-side {
+		flex: 353;
+		gap: 1.2vh;
+		overflow: hidden;
+	}
+	.cl-title, .sc-title {
+		font-size: clamp(15px, 1.2vw, 19px);
+		margin-bottom: .8vh;
+	}
+	.cl-card {
+		height: 16.2vh;
+		box-sizing: border-box;
+		border-radius: 12px;
+		padding: 1.2vh .9vw;
+		margin-bottom: 1vh;
+	}
+	.cl-img {
+		width: 5.1vw;
+		height: 10.8vh;
+		border-radius: 9px;
+	}
+	.cl-body {
+		margin-left: .8vw;
+	}
+	.cl-name {
+		font-size: clamp(13px, 1.05vw, 17px);
+	}
+	.cl-tag {
+		margin-top: .55vh;
+		padding: .3vh .65vw;
+		font-size: clamp(10px, .76vw, 12px);
+	}
+	.cl-foot {
+		margin-top: .65vh;
+	}
+	.cl-status, .cl-deadline {
+		font-size: clamp(10px, .78vw, 13px);
+	}
+	.cl-remain-num {
+		font-size: clamp(12px, .92vw, 15px);
+	}
+
+	/* 画像卡按内容自适应，避免固定高度叠加 overflow:hidden 把姓名和偏好裁掉 */
+	.profile {
+		height: auto;
+		flex: none;
+		padding-bottom: .4vh;
+	}
+	.pf-cover {
+		height: 10.5vh;
+	}
+	/* 只让头像压住封面，姓名与按钮对齐到封面下方，避免被封面遮住 */
+	.pf-head {
+		padding: 0 1.2vw;
+		margin-top: -2.6vh;
+		align-items: flex-end;
+	}
+	.pf-avatar {
+		width: 4.8vw;
+		height: 4.8vw;
+	}
+	.pf-name {
+		font-size: clamp(17px, 1.45vw, 23px);
+	}
+	.pf-follow {
+		height: 5.2vh;
+		padding: 0 1.35vw;
+		font-size: clamp(12px, .95vw, 15px);
+	}
+	.pf-pref {
+		padding: 1.2vh 1.2vw;
+	}
+	.pf-pref-label {
+		font-size: clamp(11px, .85vw, 14px);
+	}
+	.pf-pref-chips {
+		margin-top: .65vh;
+	}
+	.chip-mini {
+		font-size: clamp(10px, .76vw, 12px);
+	}
+	.progress-card {
+		height: auto;
+		box-sizing: border-box;
+		padding: 1.4vh 1.2vw;
+		flex: none;
+	}
+	.pc-head {
+		margin-bottom: 1.2vh;
+	}
+	.pc-title {
+		font-size: clamp(14px, 1.1vw, 18px);
+	}
+	.pc-pct {
+		font-size: clamp(24px, 2vw, 32px);
+	}
+	.st-dot {
+		width: 26px;
+		height: 26px;
+		font-size: 14px;
+	}
+	.st-l {
+		font-size: clamp(10px, .75vw, 12px);
+	}
+	.life-card {
+		flex: 1;
+		min-height: 0;
+		padding: 1.4vh 1.2vw;
+	}
+	/* 环形图与右侧文案贴着卡片顶部，多余高度留给底部周历 */
+	.life-top {
+		flex: none;
+		align-items: center;
+		gap: 1.4vw;
+	}
+	.ring {
+		width: 9.5vw;
+		height: 9.5vw;
+	}
+	.ring-hole {
+		width: 6.8vw;
+		height: 6.8vw;
+	}
+	.ring-num {
+		font-size: clamp(12px, .9vw, 15px);
+	}
+	.ring-num .big {
+		font-size: clamp(27px, 2.25vw, 36px);
+	}
+	.ring-sub {
+		font-size: clamp(10px, .72vw, 12px);
+	}
+	.life-label {
+		font-size: clamp(12px, .9vw, 15px);
+	}
+	.life-date {
+		font-size: clamp(29px, 2.5vw, 40px);
+	}
+	.life-btn {
+		height: 5.4vh;
+		font-size: clamp(12px, .95vw, 15px);
+	}
+	.life-week {
+		margin-top: auto;
+		padding-top: 1vh;
+	}
+	.lw-l, .lw-d {
+		font-size: clamp(9px, .7vw, 11px);
+	}
+
+	.act-card {
+		height: 28%;
+		box-sizing: border-box;
+	}
+	.tl-card.grow {
+		height: 33%;
+		max-height: none;
+		box-sizing: border-box;
+		overflow-y: auto;
+	}
+	.sug-card {
+		height: 25%;
+		box-sizing: border-box;
+	}
+	.act-card, .tl-card, .sug-card {
+		padding: 1.5vh 1.15vw;
+		border-radius: 13px;
+	}
+	.act-box {
+		padding: 1.2vh 1vw;
+		margin: .8vh 0;
+	}
+	.act-main {
+		font-size: clamp(14px, 1.12vw, 18px);
+	}
+	.act-sub, .tl-text, .sug-text {
+		font-size: clamp(11px, .86vw, 14px);
+	}
+	.act-btn {
+		height: 5.4vh;
+		font-size: clamp(13px, 1vw, 16px);
+	}
+	.tl-item {
+		padding: .8vh 0;
+	}
+	.tl-date {
+		font-size: clamp(10px, .76vw, 12px);
+	}
+}
 </style>

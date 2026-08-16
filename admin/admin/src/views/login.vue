@@ -3,13 +3,13 @@
     <!-- 左侧品牌区 -->
     <div class="brand-side">
       <div class="brand-inner">
-        <div class="brand-logo">摄</div>
-        <div class="brand-name">照相馆预约系统</div>
-        <div class="brand-en">PROFESSIONAL PHOTO STUDIO</div>
-        <div class="brand-sub">证件照 · 形象照 · 写真 · 亲子全家福 预约管理后台</div>
+        <div class="brand-logo"><i class="el-icon-video-play"></i></div>
+        <div class="brand-name">合意传媒</div>
+        <div class="brand-en">HEYI&nbsp;MEDIA</div>
+        <div class="brand-sub">轻视频 · 内容 · 增长 —— 合意传媒运营管理平台</div>
         <ul class="brand-points">
-          <li><i class="el-icon-camera"></i> 套系 / 排期 / 订单全流程管理</li>
-          <li><i class="el-icon-picture-outline"></i> 客片成品在线交付</li>
+          <li><i class="el-icon-user"></i> 客户 / 订单 / 素材 全流程管理</li>
+          <li><i class="el-icon-video-camera"></i> 成品在线交付与优质案例沉淀</li>
           <li><i class="el-icon-data-line"></i> 经营数据一目了然</li>
         </ul>
       </div>
@@ -41,7 +41,7 @@
           </div>
           <el-button type="primary" @click="login()" class="login-btn">登 录</el-button>
         </el-form>
-        <div class="login-foot">© 照相馆预约系统</div>
+        <div class="login-foot">© 合意传媒 · 运营管理后台</div>
       </div>
     </div>
   </div>
@@ -173,12 +173,12 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-$primary: #B49A6B;
-$primary-deep: #8C7853;
-$primary-soft: #F3EEE4;
-$ink: #222;
-$ink-2: #666;
-$ink-3: #999;
+$primary: #2F6BFF;
+$primary-deep: #1E52D6;
+$primary-soft: #EAF1FF;
+$ink: #1F2733;
+$ink-2: #5a6473;
+$ink-3: #9aa3b2;
 
 .login-page {
   position: fixed;
@@ -192,7 +192,7 @@ $ink-3: #999;
   position: relative;
   flex: 1.1;
   overflow: hidden;
-  background: linear-gradient(150deg, #5A4B33 0%, #8C7853 45%, #B49A6B 100%);
+  background: linear-gradient(150deg, #0B1E4D 0%, #1E52D6 48%, #2F6BFF 100%);
   color: #fff;
   display: flex;
   align-items: center;
@@ -313,8 +313,8 @@ $ink-3: #999;
       height: 50px;
       line-height: 50px;
       border-radius: 12px;
-      background: #F7F6F3;
-      border: 1px solid #ECE8DF;
+      background: #F5F8FF;
+      border: 1px solid #E3ECFF;
       padding-left: 42px;
       font-size: 15px;
 
@@ -380,7 +380,7 @@ $ink-3: #999;
     margin-top: 28px;
     text-align: center;
     font-size: 12px;
-    color: #c4c0b6;
+    color: #9aa3b2;
   }
 }
 

@@ -21,6 +21,11 @@
 			"navigationStyle": "custom"
 		}
 	}, {
+		"path": "pages/material/library",
+		"style": {
+			"navigationStyle": "custom"
+		}
+	}, {
 		"path": "pages/customer/customer",
 		"style": {
 			"navigationStyle": "custom"

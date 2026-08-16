@@ -4,6 +4,30 @@
       <span class="page-title">{{ pageTitle }}</span>
     </div>
     <div class="navbar-right">
+      <el-dropdown trigger="click" class="month-picker" @command="onMonth">
+        <span class="month-btn">
+          <i class="el-icon-date"/>
+          <span>{{ monthLabel }}</span>
+          <i class="el-icon-arrow-down"/>
+        </span>
+        <el-dropdown-menu slot="dropdown">
+          <el-dropdown-item command="本月">本月</el-dropdown-item>
+          <el-dropdown-item command="上月">上月</el-dropdown-item>
+          <el-dropdown-item command="本季度">本季度</el-dropdown-item>
+          <el-dropdown-item command="本年">本年</el-dropdown-item>
+        </el-dropdown-menu>
+      </el-dropdown>
+
+      <div class="nav-search">
+        <i class="el-icon-search"/>
+        <input v-model="keyword" placeholder="搜索订单、客户、素材、员工" @keyup.enter="onSearch"/>
+      </div>
+
+      <div class="nav-bell">
+        <i class="el-icon-bell"/>
+        <span class="bell-dot"></span>
+      </div>
+
       <el-dropdown trigger="click" @command="handleCommand">
         <span class="user-info">
           <span class="user-avatar">{{ avatarText }}</span>
@@ -25,6 +49,8 @@ export default {
   data() {
     return {
       user: {},
+      keyword: '',
+      monthLabel: '本月',
     };
   },
   computed: {
@@ -49,6 +75,13 @@ export default {
     });
   },
   methods: {
+    onMonth(cmd) {
+      this.monthLabel = cmd
+    },
+    onSearch() {
+      if (!this.keyword) return
+      this.$message({ message: '搜索：' + this.keyword, type: 'info' })
+    },
     handleCommand(command) {
       if (command === 'logout') {
         this.onLogout()
@@ -105,7 +138,7 @@ export default {
         width: 4px;
         height: 18px;
         border-radius: 2px;
-        background: #B49A6B;
+        background: #2F6BFF;
       }
     }
   }
@@ -113,6 +146,72 @@ export default {
   .navbar-right {
     display: flex;
     align-items: center;
+    gap: 16px;
+
+    .month-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 8px;
+      border: 1px solid #e4e7ed;
+      background: #fff;
+      font-size: 13px;
+      color: #4a5566;
+
+      .el-icon-arrow-down { font-size: 12px; color: #909399; }
+      &:hover { border-color: #2F6BFF; color: #2F6BFF; }
+    }
+
+    .nav-search {
+      display: flex;
+      align-items: center;
+      width: 300px;
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 8px;
+      background: #f4f6fa;
+      color: #909399;
+
+      i { font-size: 15px; margin-right: 8px; }
+
+      input {
+        flex: 1;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 13px;
+        color: #303133;
+      }
+    }
+
+    .nav-bell {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #4a5566;
+      font-size: 18px;
+
+      &:hover { background: #f4f6fa; }
+
+      .bell-dot {
+        position: absolute;
+        top: 7px;
+        right: 8px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #E8423F;
+        border: 1.5px solid #fff;
+      }
+    }
 
     .user-info {
       display: flex;
@@ -123,14 +222,14 @@ export default {
       transition: background .2s;
 
       &:hover {
-        background: #F3EEE4;
+        background: #f0f5ff;
       }
 
       .user-avatar {
         width: 34px;
         height: 34px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #C9B187, #A6885A);
+        background: linear-gradient(135deg, #4f8bff, #2F6BFF);
         color: #fff;
         font-size: 15px;
         font-weight: 600;
