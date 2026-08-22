@@ -45,6 +45,16 @@
 		<!-- 菜单 -->
 		<view class="menu">
 			<block v-if="tableName == 'yonghu'">
+				<view class="row" hover-class="row-hover" @tap="goHy('service')">
+					<text class="cuIcon-service row-icon"></text>
+					<text class="row-text">我的服务</text>
+					<text class="cuIcon-right row-arrow"></text>
+				</view>
+				<view class="row" hover-class="row-hover" @tap="goHy('content')">
+					<text class="cuIcon-pic row-icon"></text>
+					<text class="row-text">我的内容</text>
+					<text class="cuIcon-right row-arrow"></text>
+				</view>
 				<view class="row" hover-class="row-hover" @tap="goPage('../preference/preference')">
 					<text class="cuIcon-newshot row-icon"></text>
 					<text class="row-text">拍摄偏好</text>
@@ -167,6 +177,24 @@
 					}
 				});
 			},
+			async goHy(which) {
+				const phone = this.user && this.user.shoujihaoma;
+				if (!phone) {
+					uni.showToast({ title: '请先完善手机号', icon: 'none' });
+					return;
+				}
+				try {
+					const res = await http.get('hyCustomer/bindByPhone', { phone });
+					const c = res.data || {};
+					if (c.id) {
+						uni.setStorageSync('hyCustomerId', c.id);
+						uni.setStorageSync('hyCustomerName', c.name || '');
+					}
+					uni.navigateTo({
+						url: which === 'content' ? '../hy-content/content' : '../hy-service/service'
+					});
+				} catch (e) {}
+			},
 			onPageTap(url) {
 				uni.setStorageSync("useridTag", 1);
 				uni.navigateTo({
@@ -188,6 +216,8 @@
 							uni.removeStorageSync('nowTable');
 							uni.removeStorageSync('role');
 							uni.removeStorageSync('userid');
+							uni.removeStorageSync('hyCustomerId');
+							uni.removeStorageSync('hyCustomerName');
 							uni.reLaunch({
 								url: '../login/login'
 							});

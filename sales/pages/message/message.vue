@@ -20,7 +20,7 @@
 					<image class="a-thumb" :src="$img(coverOfAction(a))" mode="aspectFill"></image>
 					<view class="a-content">
 					<view class="a-top">
-						<text class="a-tag" :class="tagClass(a.type)">{{ tagText(a.type) }}</text>
+						<text class="a-tag" :class="tagClass(a.type)">{{ tagLabel(a) }}</text>
 						<text class="a-cust">{{ a.customerName }}</text>
 					</view>
 					<view class="a-mid">
@@ -46,12 +46,14 @@
 						</view>
 						<view class="a-actions">
 							<template v-if="a.type==='待付款'">
-								<view class="btn btn-danger ab" @click="contact(a)">联系客户</view>
+								<view class="btn btn-danger ab" @click="confirmPay(a)">确认收款</view>
+								<view class="btn btn-ghost ab" @click="contact(a)">联系客户</view>
 								<view class="btn btn-ghost ab" @click="recordFollow(a)">记录跟进</view>
 								<view class="btn btn-ghost ab" @click="viewPlan(a)">查看内容方案</view>
 							</template>
 							<template v-else-if="a.type==='制作预警'">
-								<view class="btn ab intervene" @click="resolve(a,'已发起内部干预')">↗ 发起内部干预</view>
+								<view v-if="a.canIntervene==1" class="btn ab intervene" @click="resolve(a,'已发起内部干预')">↗ 发起内部干预</view>
+								<text v-else class="a-watch">已过半 · 黄色关注（未达 2/3 或进度未落后）</text>
 								<view class="btn btn-ghost ab" @click="viewProgress(a)">查看制作进度</view>
 							</template>
 							<template v-else-if="a.type==='客诉'">
@@ -146,12 +148,14 @@ export default {
 	},
 	methods: {
 		load() {
-			this.$api.page('hyActionItem', { page: 1, limit: 50, belong: '销售', status: '待处理' }).then(res => {
-				this.actions = (res.data && res.data.list) || []
-			})
-			this.$api.page('hyActionItem', { page: 1, limit: 50, belong: '销售', status: '处理中' }).then(res => {
-				const proc = (res.data && res.data.list) || []
-				this.actions = this.actions.concat(proc)
+			this.$api.get('hyActionItem/refreshProgress').finally(() => {
+				this.$api.page('hyActionItem', { page: 1, limit: 50, belong: '销售', status: '待处理' }).then(res => {
+					this.actions = (res.data && res.data.list) || []
+					this.$api.page('hyActionItem', { page: 1, limit: 50, belong: '销售', status: '处理中' }).then(res2 => {
+						const proc = (res2.data && res2.data.list) || []
+						this.actions = this.actions.concat(proc)
+					})
+				})
 			})
 			this.$api.page('hyMessage', { page: 1, limit: 20 }).then(res => {
 				this.messages = (res.data && res.data.list) || []
@@ -161,7 +165,13 @@ export default {
 			if (f.key === 'all') return this.actions.length
 			return this.actions.filter(a => a.type === f.type).length
 		},
-		tagText(t) { return ({ '待付款': '待付款', '制作预警': '允许干预', '客诉': '客户投诉', '库存不足': '内容库存不足' })[t] || t },
+		tagLabel(a) {
+			if (a.type === '制作预警') return a.canIntervene == 1 ? '允许干预' : '黄色关注'
+			return ({ '待付款': '待付款', '客诉': '客户投诉', '库存不足': '内容库存不足' })[a.type] || a.type
+		},
+		tagText(t) {
+			return ({ '待付款': '待付款', '制作预警': '制作预警', '客诉': '客户投诉', '库存不足': '内容库存不足' })[t] || t
+		},
 		tagClass(t) { return ({ '待付款': 'orange', '制作预警': 'green', '客诉': 'red', '库存不足': 'blue' })[t] || 'blue' },
 		coverOfMsg(m) { return 'upload/studio_cover_1.jpg' },
 		coverOfAction(a) {
@@ -175,12 +185,33 @@ export default {
 				this.load()
 			})
 		},
-		contact(a) { uni.showToast({ title: '联系客户（演示）', icon: 'none' }) },
+		confirmPay(a) {
+			uni.showModal({
+				title: '确认收款',
+				content: `确认「${a.customerName}」已付款？将自动生成订单。`,
+				success: (r) => {
+					if (!r.confirm) return
+					this.$api.post('hyCustomer/confirmPay', { customerId: a.customerId }).then(res => {
+						const no = (res.data && res.data.orderNo) || ''
+						uni.showToast({ title: no ? `订单已生成 ${no}` : '订单已生成', icon: 'success' })
+						this.load()
+					})
+				}
+			})
+		},
+		contact(a) {
+			uni.navigateTo({ url: `/pages/customer/customer?id=${a.customerId}` })
+		},
 		recordFollow(a) { uni.navigateTo({ url: `/pages/customer/follow?customerId=${a.customerId}&customerName=${encodeURIComponent(a.customerName)}` }) },
 		viewPlan(a) { uni.navigateTo({ url: `/pages/customer/customer?id=${a.customerId}` }) },
 		viewProgress(a) { uni.navigateTo({ url: `/pages/order/order` }) },
 		viewPref(a) { uni.navigateTo({ url: `/pages/customer/customer?id=${a.customerId}` }) },
-		viewDone() { uni.showToast({ title: '已完成事项（演示）', icon: 'none' }) }
+		viewDone() {
+			this.$api.page('hyActionItem', { page: 1, limit: 30, belong: '销售', status: '已完成' }).then(res => {
+				const n = (res.data && res.data.total) || 0
+				uni.showToast({ title: `已完成事项 ${n} 条`, icon: 'none' })
+			})
+		}
 	}
 }
 </script>
@@ -223,6 +254,7 @@ export default {
 .ab { height:64rpx; padding:0 26rpx; font-size:24rpx; }
 .intervene { background:#E8F7F0; color:#22B07D; }
 .renew { background:#EAF1FF; color:#2F6BFF; }
+.a-watch { font-size:22rpx; color:#B8791F; max-width:220rpx; line-height:1.4; }
 
 .thresh { margin-top:18rpx; }
 .th-bar { position:relative; height:10rpx; background:#EEF1F5; border-radius:999rpx; margin:16rpx 0; }
@@ -265,7 +297,7 @@ export default {
 .empty { color:$muted; text-align:center; padding:40rpx 0; }
 
 /* 1-6 标注稿：主行动区约 1014，右侧消息栏约 254 */
-@media (min-width: 900px) and (orientation: landscape) {
+@media #{$pad-mq-landscape} {
 	.searchbar {
 		width: 22vw;
 		height: 5.2vh;

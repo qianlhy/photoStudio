@@ -331,17 +331,26 @@ export default {
 }
 
 /*
- * Pad 横屏按设计稿的“白色屏幕内容区”缩放。
- * 原稿 1586×992 含设备外壳，实际 UI 内容约 1466×869；
- * 因此不能直接把整张图当作 16:10 页面尺寸。
+ * Pad 横屏：设计基准 1280×800（16:10）
  */
-@media (min-width: 900px) and (orientation: landscape) {
+@media #{$pad-mq-landscape} {
 	.topbar {
 		height: 10vh;
 		padding: 0 2.1vw;
 	}
 	.brand {
 		font-size: clamp(20px, 1.7vw, 27px);
+	}
+	.page-title {
+		margin-left: 1.2vw;
+		max-width: 16vw;
+	}
+	.page-title .pt-title {
+		font-size: clamp(18px, 1.55vw, 25px);
+		line-height: 1.2;
+	}
+	.page-title .pt-sub {
+		font-size: clamp(11px, .85vw, 14px);
 	}
 	.center .title {
 		font-size: clamp(18px, 1.55vw, 25px);

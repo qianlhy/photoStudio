@@ -12,6 +12,12 @@ $warn: #FF8A3D;           /* 橙 */
 $ok: #22B07D;             /* 绿 */
 $radius: 20rpx;
 
+/* 设计基准：1280×800 横屏 Pad（16:10，与小米平板6 Pro 同比例） */
+$pad-design-w: 1280;
+$pad-design-h: 800;
+$pad-landscape-min-w: 900px;
+$pad-mq-landscape: "(min-width: #{$pad-landscape-min-w}) and (orientation: landscape)";
+
 /* 五类内容配色（厨过程/教知识/讲故事/说观点/硬广） */
 $c-process: #7C5CFF;
 $c-knowledge: #2F6BFF;

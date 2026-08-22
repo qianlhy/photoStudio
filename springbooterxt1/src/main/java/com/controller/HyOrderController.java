@@ -63,6 +63,10 @@ public class HyOrderController {
         return R.ok().put("data", order).put("items", items);
     }
 
+    /**
+     * 管理端补录订单。正常闭环请走 /hyCustomer/confirmPay（付款成功后建单）。
+     * 禁止写入「待付款」状态。
+     */
     @PostMapping("/save")
     public R save(@RequestBody HyOrderEntity entity) {
         entity.setId(HyId.next());
@@ -71,7 +75,12 @@ public class HyOrderController {
             entity.setOrderNo("YJ-" + new SimpleDateFormat("MMdd").format(new Date()) + "-"
                     + (int) (Math.random() * 900 + 100));
         }
-        if (entity.getStatus() == null) entity.setStatus("待拍摄");
+        if (entity.getStatus() == null || "待付款".equals(entity.getStatus())) {
+            entity.setStatus("待拍摄");
+        }
+        if (!("待拍摄".equals(entity.getStatus()) || "待交付".equals(entity.getStatus()) || "已完成".equals(entity.getStatus()))) {
+            entity.setStatus("待拍摄");
+        }
         service.insert(entity);
         return R.ok().put("id", entity.getId());
     }

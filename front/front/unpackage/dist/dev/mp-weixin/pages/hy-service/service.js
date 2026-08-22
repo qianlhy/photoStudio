@@ -269,21 +269,55 @@ var _default = {
           _this2.order = list[0] || {};
         });
       };
-      if (this.customerId) {
-        finish(this.customerId);
+      this.bindThen(finish);
+    },
+    bindThen: function bindThen(finish) {
+      var _this3 = this;
+      var cached = uni.getStorageSync('hyCustomerId');
+      if (cached) {
+        this.customerId = cached;
+        finish(cached);
         return;
       }
-      // 兜底：取第一个客户用于演示
-      this.$api.page('hyCustomer', {
-        page: 1,
-        limit: 1
-      }).then(function (res) {
-        var c = res.data && res.data.list && res.data.list[0] || {};
-        _this2.customerId = c.id;
-        if (c.id) {
-          uni.setStorageSync('hyCustomerId', c.id);
-          finish(c.id);
+      var table = uni.getStorageSync('nowTable') || 'yonghu';
+      this.$api.session(table).then(function (res) {
+        var u = res.data || {};
+        var phone = u.shoujihaoma;
+        if (!phone) {
+          uni.showToast({
+            title: '请先完善手机号以查看服务',
+            icon: 'none'
+          });
+          return;
         }
+        uni.request({
+          url: _this3.$base.url + 'hyCustomer/bindByPhone',
+          method: 'GET',
+          data: {
+            phone: phone
+          },
+          header: {
+            Token: uni.getStorageSync('token')
+          },
+          success: function success(r) {
+            var body = r.data || {};
+            if (body.code === 0 && body.data && body.data.id) {
+              _this3.customerId = body.data.id;
+              uni.setStorageSync('hyCustomerId', body.data.id);
+              finish(body.data.id);
+            } else {
+              uni.showToast({
+                title: body.msg || '未绑定服务账号',
+                icon: 'none'
+              });
+            }
+          }
+        });
+      }).catch(function () {
+        uni.showToast({
+          title: '请先登录',
+          icon: 'none'
+        });
       });
     },
     md: function md(t) {
@@ -303,16 +337,16 @@ var _default = {
       });
     },
     askQuestion: function askQuestion() {
-      var _this3 = this;
+      var _this4 = this;
       uni.showModal({
         title: '提交问题',
         editable: true,
         placeholderText: '请描述您的问题',
         success: function success(r) {
           if (r.confirm && r.content) {
-            _this3.$api.save('hyMessage', {
-              customerId: _this3.customerId,
-              customerName: _this3.customer.name,
+            _this4.$api.save('hyMessage', {
+              customerId: _this4.customerId,
+              customerName: _this4.customer.name,
               title: r.content,
               content: r.content,
               type: '客户问题',
@@ -328,9 +362,34 @@ var _default = {
       });
     },
     viewRecords: function viewRecords() {
-      uni.showToast({
-        title: '服务记录（演示）',
-        icon: 'none'
+      if (!this.customerId) {
+        uni.showToast({
+          title: '暂无服务记录',
+          icon: 'none'
+        });
+        return;
+      }
+      this.$api.page('hyFollowRecord', {
+        page: 1,
+        limit: 5,
+        customerId: this.customerId
+      }).then(function (res) {
+        var list = res.data && res.data.list || [];
+        if (!list.length) {
+          uni.showToast({
+            title: '暂无服务记录',
+            icon: 'none'
+          });
+          return;
+        }
+        var text = list.map(function (t) {
+          return t.summary || t.contactResult || t.nextAction || '跟进记录';
+        }).slice(0, 3).join('\n');
+        uni.showModal({
+          title: '服务记录',
+          content: text,
+          showCancel: false
+        });
       });
     },
     goContent: function goContent() {

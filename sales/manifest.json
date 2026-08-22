@@ -1,15 +1,17 @@
 {
     "name" : "合意传媒-销售经理端",
-    "appid" : "__UNI__HYSALES",
-    "description" : "合意传媒 销售经理 pad 端",
-    "versionName" : "1.0.0",
-    "versionCode" : "100",
+    "appid" : "__UNI__309C821",
+    "description" : "合意传媒 销售经理 pad 端（1280×800横屏设计基准）",
+    "versionName" : "1.0.1",
+    "versionCode" : "101",
     "transformPx" : false,
     "app-plus" : {
         "usingComponents" : true,
         "nvueCompiler" : "uni-app",
         "compilerVersion" : 3,
         "screenOrientation" : [ "landscape-primary", "landscape-secondary" ],
+        "fullscreen" : true,
+        "softinputNavBar" : "none",
         "splashscreen" : {
             "alwaysShowBeforeRender" : true,
             "waiting" : true,
@@ -19,6 +21,9 @@
         "modules" : {},
         "distribute" : {
             "android" : {
+                "abiFilters" : [ "armeabi-v7a", "arm64-v8a" ],
+                "minSdkVersion" : 21,
+                "targetSdkVersion" : 30,
                 "permissions" : [
                     "<uses-permission android:name=\"android.permission.CAMERA\"/>",
                     "<uses-permission android:name=\"android.permission.CALL_PHONE\"/>",
@@ -26,7 +31,9 @@
                     "<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\"/>"
                 ]
             },
-            "ios" : {},
+            "ios" : {
+                "dSYMs" : false
+            },
             "sdkConfigs" : {}
         }
     },

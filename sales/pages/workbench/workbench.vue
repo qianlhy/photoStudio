@@ -176,11 +176,32 @@ export default {
 			uni.navigateTo({ url: '/pages/customer/customer' })
 		},
 		scanOldCustomer() {
+			const openCustomer = (raw) => {
+				let id = String(raw || '').trim()
+				const m = id.match(/hyCustomer[:/=]?(\d+)/i) || id.match(/customerId[=:](\d+)/i) || id.match(/^(\d{5,})$/)
+				if (m) {
+					uni.navigateTo({ url: `/pages/customer/customer?id=${m[1]}` })
+					return
+				}
+				uni.showToast({ title: '未识别到客户码，已进入客户列表', icon: 'none' })
+				uni.navigateTo({ url: '/pages/customer/customer' })
+			}
 			// #ifdef APP-PLUS || MP-WEIXIN
-			uni.scanCode({ success: () => uni.navigateTo({ url: '/pages/customer/customer' }) })
+			uni.scanCode({
+				success: (res) => openCustomer(res.result),
+				fail: () => uni.navigateTo({ url: '/pages/customer/customer' })
+			})
 			// #endif
 			// #ifdef H5
-			uni.navigateTo({ url: '/pages/customer/customer' })
+			uni.showModal({
+				title: '扫码识别老客户',
+				editable: true,
+				placeholderText: '粘贴客户码，如 hyCustomer:6001',
+				success: (r) => {
+					if (r.confirm) openCustomer(r.content)
+					else uni.navigateTo({ url: '/pages/customer/customer' })
+				}
+			})
 			// #endif
 		},
 		openCustomer(r) {
@@ -550,8 +571,8 @@ export default {
 	padding: 24rpx 0;
 }
 
-/* 1280×800 等 16:10 安卓 Pad：按 PxCook 中 1-1 的标注比例还原 */
-@media (min-width: 900px) and (orientation: landscape) {
+/* 1280×800 横屏 Pad：按 PxCook 标注比例 */
+@media #{$pad-mq-landscape} {
 	.wb {
 		gap: .65vw;
 	}

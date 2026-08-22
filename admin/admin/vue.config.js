@@ -36,7 +36,7 @@ module.exports = {
         https: false, // 是否开启https模式
         proxy: { // 请求代理服务器
             '/ssm48yhg': { //带上api前缀的
-                target: 'http://localhost:8080/ssm48yhg/', //代理目标地址
+                target: 'http://hycm.baibaiyeye.com.cn/ssm48yhg/', //代理目标地址
                 changeOrigin: true,
                 secure: false,
                 pathRewrite: { // 在发出请求后将/api替换为''空值，这样不影响接口请求

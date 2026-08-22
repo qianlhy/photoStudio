@@ -94,10 +94,11 @@
 			<version>${fastjson.version}</version>
 		</dependency>
 
-		<!-- Lombok：简化合意传媒新模块实体类样板代码 -->
+		<!-- Lombok：简化合意传媒新模块实体类样板代码（1.18.30 兼容 JDK 17） -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
+			<version>1.18.30</version>
 			<optional>true</optional>
 		</dependency>
 	

@@ -23,8 +23,10 @@
 			<!-- 视频区 -->
 			<view class="stage">
 				<view v-if="current" class="player">
-					<video v-if="current.video" class="video" :src="$img(current.video)" :poster="$img(current.cover)"
-						controls></video>
+					<video v-if="current.video" :key="'v-' + current.id + '-' + idx" class="video"
+						:src="videoSrc(current)" :poster="$img(current.cover)"
+						controls autoplay object-fit="contain" show-center-play-btn
+						@error="onVideoError"></video>
 					<image v-else class="video poster" :src="$img(current.cover)" mode="aspectFill"></image>
 					<view class="overlay">
 						<text class="ov-title">{{ current.title }}</text>
@@ -170,6 +172,12 @@ export default {
 		}
 	},
 	methods: {
+		videoSrc(m) {
+			return m && m.video ? this.$img(m.video) : ''
+		},
+		onVideoError() {
+			uni.showToast({ title: '视频加载失败，请确认服务器已上传样片', icon: 'none' })
+		},
 		loadSession() {
 			this.$api.info('hySelectionSession', this.sessionId).then(res => {
 				const s = res.data
@@ -323,7 +331,7 @@ export default {
 					confirmed: 0
 				}
 				this.$api.save('hyContentPlan', plan).then(() => {
-					uni.showToast({ title: '方案已生成', icon: 'success' })
+					uni.showToast({ title: '方案已生成，客户进入待付款', icon: 'success' })
 					setTimeout(() => {
 						uni.redirectTo({ url: `/pages/customer/customer?id=${this.customerId}` })
 					}, 600)
@@ -661,7 +669,7 @@ export default {
 }
 
 /* 1-2 标注稿：主舞台 1027、右栏 374、栏间距 16 */
-@media (min-width: 900px) and (orientation: landscape) {
+@media #{$pad-mq-landscape} {
 	.topbar {
 		height: 8vh;
 		padding: 0 4.2vw;

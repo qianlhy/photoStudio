@@ -175,4 +175,39 @@ export default {
 	font-size: 22rpx;
 	color: $muted;
 }
+
+/* 小米平板 6 Pro 横屏登录页 */
+@media #{$pad-mq-landscape} {
+	.login-card {
+		width: 520px;
+		max-width: 36vw;
+		padding: 48px 56px 40px;
+		border-radius: 20px;
+	}
+	.logo {
+		font-size: 34px;
+	}
+	.slogan {
+		font-size: 16px;
+		margin-bottom: 36px;
+	}
+	.field {
+		height: 52px;
+		margin-bottom: 18px;
+		border-radius: 12px;
+	}
+	.field input {
+		font-size: 16px;
+	}
+	.btn-login {
+		height: 52px;
+		line-height: 52px;
+		font-size: 18px;
+		border-radius: 12px;
+	}
+	.tip {
+		font-size: 13px;
+		margin-top: 20px;
+	}
+}
 </style>

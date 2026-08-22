@@ -241,7 +241,7 @@ export default {
 .recent-name { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:#fff; font-size:24rpx; font-weight:600; white-space:nowrap; text-shadow:0 2rpx 8rpx rgba(0,0,0,.5); z-index:2; }
 .recent-clock { position:absolute; right:10rpx; top:8rpx; color:#fff; z-index:2; }
 
-@media (min-width:900px) and (orientation:landscape) {
+@media #{$pad-mq-landscape} {
 	.searchbar { width:25vw; height:5.2vh; padding:0 1.2vw; }
 	.s-input,.total { font-size:clamp(12px,.95vw,15px); }
 	.library { gap:1.1vh; }

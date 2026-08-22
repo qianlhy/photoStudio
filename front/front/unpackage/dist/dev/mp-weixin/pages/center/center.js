@@ -253,6 +253,16 @@ var _http = _interopRequireDefault(__webpack_require__(/*! @/api/http.js */ 35))
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   data: function data() {
     return {
@@ -378,6 +388,53 @@ var _default = {
         }
       });
     },
+    goHy: function goHy(which) {
+      var _this3 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
+        var phone, res, c;
+        return _regenerator.default.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                phone = _this3.user && _this3.user.shoujihaoma;
+                if (phone) {
+                  _context3.next = 4;
+                  break;
+                }
+                uni.showToast({
+                  title: '请先完善手机号',
+                  icon: 'none'
+                });
+                return _context3.abrupt("return");
+              case 4:
+                _context3.prev = 4;
+                _context3.next = 7;
+                return _http.default.get('hyCustomer/bindByPhone', {
+                  phone: phone
+                });
+              case 7:
+                res = _context3.sent;
+                c = res.data || {};
+                if (c.id) {
+                  uni.setStorageSync('hyCustomerId', c.id);
+                  uni.setStorageSync('hyCustomerName', c.name || '');
+                }
+                uni.navigateTo({
+                  url: which === 'content' ? '../hy-content/content' : '../hy-service/service'
+                });
+                _context3.next = 15;
+                break;
+              case 13:
+                _context3.prev = 13;
+                _context3.t0 = _context3["catch"](4);
+              case 15:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, null, [[4, 13]]);
+      }))();
+    },
     onPageTap: function onPageTap(url) {
       uni.setStorageSync("useridTag", 1);
       uni.navigateTo({
@@ -399,6 +456,8 @@ var _default = {
             uni.removeStorageSync('nowTable');
             uni.removeStorageSync('role');
             uni.removeStorageSync('userid');
+            uni.removeStorageSync('hyCustomerId');
+            uni.removeStorageSync('hyCustomerName');
             uni.reLaunch({
               url: '../login/login'
             });

@@ -399,20 +399,45 @@ var _default = {
           _this2.refCount = p.totalCount || 0;
         });
       };
-      if (this.customerId) {
-        finish(this.customerId);
+      var cached = uni.getStorageSync('hyCustomerId');
+      if (cached) {
+        this.customerId = cached;
+        finish(cached);
         return;
       }
-      this.$api.page('hyCustomer', {
-        page: 1,
-        limit: 1
-      }).then(function (res) {
-        var c = res.data && res.data.list && res.data.list[0] || {};
-        _this2.customerId = c.id;
-        if (c.id) {
-          uni.setStorageSync('hyCustomerId', c.id);
-          finish(c.id);
+      var table = uni.getStorageSync('nowTable') || 'yonghu';
+      this.$api.session(table).then(function (res) {
+        var phone = res.data && res.data.shoujihaoma || '';
+        if (!phone) {
+          uni.showToast({
+            title: '请先完善手机号以查看内容',
+            icon: 'none'
+          });
+          return;
         }
+        uni.request({
+          url: _this2.$base.url + 'hyCustomer/bindByPhone',
+          method: 'GET',
+          data: {
+            phone: phone
+          },
+          header: {
+            Token: uni.getStorageSync('token')
+          },
+          success: function success(r) {
+            var body = r.data || {};
+            if (body.code === 0 && body.data && body.data.id) {
+              _this2.customerId = body.data.id;
+              uni.setStorageSync('hyCustomerId', body.data.id);
+              finish(body.data.id);
+            } else {
+              uni.showToast({
+                title: body.msg || '未绑定服务账号',
+                icon: 'none'
+              });
+            }
+          }
+        });
       });
     },
     play: function play(m) {

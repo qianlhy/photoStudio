@@ -44,7 +44,7 @@
 				<view class="card d-card">
 					<view class="d-head">
 						<text class="d-title">本次订单</text>
-						<view class="btn btn-ghost d-done" @click="finishOrder">✓ 完成订单</view>
+						<text class="d-readonly">销售只读 · 履约由制作侧更新</text>
 					</view>
 					<view class="d-cust">
 						<image class="dc-img" :src="$img(coverOf(selected))" mode="aspectFill"></image>
@@ -97,8 +97,8 @@
 						</view>
 					</view>
 					<view class="cc-foot">
-						<view class="btn btn-ghost" @click="upload">⤴ 上传交付成品</view>
-						<view class="btn btn-danger" @click="viewList">查看本次拍摄清单 ›</view>
+						<text class="cc-hint">正常制作阶段仅查看进度，不安排拍摄、不上传成品、不确认交付</text>
+						<view class="btn btn-ghost" @click="viewList">查看本次拍摄清单 ›</view>
 					</view>
 				</view>
 			</view>
@@ -212,19 +212,9 @@ export default {
 			const d = new Date(t.replace ? t.replace(/-/g, '/') : t)
 			return `${d.getMonth() + 1}月${d.getDate()}日`
 		},
-		finishOrder() {
-			if (!this.selected) return
-			this.$api.update('hyOrder', { id: this.selected.id, status: '已完成', completedCount: this.selected.videoCount }).then(() => {
-				uni.showToast({ title: '订单已完成', icon: 'success' })
-				this.loadCounts()
-				this.loadOrders()
-			})
-		},
-		upload() {
-			uni.showToast({ title: '上传交付成品（演示）', icon: 'none' })
-		},
 		viewList() {
-			uni.showToast({ title: '本次拍摄清单（演示）', icon: 'none' })
+			const n = (this.items || []).length
+			uni.showToast({ title: n ? `本次共 ${n} 条内容清单` : '暂无内容清单', icon: 'none' })
 		}
 	}
 }
@@ -268,6 +258,7 @@ export default {
 .d-card { padding:24rpx; }
 .d-head { display:flex; justify-content:space-between; align-items:center; }
 .d-title { font-size:28rpx; font-weight:600; }
+.d-readonly { font-size:22rpx; color:$muted; }
 .d-done { height:60rpx; padding:0 24rpx; font-size:24rpx; }
 .d-cust { display:flex; margin-top:20rpx; }
 .dc-img { width:110rpx; height:110rpx; border-radius:14rpx; background:#eee; }
@@ -297,13 +288,14 @@ export default {
 .it-check { position:absolute; top:8rpx; right:8rpx; width:32rpx; height:32rpx; border-radius:50%; background:rgba(255,255,255,.85); border:2rpx solid #D7DCE3; display:flex; align-items:center; justify-content:center; font-size:22rpx; color:#fff; }
 .it-check.done { background:#22B07D; border-color:#22B07D; }
 .it-name { font-size:20rpx; color:$ink-2; margin-top:8rpx; text-align:center; }
-.cc-foot { display:flex; gap:18rpx; margin-top:auto; padding-top:24rpx; }
-.cc-foot .btn { flex:1; height:84rpx; font-size:26rpx; }
+.cc-foot { display:flex; flex-direction:column; gap:18rpx; margin-top:auto; padding-top:24rpx; }
+.cc-hint { font-size:22rpx; color:$muted; line-height:1.5; }
+.cc-foot .btn { height:84rpx; font-size:26rpx; }
 
 .empty-center { display:flex; align-items:center; justify-content:center; color:$muted; min-height:400rpx; }
 
 /* 1-4 标注稿：订单列表 663、详情 609，卡片高约 210 */
-@media (min-width: 900px) and (orientation: landscape) {
+@media #{$pad-mq-landscape} {
 	.searchbar {
 		width: 27.7vw;
 		height: 5.2vh;
@@ -378,6 +370,18 @@ export default {
 		box-sizing: border-box;
 		padding: 1.4vh 1.2vw;
 		border-radius: 13px;
+	}
+	.d-head {
+		align-items: flex-start;
+		gap: .6vw;
+	}
+	.d-readonly {
+		font-size: clamp(10px, .78vw, 13px);
+		color: $muted;
+		max-width: 42%;
+		text-align: right;
+		line-height: 1.35;
+		flex-shrink: 1;
 	}
 	.d-title, .cc-title {
 		font-size: clamp(15px, 1.2vw, 19px);
@@ -470,6 +474,11 @@ export default {
 	.cc-foot {
 		padding-top: 1vh;
 		gap: .8vw;
+	}
+	.cc-hint {
+		font-size: clamp(10px, .78vw, 13px);
+		line-height: 1.45;
+		color: $muted;
 	}
 	.cc-foot .btn {
 		height: 5.7vh;

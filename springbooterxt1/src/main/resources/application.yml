@@ -10,8 +10,8 @@ spring:
     datasource:
         driverClassName: com.mysql.cj.jdbc.Driver
         url: jdbc:mysql://127.0.0.1:3306/ssm48yhg?characterEncoding=utf8&useSSL=false&serverTimezone=UTC&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true
-        username: root
-        password: root
+        username: ssm48yhg
+        password: h6iLDMDJdmfzj7Yr
 
 
 
@@ -70,4 +70,4 @@ wxpay:
   api-v3-key: your_api_v3_key
   cert-serial-no: your_cert_serial_no
   private-key-path: classpath:cert/apiclient_key.pem
-  notify-url: https://your.domain.com/ssm48yhg/wxpay/notify
+  notify-url: https://hycm.baibaiyeye.com.cn/ssm48yhg/wxpay/notify

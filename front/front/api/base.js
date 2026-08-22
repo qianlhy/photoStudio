@@ -1,4 +1,4 @@
 ﻿const base = {
-    url : "http://localhost:8080/ssm48yhg/"
+    url : "http://hycm.baibaiyeye.com.cn/ssm48yhg/"
 }
 export default base

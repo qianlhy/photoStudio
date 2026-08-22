@@ -1,6 +1,11 @@
 <script>
 export default {
 	onLaunch: function() {
+		// #ifdef APP-PLUS
+		if (typeof plus !== 'undefined' && plus.screen) {
+			plus.screen.lockOrientation('landscape-primary')
+		}
+		// #endif
 		// 拉取品牌配置，写入全局
 		const api = this.$api
 		api.config().then(res => {
@@ -162,7 +167,8 @@ image {
 }
 
 /* 横屏 Pad：卡片边缘和投影统一为轻量层级，不改变原有布局 */
-@media (min-width: 900px) and (orientation: landscape) {
+/* 小米平板 6 Pro 横屏 2880×1800 */
+@media #{$pad-mq-landscape} {
 	.card {
 		border-color: rgba(31, 39, 51, .055);
 		box-shadow: 0 3px 12px rgba(31, 39, 51, .028);

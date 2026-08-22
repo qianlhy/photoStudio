@@ -119,7 +119,8 @@
 						<text class="act-main">{{ nextAction.title }}</text>
 						<text class="act-sub">{{ nextAction.sub }}</text>
 					</view>
-					<view class="btn btn-danger act-btn" @click="goFollow">记录本次跟进</view>
+					<view v-if="selected.followStatus==='待付款'" class="btn btn-danger act-btn" @click="confirmPay">确认收款并生成订单</view>
+					<view class="btn btn-danger act-btn" :class="{'btn-ghost': selected.followStatus==='待付款'}" @click="goFollow">记录本次跟进</view>
 				</view>
 
 				<view class="card tl-card grow">
@@ -292,6 +293,22 @@ export default {
 		goFollow() {
 			uni.navigateTo({ url: `/pages/customer/follow?customerId=${this.selected.id}&customerName=${encodeURIComponent(this.selected.name)}` })
 		},
+		confirmPay() {
+			if (!this.selected) return
+			uni.showModal({
+				title: '确认收款',
+				content: `确认「${this.selected.name}」已付款？将自动生成订单（待拍摄）并回写内容库存。`,
+				success: (r) => {
+					if (!r.confirm) return
+					this.$api.post('hyCustomer/confirmPay', { customerId: this.selected.id }).then(res => {
+						const no = (res.data && res.data.orderNo) || ''
+						uni.showToast({ title: no ? `订单已生成 ${no}` : '订单已生成', icon: 'success' })
+						this.loadCustomers()
+						setTimeout(() => uni.navigateTo({ url: '/pages/order/order' }), 700)
+					})
+				}
+			})
+		},
 		recommendRenew() {
 			uni.showToast({ title: '已生成续拍方案建议', icon: 'none' })
 		}
@@ -426,7 +443,7 @@ export default {
 .act-box { background:#FDF1F0; border-radius:14rpx; padding:20rpx; margin:14rpx 0; }
 .act-main { font-size:27rpx; font-weight:700; display:block; }
 .act-sub { font-size:23rpx; color:$ink-2; margin-top:8rpx; display:block; }
-.act-btn { height: 80rpx; font-size: 28rpx; }
+.act-btn { height: 80rpx; font-size: 28rpx; margin-top: 14rpx; }
 .tl-item { display:flex; padding:14rpx 0; }
 .tl-dot { width:14rpx; height:14rpx; border-radius:50%; margin-top:8rpx; margin-right:16rpx; flex-shrink:0; }
 .tl-date { font-size:22rpx; color:$muted; display:block; }
@@ -438,7 +455,7 @@ export default {
 .empty-center { display:flex; align-items:center; justify-content:center; color:$muted; min-height:400rpx; }
 
 /* 1-3 标注稿：左/中/右约 337 / 591 / 353 */
-@media (min-width: 900px) and (orientation: landscape) {
+@media #{$pad-mq-landscape} {
 	.searchbar {
 		width: 25vw;
 		height: 5.2vh;

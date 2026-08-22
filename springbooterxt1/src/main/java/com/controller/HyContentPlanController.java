@@ -4,6 +4,7 @@ import com.annotation.IgnoreAuth;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.entity.HyContentPlanEntity;
 import com.service.impl.HyContentPlanServiceImpl;
+import com.service.impl.HyDealServiceImpl;
 import com.utils.HyId;
 import com.utils.MPUtil;
 import com.utils.PageUtils;
@@ -22,6 +23,8 @@ public class HyContentPlanController {
 
     @Autowired
     private HyContentPlanServiceImpl service;
+    @Autowired
+    private HyDealServiceImpl dealService;
 
     @IgnoreAuth
     @RequestMapping("/page")
@@ -46,11 +49,14 @@ public class HyContentPlanController {
         return R.ok().put("data", service.selectById(id));
     }
 
+    /** 结束选片生成方案后，自动将客户置为待付款并创建行动事项 */
     @PostMapping("/save")
     public R save(@RequestBody HyContentPlanEntity entity) {
         entity.setId(HyId.next());
         entity.setAddtime(new Date());
+        if (entity.getConfirmed() == null) entity.setConfirmed(0);
         service.insert(entity);
+        dealService.markAwaitingPayment(entity.getCustomerId(), entity.getId());
         return R.ok().put("id", entity.getId());
     }
 

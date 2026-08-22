@@ -4,6 +4,7 @@ import com.annotation.IgnoreAuth;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.entity.HyActionItemEntity;
 import com.service.impl.HyActionItemServiceImpl;
+import com.service.impl.HyDealServiceImpl;
 import com.utils.HyId;
 import com.utils.MPUtil;
 import com.utils.PageUtils;
@@ -22,6 +23,8 @@ public class HyActionItemController {
 
     @Autowired
     private HyActionItemServiceImpl service;
+    @Autowired
+    private HyDealServiceImpl dealService;
 
     @IgnoreAuth
     @RequestMapping("/page")
@@ -45,6 +48,14 @@ public class HyActionItemController {
     @RequestMapping("/info/{id}")
     public R info(@PathVariable("id") Long id) {
         return R.ok().put("data", service.selectById(id));
+    }
+
+    /** 刷新制作预警：内部周期 50% 关注，2/3 且落后才开放销售干预 */
+    @IgnoreAuth
+    @RequestMapping("/refreshProgress")
+    public R refreshProgress() {
+        int n = dealService.refreshProductionWarnings();
+        return R.ok().put("updated", n);
     }
 
     @PostMapping("/save")
