@@ -1,65 +1,75 @@
 <template>
 	<view class="login-page">
-		<!-- 品牌区 -->
-		<view class="brand">
-			<view class="brand-logo">
-				<text class="cuIcon-camera"></text>
-			</view>
-			<text class="brand-name">云漫 · 照相馆</text>
-			<text class="brand-slogan">记录每一刻值得珍藏的光影</text>
-		</view>
+		<view class="aurora aurora-a"></view>
+		<view class="aurora aurora-b"></view>
 
-		<!-- 登录卡片 -->
-		<view class="card">
-			<view class="tabs">
-				<view class="tab" :class="{ active: loginType === 'wx' }" @tap="switchType('wx')">
-					微信登录
+		<view class="login-body">
+			<!-- 品牌区 -->
+			<view class="brand">
+				<view class="brand-logo">
+					<view class="logo-play"></view>
 				</view>
-				<view class="tab" :class="{ active: loginType === 'phone' }" @tap="switchType('phone')">
-					手机号登录
-				</view>
+				<text class="brand-tag">合意传媒</text>
+				<text class="brand-name">影集 · 客户服务</text>
+				<text class="brand-slogan">查看服务进度与内容交付</text>
 			</view>
 
-			<!-- 微信登录 -->
-			<view v-if="loginType === 'wx'" class="pane">
-				<button class="btn-wx" @tap="wxLogin">
-					<text class="cuIcon-weixin"></text>
-					<text class="btn-wx-text">微信一键登录</text>
-				</button>
-				<view class="tip">使用微信账号快速登录 / 注册</view>
-			</view>
-
-			<!-- 手机号登录 -->
-			<view v-else class="pane">
-				<view class="field">
-					<text class="cuIcon-mobile field-icon"></text>
-					<input v-model="phone" type="number" maxlength="11" class="field-input" placeholder="请输入手机号"
-						placeholder-class="ph" />
-				</view>
-				<view class="field">
-					<text class="cuIcon-lock field-icon"></text>
-					<input v-model="smsCode" type="number" maxlength="6" class="field-input code-input" placeholder="请输入验证码"
-						placeholder-class="ph" />
-					<view class="code-btn" :class="{ disabled: smsCountdown > 0 }" @tap="sendSms">
-						{{ smsCountdown > 0 ? smsCountdown + 's' : '获取验证码' }}
+			<!-- 登录卡片 -->
+			<view class="card glass-card">
+				<view class="tabs">
+					<view class="tab" :class="{ active: loginType === 'wx' }" @tap="switchType('wx')">
+						微信登录
+					</view>
+					<view class="tab" :class="{ active: loginType === 'phone' }" @tap="switchType('phone')">
+						手机号登录
 					</view>
 				</view>
-				<button class="btn-primary" @tap="phoneLogin">登 录</button>
-				<view class="tip">未注册请先提交申请，审核通过后可登录</view>
+
+				<!-- 微信登录 -->
+				<view v-if="loginType === 'wx'" class="pane">
+					<button class="btn-wx" @tap="wxLogin">
+						<text class="cuIcon-weixin"></text>
+						<text class="btn-wx-text">微信一键登录</text>
+					</button>
+					<view class="tip">使用微信账号快速登录 / 注册</view>
+				</view>
+
+				<!-- 手机号登录 -->
+				<view v-else class="pane">
+					<view class="field">
+						<text class="cuIcon-mobile field-icon"></text>
+						<input v-model="phone" type="number" maxlength="11" class="field-input" placeholder="请输入手机号"
+							placeholder-class="ph" />
+					</view>
+					<view class="field">
+						<text class="cuIcon-lock field-icon"></text>
+						<input v-model="smsCode" type="number" maxlength="6" class="field-input code-input" placeholder="请输入验证码"
+							placeholder-class="ph" />
+						<view class="code-btn" :class="{ disabled: smsCountdown > 0 }" @tap="sendSms">
+							{{ smsCountdown > 0 ? smsCountdown + 's' : '获取验证码' }}
+						</view>
+					</view>
+					<button class="btn-primary" @tap="phoneLogin">登 录</button>
+					<view class="tip">未注册请先提交申请，审核通过后可登录</view>
+				</view>
 			</view>
+
+			<view class="apply-link" @tap="goApply">没有账号？提交注册申请</view>
+
+			<!-- 开发体验挡板：一键登录，免校验 -->
+			<view class="dev-login" @tap="devLogin">一键体验登录（开发用）</view>
+
+			<view class="agreement">登录即代表同意《用户协议》与《隐私政策》</view>
 		</view>
-
-		<view class="apply-link" @tap="goApply">没有账号？提交注册申请</view>
-
-		<!-- 开发体验挡板：一键登录，免校验 -->
-		<view class="dev-login" @tap="devLogin">一键体验登录（开发用）</view>
-
-		<view class="agreement">登录即代表同意《用户协议》与《隐私政策》</view>
 	</view>
 </template>
 
 <script>
 	import http from '@/api/http.js'
+	// 与 db_full 用户 id=11、hy_customer id=6001 对齐，便于登录后绑定服务档案
+	const DEV_PHONE = '13823888881'
+	const DEV_CODE = '123456'
+
 	export default {
 		data() {
 			return {
@@ -76,6 +86,24 @@
 		methods: {
 			switchType(t) {
 				this.loginType = t
+			},
+			requestLogin(url, data) {
+				return new Promise((resolve, reject) => {
+					uni.request({
+						url: this.$base.url + url,
+						method: 'GET',
+						data,
+						success: (response) => {
+							const body = response.data || {}
+							if (response.statusCode === 200 && body.code === 0) {
+								resolve(body)
+								return
+							}
+							reject(body)
+						},
+						fail: reject
+					})
+				})
 			},
 			wxLogin() {
 				uni.login({
@@ -148,16 +176,26 @@
 			goApply() {
 				uni.navigateTo({ url: '../apply/apply' });
 			},
-			// 开发体验挡板：固定手机号 + 模拟验证码 123456 一键登录
 			async devLogin() {
+				uni.removeStorageSync('hyCustomerId')
 				try {
-					const res = await http.get('yonghu/smslogin', {
-						phone: '13800138000',
-						code: '123456'
+					const res = await this.requestLogin('yonghu/smslogin', {
+						phone: DEV_PHONE,
+						code: DEV_CODE
 					})
 					await this.afterLogin(res)
+					return
+				} catch (e) {}
+				try {
+					const res = await this.requestLogin('yonghu/login', {
+						username: '账号1',
+						password: DEV_CODE
+					})
+					await this.afterLogin(res)
+					return
 				} catch (e) {
-					this.$utils.msg('体验登录失败，请确认后端已启动')
+					const msg = (e && e.msg) ? e.msg : '体验登录失败，请确认后端已启动'
+					this.$utils.msg(msg)
 				}
 			},
 			async afterLogin(res) {
@@ -187,7 +225,6 @@
 					})
 					return
 				}
-				// 新版客户小程序正式入口是服务模块，旧商城首页保留为兼容页面
 				uni.reLaunch({ url: '../hy-service/service' });
 			}
 		}
@@ -196,58 +233,106 @@
 
 <style lang="scss" scoped>
 	.login-page {
+		position: relative;
+		min-height: 100vh;
+		overflow: hidden;
+		background: linear-gradient(180deg, #F0FBFC 0%, #F7FCFC 48%, #F4FBFA 100%);
+		color: #10244B;
+	}
+
+	.aurora {
+		position: absolute;
+		border-radius: 50%;
+		filter: blur(8rpx);
+		pointer-events: none;
+	}
+
+	.aurora-a {
+		top: -120rpx;
+		right: -140rpx;
+		width: 520rpx;
+		height: 480rpx;
+		background: radial-gradient(circle, rgba(110, 229, 220, .32), rgba(160, 215, 251, .12) 48%, transparent 70%);
+	}
+
+	.aurora-b {
+		top: 260rpx;
+		left: -220rpx;
+		width: 520rpx;
+		height: 380rpx;
+		background: radial-gradient(circle, rgba(146, 220, 239, .18), transparent 70%);
+	}
+
+	.login-body {
+		position: relative;
+		z-index: 2;
 		min-height: 100vh;
 		box-sizing: border-box;
 		padding: 0 56rpx;
 		display: flex;
 		flex-direction: column;
-		background: linear-gradient(180deg, #F3EEE4 0%, #FAF8F4 38%, #FFFFFF 100%);
 	}
 
 	.brand {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		padding-top: 150rpx;
-		padding-bottom: 70rpx;
+		padding-top: calc(var(--status-bar-height, 40rpx) + 120rpx);
+		padding-bottom: 56rpx;
 	}
 
 	.brand-logo {
 		width: 132rpx;
 		height: 132rpx;
 		border-radius: 50%;
-		background: linear-gradient(135deg, #C7AE80 0%, #B49A6B 100%);
+		border: 5rpx solid rgba(255, 255, 255, .86);
+		background: linear-gradient(145deg, #5DDAEA, #B6F5F2);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		box-shadow: 0 12rpx 30rpx rgba(180, 154, 107, 0.35);
+		box-shadow: 0 12rpx 30rpx rgba(58, 187, 201, .28);
+	}
 
-		.cuIcon-camera {
-			color: #fff;
-			font-size: 66rpx;
-		}
+	.logo-play {
+		margin-left: 8rpx;
+		border-left: 34rpx solid rgba(255, 255, 255, .95);
+		border-top: 22rpx solid transparent;
+		border-bottom: 22rpx solid transparent;
+		filter: drop-shadow(0 3rpx 4rpx rgba(29, 151, 173, .18));
+	}
+
+	.brand-tag {
+		margin-top: 28rpx;
+		font-size: 28rpx;
+		font-weight: 700;
+		color: #77879C;
+		letter-spacing: 2rpx;
 	}
 
 	.brand-name {
-		margin-top: 28rpx;
-		font-size: 42rpx;
-		font-weight: 600;
-		letter-spacing: 4rpx;
-		color: $brand-ink;
+		margin-top: 12rpx;
+		font-size: 44rpx;
+		font-weight: 700;
+		letter-spacing: 2rpx;
+		color: #122956;
 	}
 
 	.brand-slogan {
 		margin-top: 14rpx;
-		font-size: 24rpx;
-		color: $brand-ink-3;
-		letter-spacing: 2rpx;
+		font-size: 25rpx;
+		color: #99A6B8;
+	}
+
+	.glass-card {
+		border: 1rpx solid rgba(214, 230, 235, .78);
+		border-radius: 28rpx;
+		background: rgba(255, 255, 255, .68);
+		box-shadow: 0 10rpx 30rpx rgba(68, 103, 119, .055), inset 0 1rpx 0 rgba(255, 255, 255, .86);
+		backdrop-filter: blur(18rpx);
 	}
 
 	.card {
-		background: #fff;
-		border-radius: 28rpx;
 		padding: 50rpx 44rpx 56rpx;
-		box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.06);
 	}
 
 	.tabs {
@@ -260,12 +345,12 @@
 		position: relative;
 		margin: 0 36rpx;
 		font-size: 30rpx;
-		color: $brand-ink-3;
+		color: #99A6B8;
 		padding-bottom: 16rpx;
 	}
 
 	.tab.active {
-		color: $brand-ink;
+		color: #122956;
 		font-weight: 600;
 	}
 
@@ -278,7 +363,7 @@
 		width: 44rpx;
 		height: 5rpx;
 		border-radius: 5rpx;
-		background: $brand-primary;
+		background: linear-gradient(90deg, #38C9DC, #44DDC8);
 	}
 
 	.pane {
@@ -292,32 +377,33 @@
 		height: 92rpx;
 		padding: 0 28rpx;
 		margin-bottom: 28rpx;
-		background: $brand-bg-soft;
+		background: rgba(255, 255, 255, .72);
+		border: 1rpx solid rgba(214, 230, 235, .72);
 		border-radius: 16rpx;
 	}
 
 	.field-icon {
 		font-size: 36rpx;
-		color: $brand-ink-3;
+		color: #8FA6B1;
 		margin-right: 16rpx;
 	}
 
 	.field-input {
 		flex: 1;
 		font-size: 28rpx;
-		color: $brand-ink;
+		color: #122956;
 	}
 
 	.ph {
-		color: #bbb;
+		color: #B0BAC7;
 	}
 
 	.code-btn {
 		font-size: 26rpx;
-		color: $brand-primary-deep;
+		color: #43BFB7;
 		padding-left: 24rpx;
 		margin-left: 8rpx;
-		border-left: 1rpx solid #e2e2e2;
+		border-left: 1rpx solid rgba(214, 230, 235, .9);
 		white-space: nowrap;
 	}
 
@@ -330,11 +416,11 @@
 		height: 92rpx;
 		line-height: 92rpx;
 		border-radius: 16rpx;
-		background: linear-gradient(135deg, #B49A6B 0%, #A6885A 100%);
+		background: linear-gradient(135deg, #38C9DC, #44DDC8);
 		color: #fff;
 		font-size: 32rpx;
 		letter-spacing: 8rpx;
-		box-shadow: 0 10rpx 24rpx rgba(180, 154, 107, 0.3);
+		box-shadow: 0 10rpx 24rpx rgba(58, 187, 201, .28);
 	}
 
 	.btn-primary::after {
@@ -350,7 +436,7 @@
 		background: #07c160;
 		color: #fff;
 		font-size: 32rpx;
-		box-shadow: 0 10rpx 24rpx rgba(7, 193, 96, 0.25);
+		box-shadow: 0 10rpx 24rpx rgba(7, 193, 96, .25);
 
 		.cuIcon-weixin {
 			font-size: 40rpx;
@@ -370,21 +456,21 @@
 		text-align: center;
 		margin-top: 30rpx;
 		font-size: 24rpx;
-		color: $brand-ink-3;
+		color: #99A6B8;
 	}
 
 	.apply-link {
 		margin: 24rpx auto 0;
 		text-align: center;
 		font-size: 26rpx;
-		color: $brand-primary-deep;
+		color: #43BFB7;
 	}
 
 	.dev-login {
 		margin: 20rpx auto 0;
 		text-align: center;
 		font-size: 26rpx;
-		color: $brand-primary-deep;
+		color: #69CEF2;
 		text-decoration: underline;
 		padding: 16rpx 0;
 	}
@@ -394,6 +480,6 @@
 		text-align: center;
 		padding: 30rpx 0 40rpx;
 		font-size: 22rpx;
-		color: #b9b9b9;
+		color: #A7B1BF;
 	}
 </style>

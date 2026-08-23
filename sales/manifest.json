@@ -1,7 +1,7 @@
 {
     "name" : "合意传媒-销售经理端",
     "appid" : "__UNI__309C821",
-    "description" : "合意传媒 销售经理 pad 端（1280×800横屏设计基准）",
+    "description" : "合意传媒 销售经理 pad 端（适配小米平板6 Pro 2880×1800横屏）",
     "versionName" : "1.0.1",
     "versionCode" : "101",
     "transformPx" : false,
@@ -18,7 +18,9 @@
             "autoclose" : true,
             "delay" : 0
         },
-        "modules" : {},
+        "modules" : {
+            "VideoPlayer" : {}
+        },
         "distribute" : {
             "android" : {
                 "abiFilters" : [ "armeabi-v7a", "arm64-v8a" ],

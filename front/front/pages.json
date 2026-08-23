@@ -6,7 +6,7 @@
 	"pages": [{
 		"path": "pages/login/login",
 		"style": {
-			"navigationBarBackgroundColor": "#F3EEE4",
+			"navigationBarBackgroundColor": "#F0FBFC",
 			"navigationBarTextStyle": "black",
 			"navigationBarTitleText": ""
 		}

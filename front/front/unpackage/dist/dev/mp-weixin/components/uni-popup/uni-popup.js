@@ -80,7 +80,7 @@ var components
 try {
   components = {
     uniTransition: function () {
-      return __webpack_require__.e(/*! import() | components/uni-transition/uni-transition */ "components/uni-transition/uni-transition").then(__webpack_require__.bind(null, /*! @/components/uni-transition/uni-transition.vue */ 226))
+      return __webpack_require__.e(/*! import() | components/uni-transition/uni-transition */ "components/uni-transition/uni-transition").then(__webpack_require__.bind(null, /*! @/components/uni-transition/uni-transition.vue */ 233))
     },
   }
 } catch (e) {
@@ -145,7 +145,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 var uniTransition = function uniTransition() {
   __webpack_require__.e(/*! require.ensure | components/uni-transition/uni-transition */ "components/uni-transition/uni-transition").then((function () {
-    return resolve(__webpack_require__(/*! ../uni-transition/uni-transition.vue */ 226));
+    return resolve(__webpack_require__(/*! ../uni-transition/uni-transition.vue */ 233));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 var _default = {

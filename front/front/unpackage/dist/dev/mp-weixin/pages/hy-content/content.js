@@ -101,7 +101,7 @@ var components
 try {
   components = {
     clientTabbar: function () {
-      return __webpack_require__.e(/*! import() | components/client-tabbar/client-tabbar */ "components/client-tabbar/client-tabbar").then(__webpack_require__.bind(null, /*! @/components/client-tabbar/client-tabbar.vue */ 257))
+      return __webpack_require__.e(/*! import() | components/client-tabbar/client-tabbar */ "components/client-tabbar/client-tabbar").then(__webpack_require__.bind(null, /*! @/components/client-tabbar/client-tabbar.vue */ 226))
     },
   }
 } catch (e) {
@@ -216,7 +216,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 var clientTabbar = function clientTabbar() {
   __webpack_require__.e(/*! require.ensure | components/client-tabbar/client-tabbar */ "components/client-tabbar/client-tabbar").then((function () {
-    return resolve(__webpack_require__(/*! @/components/client-tabbar/client-tabbar.vue */ 257));
+    return resolve(__webpack_require__(/*! @/components/client-tabbar/client-tabbar.vue */ 226));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 var _default = {
@@ -367,22 +367,22 @@ var _default = {
     load: function load() {
       var _this2 = this;
       var finish = function finish(cid) {
+        var customerId = Number(cid) || cid;
         _this2.$api.list('hyCustomer', {
-          id: cid
+          id: customerId
         }).then(function (res) {
           _this2.customer = res.data && res.data[0] || {};
         });
+        // 勿传 sort=sort：会与实体字段 sort(Integer) 冲突，后端已在 Controller 内按 sort 排序
         _this2.$api.page('hyDeliverable', {
-          customerId: cid,
+          customerId: customerId,
           page: 1,
-          limit: 50,
-          sort: 'sort',
-          order: 'asc'
+          limit: 50
         }).then(function (res) {
           _this2.list = res.data && res.data.list || [];
         });
         _this2.$api.page('hyOrder', {
-          customerId: cid,
+          customerId: customerId,
           page: 1,
           limit: 1,
           sort: 'addtime',
@@ -391,7 +391,7 @@ var _default = {
           _this2.order = res.data && res.data.list && res.data.list[0] || {};
         });
         _this2.$api.page('hyContentPlan', {
-          customerId: cid,
+          customerId: customerId,
           page: 1,
           limit: 1
         }).then(function (res) {

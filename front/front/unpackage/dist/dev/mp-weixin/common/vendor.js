@@ -11135,7 +11135,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var base = {
-  url: "http://localhost:8080/ssm48yhg/"
+  // 微信小程序正式环境必须用 https；http 会被拦截或 301 导致登录失败
+  url: "https://hycm.baibaiyeye.com.cn/ssm48yhg/"
 };
 var _default = base;
 exports.default = _default;

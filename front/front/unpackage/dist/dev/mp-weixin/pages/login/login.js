@@ -205,6 +205,16 @@ var _http = _interopRequireDefault(__webpack_require__(/*! @/api/http.js */ 35))
 //
 //
 //
+//
+//
+//
+//
+//
+//
+
+// 与 db_full 用户 id=11、hy_customer id=6001 对齐，便于登录后绑定服务档案
+var DEV_PHONE = '13823888881';
+var DEV_CODE = '123456';
 var _default = {
   data: function data() {
     return {
@@ -222,8 +232,27 @@ var _default = {
     switchType: function switchType(t) {
       this.loginType = t;
     },
-    wxLogin: function wxLogin() {
+    requestLogin: function requestLogin(url, data) {
       var _this = this;
+      return new Promise(function (resolve, reject) {
+        uni.request({
+          url: _this.$base.url + url,
+          method: 'GET',
+          data: data,
+          success: function success(response) {
+            var body = response.data || {};
+            if (response.statusCode === 200 && body.code === 0) {
+              resolve(body);
+              return;
+            }
+            reject(body);
+          },
+          fail: reject
+        });
+      });
+    },
+    wxLogin: function wxLogin() {
+      var _this2 = this;
       uni.login({
         provider: 'weixin',
         success: function () {
@@ -237,7 +266,7 @@ var _default = {
                       _context.next = 3;
                       break;
                     }
-                    _this.$utils.msg('微信登录失败，请重试');
+                    _this2.$utils.msg('微信登录失败，请重试');
                     return _context.abrupt("return");
                   case 3:
                     _context.prev = 3;
@@ -257,7 +286,7 @@ var _default = {
                     return _context.abrupt("return");
                   case 10:
                     _context.next = 12;
-                    return _this.afterLogin(res);
+                    return _this2.afterLogin(res);
                   case 12:
                     _context.next = 17;
                     break;
@@ -282,44 +311,44 @@ var _default = {
           return success;
         }(),
         fail: function fail() {
-          _this.$utils.msg('微信登录失败，请重试');
+          _this2.$utils.msg('微信登录失败，请重试');
         }
       });
     },
     sendSms: function sendSms() {
-      var _this2 = this;
+      var _this3 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
         var res;
         return _regenerator.default.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                if (!(_this2.smsCountdown > 0)) {
+                if (!(_this3.smsCountdown > 0)) {
                   _context2.next = 2;
                   break;
                 }
                 return _context2.abrupt("return");
               case 2:
-                if (/^1\d{10}$/.test(_this2.phone)) {
+                if (/^1\d{10}$/.test(_this3.phone)) {
                   _context2.next = 5;
                   break;
                 }
-                _this2.$utils.msg('请输入正确的手机号');
+                _this3.$utils.msg('请输入正确的手机号');
                 return _context2.abrupt("return");
               case 5:
                 _context2.prev = 5;
                 _context2.next = 8;
                 return _http.default.get('yonghu/sendSmsCode', {
-                  phone: _this2.phone
+                  phone: _this3.phone
                 });
               case 8:
                 res = _context2.sent;
-                _this2.$utils.msg(res && res.msg || '验证码已发送');
-                _this2.smsCountdown = 60;
-                if (_this2.timer) clearInterval(_this2.timer);
-                _this2.timer = setInterval(function () {
-                  _this2.smsCountdown--;
-                  if (_this2.smsCountdown <= 0) clearInterval(_this2.timer);
+                _this3.$utils.msg(res && res.msg || '验证码已发送');
+                _this3.smsCountdown = 60;
+                if (_this3.timer) clearInterval(_this3.timer);
+                _this3.timer = setInterval(function () {
+                  _this3.smsCountdown--;
+                  if (_this3.smsCountdown <= 0) clearInterval(_this3.timer);
                 }, 1000);
                 _context2.next = 17;
                 break;
@@ -335,32 +364,32 @@ var _default = {
       }))();
     },
     phoneLogin: function phoneLogin() {
-      var _this3 = this;
+      var _this4 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
         var res;
         return _regenerator.default.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
               case 0:
-                if (_this3.phone) {
+                if (_this4.phone) {
                   _context3.next = 3;
                   break;
                 }
-                _this3.$utils.msg('请输入手机号');
+                _this4.$utils.msg('请输入手机号');
                 return _context3.abrupt("return");
               case 3:
-                if (_this3.smsCode) {
+                if (_this4.smsCode) {
                   _context3.next = 6;
                   break;
                 }
-                _this3.$utils.msg('请输入验证码');
+                _this4.$utils.msg('请输入验证码');
                 return _context3.abrupt("return");
               case 6:
                 _context3.prev = 6;
                 _context3.next = 9;
                 return _http.default.get('yonghu/smslogin', {
-                  phone: _this3.phone,
-                  code: _this3.smsCode
+                  phone: _this4.phone,
+                  code: _this4.smsCode
                 });
               case 9:
                 res = _context3.sent;
@@ -374,7 +403,7 @@ var _default = {
                 return _context3.abrupt("return");
               case 13:
                 _context3.next = 15;
-                return _this3.afterLogin(res);
+                return _this4.afterLogin(res);
               case 15:
                 _context3.next = 19;
                 break;
@@ -394,42 +423,58 @@ var _default = {
         url: '../apply/apply'
       });
     },
-    // 开发体验挡板：固定手机号 + 模拟验证码 123456 一键登录
     devLogin: function devLogin() {
-      var _this4 = this;
+      var _this5 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
-        var res;
+        var res, _res, msg;
         return _regenerator.default.wrap(function _callee4$(_context4) {
           while (1) {
             switch (_context4.prev = _context4.next) {
               case 0:
-                _context4.prev = 0;
-                _context4.next = 3;
-                return _http.default.get('yonghu/smslogin', {
-                  phone: '13800138000',
-                  code: '123456'
+                uni.removeStorageSync('hyCustomerId');
+                _context4.prev = 1;
+                _context4.next = 4;
+                return _this5.requestLogin('yonghu/smslogin', {
+                  phone: DEV_PHONE,
+                  code: DEV_CODE
                 });
-              case 3:
+              case 4:
                 res = _context4.sent;
-                _context4.next = 6;
-                return _this4.afterLogin(res);
-              case 6:
-                _context4.next = 11;
-                break;
-              case 8:
-                _context4.prev = 8;
-                _context4.t0 = _context4["catch"](0);
-                _this4.$utils.msg('体验登录失败，请确认后端已启动');
-              case 11:
+                _context4.next = 7;
+                return _this5.afterLogin(res);
+              case 7:
+                return _context4.abrupt("return");
+              case 10:
+                _context4.prev = 10;
+                _context4.t0 = _context4["catch"](1);
+              case 12:
+                _context4.prev = 12;
+                _context4.next = 15;
+                return _this5.requestLogin('yonghu/login', {
+                  username: '账号1',
+                  password: DEV_CODE
+                });
+              case 15:
+                _res = _context4.sent;
+                _context4.next = 18;
+                return _this5.afterLogin(_res);
+              case 18:
+                return _context4.abrupt("return");
+              case 21:
+                _context4.prev = 21;
+                _context4.t1 = _context4["catch"](12);
+                msg = _context4.t1 && _context4.t1.msg ? _context4.t1.msg : '体验登录失败，请确认后端已启动';
+                _this5.$utils.msg(msg);
+              case 25:
               case "end":
                 return _context4.stop();
             }
           }
-        }, _callee4, null, [[0, 8]]);
+        }, _callee4, null, [[1, 10], [12, 21]]);
       }))();
     },
     afterLogin: function afterLogin(res) {
-      var _this5 = this;
+      var _this6 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee5() {
         var s;
         return _regenerator.default.wrap(function _callee5$(_context5) {
@@ -455,7 +500,7 @@ var _default = {
                 uni.setStorageSync('nowTable', 'yonghu');
                 uni.setStorageSync('role', '用户');
                 _context5.next = 9;
-                return _this5.$api.session('yonghu');
+                return _this6.$api.session('yonghu');
               case 9:
                 s = _context5.sent;
                 uni.setStorageSync('userid', s.data.id);
@@ -477,7 +522,6 @@ var _default = {
                 });
                 return _context5.abrupt("return");
               case 16:
-                // 新版客户小程序正式入口是服务模块，旧商城首页保留为兼容页面
                 uni.reLaunch({
                   url: '../hy-service/service'
                 });

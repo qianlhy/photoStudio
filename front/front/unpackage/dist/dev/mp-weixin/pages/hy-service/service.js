@@ -101,7 +101,7 @@ var components
 try {
   components = {
     clientTabbar: function () {
-      return __webpack_require__.e(/*! import() | components/client-tabbar/client-tabbar */ "components/client-tabbar/client-tabbar").then(__webpack_require__.bind(null, /*! @/components/client-tabbar/client-tabbar.vue */ 257))
+      return __webpack_require__.e(/*! import() | components/client-tabbar/client-tabbar */ "components/client-tabbar/client-tabbar").then(__webpack_require__.bind(null, /*! @/components/client-tabbar/client-tabbar.vue */ 226))
     },
   }
 } catch (e) {
@@ -175,7 +175,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 var clientTabbar = function clientTabbar() {
   __webpack_require__.e(/*! require.ensure | components/client-tabbar/client-tabbar */ "components/client-tabbar/client-tabbar").then((function () {
-    return resolve(__webpack_require__(/*! @/components/client-tabbar/client-tabbar.vue */ 257));
+    return resolve(__webpack_require__(/*! @/components/client-tabbar/client-tabbar.vue */ 226));
   }).bind(null, __webpack_require__)).catch(__webpack_require__.oe);
 };
 var _default = {
