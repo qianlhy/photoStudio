@@ -88,6 +88,9 @@ public class HyDealServiceImpl {
     public Long confirmPayAndCreateOrder(Long customerId, Long planId) {
         HyCustomerEntity c = customerService.selectById(customerId);
         if (c == null) throw new IllegalArgumentException("客户不存在");
+        if (!"待付款".equals(c.getFollowStatus())) {
+            throw new IllegalArgumentException("客户当前不是「待付款」状态，请先完成选片生成方案");
+        }
 
         HyContentPlanEntity plan = resolvePlan(customerId, planId);
         if (plan == null) throw new IllegalArgumentException("请先完成选片并生成内容方案");

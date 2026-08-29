@@ -191,11 +191,21 @@ export default {
 				content: `确认「${a.customerName}」已付款？将自动生成订单。`,
 				success: (r) => {
 					if (!r.confirm) return
-					this.$api.post('hyCustomer/confirmPay', { customerId: a.customerId }).then(res => {
-						const no = (res.data && res.data.orderNo) || ''
-						uni.showToast({ title: no ? `订单已生成 ${no}` : '订单已生成', icon: 'success' })
-						this.load()
-					})
+					const doPay = (planId) => {
+						const body = { customerId: a.customerId }
+						if (planId) body.planId = planId
+						this.$api.post('hyCustomer/confirmPay', body).then(res => {
+							const no = (res.data && res.data.orderNo) || ''
+							uni.showToast({ title: no ? `订单已生成 ${no}` : '订单已生成', icon: 'success' })
+							this.load()
+						})
+					}
+					this.$api.page('hyContentPlan', {
+						customerId: a.customerId, page: 1, limit: 1, sort: 'addtime', order: 'desc'
+					}).then(res => {
+						const plan = (res.data && res.data.list && res.data.list[0]) || null
+						doPay(plan && plan.id)
+					}).catch(() => doPay(null))
 				}
 			})
 		},

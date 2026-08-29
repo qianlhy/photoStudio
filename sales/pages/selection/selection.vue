@@ -162,7 +162,12 @@ export default {
 		const brand = uni.getStorageSync('brand')
 		if (brand && brand.brandName) this.brandName = brand.brandName
 		this.sessionId = opt.sessionId || null
-		this.customerId = opt.customerId || null
+		this.customerId = opt.customerId || uni.getStorageSync('hyActiveCustomerId') || null
+		if (opt.customerName) this.customerName = decodeURIComponent(opt.customerName)
+		if (this.customerId) {
+			uni.setStorageSync('hyActiveCustomerId', this.customerId)
+			if (this.customerName) uni.setStorageSync('hyActiveCustomerName', this.customerName)
+		}
 		if (this.sessionId) {
 			this.loadSession()
 		} else if (this.customerId) {
@@ -307,6 +312,10 @@ export default {
 		finish() {
 			if (this.liked.length === 0) {
 				uni.showToast({ title: '请至少选择一条素材', icon: 'none' })
+				return
+			}
+			if (!this.customerId) {
+				uni.showToast({ title: '请先从客户页进入选片，再生成方案', icon: 'none' })
 				return
 			}
 			const payload = this.buildPayload('已结束')

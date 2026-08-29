@@ -28,6 +28,8 @@ public class HyOrderController {
     private HyOrderServiceImpl service;
     @Autowired
     private HyContentItemServiceImpl itemService;
+    @Autowired
+    private com.service.impl.HyCustomerServiceImpl customerService;
 
     @IgnoreAuth
     @RequestMapping("/page")
@@ -87,8 +89,67 @@ public class HyOrderController {
 
     @RequestMapping("/update")
     public R update(@RequestBody HyOrderEntity entity) {
+        if (entity == null || entity.getId() == null) {
+            return R.error("订单 id 必填");
+        }
+        HyOrderEntity old = service.selectById(entity.getId());
+        if (old == null) return R.error("订单不存在");
+
+        if (entity.getStatus() != null) {
+            if ("待付款".equals(entity.getStatus())) {
+                return R.error("订单禁止写入「待付款」状态");
+            }
+            if (!("待拍摄".equals(entity.getStatus())
+                    || "待交付".equals(entity.getStatus())
+                    || "已完成".equals(entity.getStatus()))) {
+                return R.error("订单状态仅支持：待拍摄 / 待交付 / 已完成");
+            }
+        }
+        Integer video = entity.getVideoCount() != null ? entity.getVideoCount() : old.getVideoCount();
+        if (entity.getCompletedCount() != null && video != null && entity.getCompletedCount() > video) {
+            entity.setCompletedCount(video);
+        }
+        // 进度满且仍为待拍摄时，自动推进到待交付
+        Integer done = entity.getCompletedCount() != null ? entity.getCompletedCount() : old.getCompletedCount();
+        String status = entity.getStatus() != null ? entity.getStatus() : old.getStatus();
+        if (done != null && video != null && done > 0 && done >= video && "待拍摄".equals(status)) {
+            entity.setStatus("待交付");
+            status = "待交付";
+        }
+        if (done != null && video != null && done >= video && "待交付".equals(status)
+                && entity.getStatus() == null) {
+            // 保持待交付，由制作侧显式点「已完成」
+        }
         service.updateById(entity);
-        return R.ok();
+
+        // 回写客户交付进度
+        HyOrderEntity latest = service.selectById(entity.getId());
+        if (latest != null && latest.getCustomerId() != null) {
+            syncCustomerFulfillment(latest);
+        }
+        return R.ok().put("data", latest);
+    }
+
+    /** 按订单状态回写客户拍摄/交付计数 */
+    private void syncCustomerFulfillment(HyOrderEntity order) {
+        try {
+            com.entity.HyCustomerEntity c = customerService.selectById(order.getCustomerId());
+            if (c == null) return;
+            int video = order.getVideoCount() == null ? 0 : order.getVideoCount();
+            int done = order.getCompletedCount() == null ? 0 : order.getCompletedCount();
+            if ("待交付".equals(order.getStatus()) || "已完成".equals(order.getStatus())) {
+                if (c.getShotCount() == null || c.getShotCount() < video) {
+                    c.setShotCount(video);
+                }
+            }
+            if ("已完成".equals(order.getStatus())) {
+                if (c.getDeliveredCount() == null || c.getDeliveredCount() < done) {
+                    c.setDeliveredCount(done);
+                }
+            }
+            customerService.updateById(c);
+        } catch (Exception ignored) {
+        }
     }
 
     @RequestMapping("/delete")

@@ -199,21 +199,23 @@ var _default = {
       return this.customer.remainCount || 0;
     },
     producing: function producing() {
+      if (!this.order.videoCount) return 0;
       var v = (this.order.videoCount || 0) - (this.order.completedCount || 0);
-      return v > 0 ? v : 10;
+      return v > 0 ? v : 0;
     },
     producingPct: function producingPct() {
+      if (!this.totalQuota) return 0;
       return Math.min(100 - this.reservePct, Math.round(this.producing / this.totalQuota * 100));
     },
     reservePct: function reservePct() {
       return Math.min(100, Math.round(this.remain / this.totalQuota * 100));
     },
     donePct: function donePct() {
-      if (!this.order.videoCount) return 60;
-      return Math.round(this.order.completedCount / this.order.videoCount * 100);
+      if (!this.order.videoCount) return 0;
+      return Math.round((this.order.completedCount || 0) / this.order.videoCount * 100);
     },
     displayStatus: function displayStatus() {
-      var status = this.order.status || '内容制作中';
+      var status = this.order.status || '暂无订单';
       if (status === '内容制作中') return '制作中';
       return status;
     },
@@ -225,8 +227,17 @@ var _default = {
     },
     steps: function steps() {
       var _this = this;
-      var st = this.order.status || '内容制作中';
+      var st = this.order.status || '';
       var order = ['服务已确认', '方案已确认', '拍摄已完成', '内容制作中', '等待交付', '服务完成'];
+      if (!st) {
+        return order.map(function (name, i) {
+          return {
+            name: name,
+            date: '',
+            state: 'todo'
+          };
+        });
+      }
       var idxMap = {
         '待拍摄': 2,
         '待交付': 4,

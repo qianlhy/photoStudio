@@ -125,36 +125,41 @@ var render = function () {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  var g0 = _vm.list.length || 11
-  var g1 = _vm.list.length || 11
-  var l0 = _vm.__map(_vm.displayList, function (m, i) {
-    var $orig = _vm.__get_orig(m)
-    var m0 = _vm.img(m.cover)
-    var m1 = _vm.isDownloaded(m)
-    var m2 = _vm.isDownloaded(m)
-    var m3 = _vm.isDownloaded(m)
-    var m4 = m.contentType || _vm.defaultType(i)
-    var m5 = _vm.indexText(i)
-    var m6 = m.title || _vm.defaultTitle(i)
-    return {
-      $orig: $orig,
-      m0: m0,
-      m1: m1,
-      m2: m2,
-      m3: m3,
-      m4: m4,
-      m5: m5,
-      m6: m6,
-    }
-  })
-  var l1 = _vm.__map(_vm.previewList, function (m, i) {
-    var $orig = _vm.__get_orig(m)
-    var m7 = _vm.img(m.cover)
-    return {
-      $orig: $orig,
-      m7: m7,
-    }
-  })
+  var g0 = _vm.list.length
+  var g1 = g0 ? _vm.list.length : null
+  var g2 = _vm.list.length
+  var g3 = _vm.list.length
+  var g4 = _vm.displayList.length
+  var l0 = g4
+    ? _vm.__map(_vm.displayList, function (m, i) {
+        var $orig = _vm.__get_orig(m)
+        var m0 = _vm.img(m.cover)
+        var m1 = _vm.isDownloaded(m)
+        var m2 = _vm.isDownloaded(m)
+        var m3 = _vm.isDownloaded(m)
+        var m4 = _vm.indexText(i)
+        return {
+          $orig: $orig,
+          m0: m0,
+          m1: m1,
+          m2: m2,
+          m3: m3,
+          m4: m4,
+        }
+      })
+    : null
+  var g5 = _vm.refCount || _vm.previewList.length
+  var g6 = g5 ? _vm.refCount || _vm.previewList.length : null
+  var l1 = g5
+    ? _vm.__map(_vm.previewList, function (m, i) {
+        var $orig = _vm.__get_orig(m)
+        var m5 = _vm.img(m.cover)
+        return {
+          $orig: $orig,
+          m5: m5,
+        }
+      })
+    : null
   if (!_vm._isMounted) {
     _vm.e0 = function ($event, t) {
       var _temp = arguments[arguments.length - 1].currentTarget.dataset,
@@ -170,7 +175,12 @@ var render = function () {
       $root: {
         g0: g0,
         g1: g1,
+        g2: g2,
+        g3: g3,
+        g4: g4,
         l0: l0,
+        g5: g5,
+        g6: g6,
         l1: l1,
       },
     }
@@ -234,69 +244,20 @@ var _default = {
       refCount: 0,
       totalQuota: 15,
       activeTab: 'all',
-      types: ['硬广', '晒过程', '教知识', '说观点', '讲故事'],
-      demoMaterials: [{
-        id: 'd1',
-        cover: 'upload/studio_work_1.jpg',
-        contentType: '硬广',
-        title: '上菜挑战',
-        downloadStatus: '已下载'
-      }, {
-        id: 'd2',
-        cover: 'upload/studio_work_2.jpg',
-        contentType: '晒过程',
-        title: '锅底熬制'
-      }, {
-        id: 'd3',
-        cover: 'upload/studio_work_3.jpg',
-        contentType: '教知识',
-        title: '牛肉知识'
-      }, {
-        id: 'd4',
-        cover: 'upload/studio_work_4.jpg',
-        contentType: '说观点',
-        title: '老板观点',
-        downloadStatus: '已下载'
-      }, {
-        id: 'd5',
-        cover: 'upload/studio_work_5.jpg',
-        contentType: '硬广',
-        title: '门店日常'
-      }, {
-        id: 'd6',
-        cover: 'upload/studio_work_6.jpg',
-        contentType: '晒过程',
-        title: '食材准备'
-      }, {
-        id: 'd7',
-        cover: 'upload/studio_cover_1.jpg',
-        contentType: '说观点',
-        title: '顾客氛围',
-        downloadStatus: '已下载'
-      }, {
-        id: 'd8',
-        cover: 'upload/studio_cover_2.jpg',
-        contentType: '硬广',
-        title: '招牌菜品'
-      }, {
-        id: 'd9',
-        cover: 'upload/studio_cover_3.jpg',
-        contentType: '晒过程',
-        title: '夜间客流'
-      }]
+      types: ['硬广', '晒过程', '教知识', '说观点', '讲故事']
     };
   },
   computed: {
     greeting: function greeting() {
       var h = new Date().getHours();
       var g = h < 11 ? '早上好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好';
-      return "".concat(g, "\uFF0C").concat(this.customer.name || '林女士');
+      return "".concat(g, "\uFF0C").concat(this.customer.name || '客户');
     },
     remain: function remain() {
-      return this.customer.remainCount || 11;
+      return this.customer.remainCount || 0;
     },
     publishDays: function publishDays() {
-      return this.customer.publishDays || 22;
+      return this.customer.publishDays || 0;
     },
     reservePct: function reservePct() {
       return Math.min(100, Math.round(this.remain / this.totalQuota * 100));
@@ -308,8 +269,8 @@ var _default = {
       return "".concat(d.getMonth() + 1, "\u6708").concat(d.getDate(), "\u65E5");
     },
     tabs: function tabs() {
-      var source = this.list.length ? this.list : this.demoMaterials;
-      var total = this.list.length || 11;
+      var source = this.list;
+      var total = this.list.length;
       var arr = [{
         key: 'all',
         label: '全部',
@@ -329,9 +290,8 @@ var _default = {
     },
     shown: function shown() {
       var _this = this;
-      var source = this.list.length ? this.list : this.demoMaterials;
-      if (this.activeTab === 'all') return source;
-      return source.filter(function (m) {
+      if (this.activeTab === 'all') return this.list;
+      return this.list.filter(function (m) {
         return m.contentType === _this.activeTab;
       });
     },
@@ -339,7 +299,7 @@ var _default = {
       return this.shown.slice(0, 9);
     },
     previewList: function previewList() {
-      return (this.list.length ? this.list : this.demoMaterials).slice(0, 3);
+      return this.list.slice(0, 3);
     }
   },
   onLoad: function onLoad() {
@@ -357,12 +317,6 @@ var _default = {
     },
     isDownloaded: function isDownloaded(m) {
       return m.downloadStatus === '已下载';
-    },
-    defaultType: function defaultType(i) {
-      return this.types[i % this.types.length];
-    },
-    defaultTitle: function defaultTitle(i) {
-      return ['上菜挑战', '锅底熬制', '牛肉知识', '老板观点', '门店日常', '食材准备', '顾客氛围', '招牌菜品', '夜间客流'][i] || '成品内容';
     },
     load: function load() {
       var _this2 = this;
@@ -442,43 +396,39 @@ var _default = {
     },
     play: function play(m) {
       if (m.video) {
-        uni.navigateTo({
-          url: "/pages/hy-content/content"
-        }); // 占位：可接视频全屏播放
         uni.showToast({
-          title: '播放：' + m.title,
+          title: '播放：' + (m.title || '成品'),
           icon: 'none'
         });
       } else {
         uni.showToast({
-          title: '正在播放：' + (m.title || '成品内容'),
+          title: '暂无视频文件',
           icon: 'none'
         });
       }
     },
     download: function download(m) {
       var _this3 = this;
-      if (String(m.id).indexOf('d') === 0) {
-        this.$set(m, 'downloadStatus', '已下载');
-        uni.showToast({
-          title: '已保存到相册',
-          icon: 'success'
-        });
-        return;
-      }
       uni.request({
         url: "".concat(this.$base.url, "hyDeliverable/download/").concat(m.id),
         method: 'GET',
         header: {
           Token: uni.getStorageSync('token')
         },
-        success: function success() {
-          m.downloadStatus = '已下载';
-          _this3.$set(m, 'downloadStatus', '已下载');
-          uni.showToast({
-            title: '已开始下载',
-            icon: 'success'
-          });
+        success: function success(r) {
+          var body = r.data || {};
+          if (body.code === 0) {
+            _this3.$set(m, 'downloadStatus', '已下载');
+            uni.showToast({
+              title: '已标记下载',
+              icon: 'success'
+            });
+          } else {
+            uni.showToast({
+              title: body.msg || '下载失败',
+              icon: 'none'
+            });
+          }
         }
       });
     },

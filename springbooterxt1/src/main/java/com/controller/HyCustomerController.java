@@ -4,6 +4,8 @@ import com.annotation.IgnoreAuth;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.entity.HyCustomerEntity;
 import com.entity.HyOrderEntity;
+import com.entity.YonghuEntity;
+import com.service.YonghuService;
 import com.service.impl.HyCustomerServiceImpl;
 import com.service.impl.HyDealServiceImpl;
 import com.service.impl.HyOrderServiceImpl;
@@ -15,6 +17,7 @@ import com.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -30,6 +33,8 @@ public class HyCustomerController {
     private HyDealServiceImpl dealService;
     @Autowired
     private HyOrderServiceImpl orderService;
+    @Autowired
+    private YonghuService yonghuService;
 
     @IgnoreAuth
     @RequestMapping("/page")
@@ -54,12 +59,19 @@ public class HyCustomerController {
     }
 
     /**
-     * 客户小程序按手机号绑定合意客户档案（付款激活后查看本人服务/内容）。
-     * 兼容种子数据中的脱敏手机号（如 138****1123）。
+     * 客户小程序按手机号绑定合意客户档案（需登录）。
+     * 登录用户为 yonghu 时，强制使用 session 手机号，防止冒用他人档案。
      */
-    @IgnoreAuth
     @RequestMapping("/bindByPhone")
-    public R bindByPhone(@RequestParam String phone) {
+    public R bindByPhone(@RequestParam(required = false) String phone, HttpServletRequest request) {
+        Object tableName = request.getSession().getAttribute("tableName");
+        Object userId = request.getSession().getAttribute("userId");
+        if ("yonghu".equals(tableName) && userId != null) {
+            YonghuEntity u = yonghuService.selectById(Long.valueOf(String.valueOf(userId)));
+            if (u != null && u.getShoujihaoma() != null && !u.getShoujihaoma().trim().isEmpty()) {
+                phone = u.getShoujihaoma().trim();
+            }
+        }
         if (phone == null || phone.trim().isEmpty()) {
             return R.error("手机号不能为空");
         }

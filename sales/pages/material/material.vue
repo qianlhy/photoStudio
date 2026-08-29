@@ -198,7 +198,10 @@ export default {
 		},
 		doSearch() {
 			if (!this.keyword) return
-			uni.navigateTo({ url: `/pages/selection/selection?keyword=${encodeURIComponent(this.keyword)}` })
+			const cid = uni.getStorageSync('hyActiveCustomerId')
+			let url = `/pages/selection/selection?keyword=${encodeURIComponent(this.keyword)}`
+			if (cid) url += `&customerId=${cid}`
+			uni.navigateTo({ url })
 		},
 		enter() {
 			uni.navigateTo({

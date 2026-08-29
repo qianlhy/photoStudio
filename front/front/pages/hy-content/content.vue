@@ -21,8 +21,9 @@
 			<view class="current-card">
 				<view class="current-copy">
 					<text class="eyebrow">当前服务</text>
-					<text class="current-title">本批{{ list.length || 11 }}条已交付</text>
-					<text class="current-sub">{{ order.packageName || '门店增长套餐' }} · {{ deliverText }}</text>
+					<text class="current-title" v-if="list.length">本批{{ list.length }}条已交付</text>
+					<text class="current-title" v-else>暂无已交付内容</text>
+					<text class="current-sub">{{ order.packageName || '—' }} · {{ deliverText }}</text>
 					<view class="service-link" @tap="goService">查看服务记录 <text>›</text></view>
 				</view>
 				<view class="deliver-art">
@@ -32,14 +33,14 @@
 				</view>
 			</view>
 
-			<view class="section-head"><text class="section-title">我的成品</text><text class="section-count">共 {{ list.length || 11 }} 条</text></view>
-			<scroll-view scroll-x class="chips" :show-scrollbar="false">
+			<view class="section-head"><text class="section-title">我的成品</text><text class="section-count">共 {{ list.length }} 条</text></view>
+			<scroll-view scroll-x class="chips" :show-scrollbar="false" v-if="list.length">
 				<view class="chips-inner">
 					<view v-for="t in tabs" :key="t.key" class="chip" :class="{on:t.key===activeTab}" @tap="activeTab=t.key">{{ t.label }} <text>{{ t.count }}</text></view>
 				</view>
 			</scroll-view>
 
-			<view class="grid">
+			<view class="grid" v-if="displayList.length">
 				<view v-for="(m,i) in displayList" :key="m.id || i" class="cell" @tap="play(m)">
 					<image class="cover" :src="img(m.cover)" mode="aspectFill"></image>
 					<view class="cell-mask"></view>
@@ -48,13 +49,16 @@
 					</view>
 					<view v-if="isDownloaded(m)" class="stamp">已下载</view>
 					<view v-else class="play"><view></view></view>
-					<view class="cell-foot"><text class="type-tag">{{ m.contentType || defaultType(i) }}</text><text class="cell-title">{{ indexText(i) }} {{ m.title || defaultTitle(i) }}</text></view>
+					<view class="cell-foot"><text class="type-tag">{{ m.contentType || '成品' }}</text><text class="cell-title">{{ indexText(i) }} {{ m.title || '成品内容' }}</text></view>
 				</view>
 			</view>
+			<view v-else class="empty-block">
+				<text>暂无成品，制作完成后将出现在这里</text>
+			</view>
 
-			<view class="reference-card">
+			<view class="reference-card" v-if="refCount || previewList.length">
 				<view class="lock-orb"><view class="lock-icon"></view></view>
-				<view class="reference-copy"><text class="reference-title">对标参考 {{ refCount || 11 }}</text><text class="reference-sub">交付前用于确认拍摄方向 · 只读</text><view class="reference-note"><view class="mini-lock"></view><text>不可下载</text></view></view>
+				<view class="reference-copy"><text class="reference-title">对标参考 {{ refCount || previewList.length }}</text><text class="reference-sub">交付前用于确认拍摄方向 · 只读</text><view class="reference-note"><view class="mini-lock"></view><text>不可下载</text></view></view>
 				<view class="reference-preview">
 					<image v-for="(m,i) in previewList" :key="i" :src="img(m.cover)" mode="aspectFill"></image>
 				</view>
@@ -81,28 +85,17 @@ export default {
 			refCount: 0,
 			totalQuota: 15,
 			activeTab: 'all',
-			types: ['硬广', '晒过程', '教知识', '说观点', '讲故事'],
-			demoMaterials: [
-				{ id:'d1', cover:'upload/studio_work_1.jpg', contentType:'硬广', title:'上菜挑战', downloadStatus:'已下载' },
-				{ id:'d2', cover:'upload/studio_work_2.jpg', contentType:'晒过程', title:'锅底熬制' },
-				{ id:'d3', cover:'upload/studio_work_3.jpg', contentType:'教知识', title:'牛肉知识' },
-				{ id:'d4', cover:'upload/studio_work_4.jpg', contentType:'说观点', title:'老板观点', downloadStatus:'已下载' },
-				{ id:'d5', cover:'upload/studio_work_5.jpg', contentType:'硬广', title:'门店日常' },
-				{ id:'d6', cover:'upload/studio_work_6.jpg', contentType:'晒过程', title:'食材准备' },
-				{ id:'d7', cover:'upload/studio_cover_1.jpg', contentType:'说观点', title:'顾客氛围', downloadStatus:'已下载' },
-				{ id:'d8', cover:'upload/studio_cover_2.jpg', contentType:'硬广', title:'招牌菜品' },
-				{ id:'d9', cover:'upload/studio_cover_3.jpg', contentType:'晒过程', title:'夜间客流' }
-			]
+			types: ['硬广', '晒过程', '教知识', '说观点', '讲故事']
 		}
 	},
 	computed: {
 		greeting() {
 			const h = new Date().getHours()
 			const g = h < 11 ? '早上好' : (h < 14 ? '中午好' : (h < 18 ? '下午好' : '晚上好'))
-			return `${g}，${this.customer.name || '林女士'}`
+			return `${g}，${this.customer.name || '客户'}`
 		},
-		remain() { return this.customer.remainCount || 11 },
-		publishDays() { return this.customer.publishDays || 22 },
+		remain() { return this.customer.remainCount || 0 },
+		publishDays() { return this.customer.publishDays || 0 },
 		reservePct() { return Math.min(100, Math.round((this.remain / this.totalQuota) * 100)) },
 		deliverText() {
 			const t = this.order.deliverDate
@@ -111,8 +104,8 @@ export default {
 			return `${d.getMonth() + 1}月${d.getDate()}日`
 		},
 		tabs() {
-			const source = this.list.length ? this.list : this.demoMaterials
-			const total = this.list.length || 11
+			const source = this.list
+			const total = this.list.length
 			const arr = [{ key: 'all', label: '全部', count: total }]
 			this.types.forEach(t => {
 				const c = source.filter(m => m.contentType === t).length
@@ -121,15 +114,14 @@ export default {
 			return arr
 		},
 		shown() {
-			const source = this.list.length ? this.list : this.demoMaterials
-			if (this.activeTab === 'all') return source
-			return source.filter(m => m.contentType === this.activeTab)
+			if (this.activeTab === 'all') return this.list
+			return this.list.filter(m => m.contentType === this.activeTab)
 		},
 		displayList() {
 			return this.shown.slice(0, 9)
 		},
 		previewList() {
-			return (this.list.length ? this.list : this.demoMaterials).slice(0, 3)
+			return this.list.slice(0, 3)
 		}
 	},
 	onLoad() {
@@ -145,12 +137,6 @@ export default {
 		},
 		isDownloaded(m) {
 			return m.downloadStatus === '已下载'
-		},
-		defaultType(i) {
-			return this.types[i % this.types.length]
-		},
-		defaultTitle(i) {
-			return ['上菜挑战','锅底熬制','牛肉知识','老板观点','门店日常','食材准备','顾客氛围','招牌菜品','夜间客流'][i] || '成品内容'
 		},
 		load() {
 			const finish = (cid) => {
@@ -201,26 +187,24 @@ export default {
 		},
 		play(m) {
 			if (m.video) {
-				uni.navigateTo({ url: `/pages/hy-content/content` }) // 占位：可接视频全屏播放
-				uni.showToast({ title: '播放：' + m.title, icon: 'none' })
+				uni.showToast({ title: '播放：' + (m.title || '成品'), icon: 'none' })
 			} else {
-				uni.showToast({ title: '正在播放：' + (m.title || '成品内容'), icon: 'none' })
+				uni.showToast({ title: '暂无视频文件', icon: 'none' })
 			}
 		},
 		download(m) {
-			if (String(m.id).indexOf('d') === 0) {
-				this.$set(m, 'downloadStatus', '已下载')
-				uni.showToast({ title: '已保存到相册', icon: 'success' })
-				return
-			}
 			uni.request({
 				url: `${this.$base.url}hyDeliverable/download/${m.id}`,
 				method: 'GET',
 				header: { Token: uni.getStorageSync('token') },
-				success: () => {
-					m.downloadStatus = '已下载'
-					this.$set(m, 'downloadStatus', '已下载')
-					uni.showToast({ title: '已开始下载', icon: 'success' })
+				success: (r) => {
+					const body = r.data || {}
+					if (body.code === 0) {
+						this.$set(m, 'downloadStatus', '已下载')
+						uni.showToast({ title: '已标记下载', icon: 'success' })
+					} else {
+						uni.showToast({ title: body.msg || '下载失败', icon: 'none' })
+					}
 				}
 			})
 		},
@@ -301,4 +285,5 @@ export default {
 .view-ref { height:100%; padding-left:12rpx; display:flex; align-items:center; gap:6rpx; border-left:1rpx solid rgba(213,207,235,.7); color:#57637A; font-size:17rpx; white-space:nowrap; }
 .view-ref text { font-size:27rpx; }
 .bottom-space { height:154rpx; }
+.empty-block { margin-top: 24rpx; padding: 48rpx 20rpx; text-align: center; color: #9AA4B4; font-size: 24rpx; background: rgba(255,255,255,.5); border-radius: 20rpx; }
 </style>

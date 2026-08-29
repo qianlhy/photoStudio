@@ -108,9 +108,33 @@
             <div class="d-row"><span class="d-l">内部目标日期</span><span class="d-v">{{ (detail.targetDate||'').substr(0,10) }}</span></div>
             <div class="d-row"><span class="d-l">承诺交付日期</span><span class="d-v">{{ (detail.deliverDate||'').substr(0,10) }}</span></div>
             <div class="d-row"><span class="d-l">交付倒计时</span><span class="d-v red">剩 {{ daysLeft(detail) }} 天</span></div>
+            <div class="d-row"><span class="d-l">订单状态</span>
+              <span class="d-v"><el-tag size="mini" :type="statusType(detail.status)">{{ detail.status || '—' }}</el-tag></span>
+            </div>
             <div class="d-row"><span class="d-l">视频总数</span><span class="d-v">{{ detail.videoCount }} 条</span></div>
-            <div class="d-row"><span class="d-l">已完成视频</span><span class="d-v">{{ detail.completedCount }} 条</span></div>
+            <div class="d-row"><span class="d-l">已完成视频</span><span class="d-v">{{ detail.completedCount || 0 }} 条</span></div>
             <div class="d-row"><span class="d-l">优质作品标记</span><span class="d-v">{{ detail.qualityFlag===1?1:0 }} 条</span></div>
+
+            <div class="fulfill-box">
+              <div class="fulfill-title">履约更新（制作侧）</div>
+              <div class="fulfill-row">
+                <span>状态</span>
+                <el-select v-model="editForm.status" size="mini" style="width:140px">
+                  <el-option label="待拍摄" value="待拍摄"></el-option>
+                  <el-option label="待交付" value="待交付"></el-option>
+                  <el-option label="已完成" value="已完成"></el-option>
+                </el-select>
+              </div>
+              <div class="fulfill-row">
+                <span>已完成条数</span>
+                <el-input-number v-model="editForm.completedCount" :min="0" :max="detail.videoCount || 99" size="mini"></el-input-number>
+              </div>
+              <el-button type="primary" size="small" style="width:100%;margin-top:10px" :loading="saving" @click="saveFulfillment">保存履约进度</el-button>
+              <div class="fulfill-tips">
+                <el-button type="text" size="mini" @click="quickStatus('待交付')">→ 标记待交付</el-button>
+                <el-button type="text" size="mini" @click="quickStatus('已完成')">→ 标记已完成</el-button>
+              </div>
+            </div>
           </div>
           <div class="sp-foot-line">
             <el-button style="width:100%" @click="detail={}">关闭</el-button>
@@ -133,12 +157,14 @@ export default {
       counts: {undone: 0, done: 0},
       dataList: [],
       pageIndex: 1, pageSize: 10, totalPage: 0, dataListLoading: false,
-      detail: {}, items: []
+      detail: {}, items: [],
+      editForm: { status: "待拍摄", completedCount: 0 },
+      saving: false
     };
   },
   created() { this.getDataList(); this.loadCounts(); },
   methods: {
-    pct(o) { return o.videoCount ? Math.round(o.completedCount / o.videoCount * 100) : 0; },
+    pct(o) { return o.videoCount ? Math.round((o.completedCount || 0) / o.videoCount * 100) : 0; },
     daysLeft(o) {
       if (!o.deliverDate) return 0;
       const d = new Date(String(o.deliverDate).replace(/-/g, "/"));
@@ -198,7 +224,47 @@ export default {
       this.$http({url: `hyOrder/detail/${row.id}`, method: "get"}).then(({data}) => {
         if (data.code === 0) { this.detail = data.data || row; this.items = data.items || []; }
         else { this.detail = row; this.items = []; }
+        this.editForm = {
+          status: this.detail.status || "待拍摄",
+          completedCount: this.detail.completedCount || 0
+        };
       });
+    },
+    quickStatus(status) {
+      this.editForm.status = status;
+      if (status === "已完成" && this.detail.videoCount) {
+        this.editForm.completedCount = this.detail.videoCount;
+      }
+      this.saveFulfillment();
+    },
+    saveFulfillment() {
+      if (!this.detail.id) return;
+      this.saving = true;
+      this.$http({
+        url: "hyOrder/update",
+        method: "post",
+        data: {
+          id: this.detail.id,
+          status: this.editForm.status,
+          completedCount: this.editForm.completedCount
+        }
+      }).then(({data}) => {
+        this.saving = false;
+        if (data.code === 0) {
+          this.$message.success("履约进度已保存");
+          if (data.data) this.detail = Object.assign({}, this.detail, data.data);
+          else {
+            this.detail.status = this.editForm.status;
+            this.detail.completedCount = this.editForm.completedCount;
+          }
+          this.editForm.status = this.detail.status;
+          this.editForm.completedCount = this.detail.completedCount || 0;
+          this.getDataList();
+          this.loadCounts();
+        } else {
+          this.$message.error(data.msg || "保存失败");
+        }
+      }).catch(() => { this.saving = false; });
     }
   }
 };
@@ -233,6 +299,10 @@ export default {
 .mgr-av { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg,#4f8bff,#2F6BFF); color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
 .mgr-av.av2 { background: linear-gradient(135deg,#22B07D,#1c9268); }
 .mgr-av.av3 { background: linear-gradient(135deg,#FF8A3D,#e5701f); }
+.fulfill-box { margin-top: 14px; padding: 12px; background: #F5F8FF; border-radius: 8px; border: 1px solid #E3EBFF; }
+.fulfill-title { font-size: 13px; font-weight: 700; color: #2F6BFF; margin-bottom: 10px; }
+.fulfill-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: #5a6473; }
+.fulfill-tips { display: flex; justify-content: space-between; margin-top: 4px; }
 .sp-foot-line { padding: 12px 18px 16px; }
 .sp-empty { padding: 60px 24px; text-align: center; color: #a8b0bd; }
 .sp-empty i { font-size: 40px; margin-bottom: 12px; }

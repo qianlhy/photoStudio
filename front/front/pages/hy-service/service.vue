@@ -28,9 +28,10 @@
 				<view class="cur-copy">
 					<text class="eyebrow">当前服务</text>
 					<text class="cur-title">第{{ batch }}批 · {{ displayStatus }}</text>
-					<text class="cur-sub">{{ order.videoCount || 10 }}条视频 · 预计{{ deliverText }}交付</text>
-					<view class="cur-progress">
-						<text>已完成 {{ order.completedCount || 6 }}/{{ order.videoCount || 10 }}</text>
+					<text class="cur-sub" v-if="order.id">{{ order.videoCount || 0 }}条视频 · 预计{{ deliverText }}交付</text>
+					<text class="cur-sub" v-else>暂无进行中的服务订单</text>
+					<view class="cur-progress" v-if="order.id">
+						<text>已完成 {{ order.completedCount || 0 }}/{{ order.videoCount || 0 }}</text>
 						<view class="cp-bar"><view class="cp-in" :style="{width: donePct+'%'}"></view></view>
 					</view>
 				</view>
@@ -54,7 +55,7 @@
 						<view class="st-body">
 							<text class="st-name" :class="{muted:s.state==='todo'}">{{ s.name }}</text>
 							<text v-if="s.date" class="st-date">{{ s.date }}</text>
-							<text v-if="s.state==='cur'" class="st-date">已完成 {{ order.completedCount || 6 }}/{{ order.videoCount || 10 }}</text>
+							<text v-if="s.state==='cur' && order.id" class="st-date">已完成 {{ order.completedCount || 0 }}/{{ order.videoCount || 0 }}</text>
 						</view>
 					</view>
 				</view>
@@ -64,10 +65,10 @@
 			<view class="info glass-card">
 				<text class="block-title">本次服务信息</text>
 				<view class="info-grid">
-					<view class="info-item"><view class="info-icon video-icon"><view></view></view><text class="ig-label">本次内容</text><text class="ig-value">{{ order.videoCount || 10 }}条</text></view>
+					<view class="info-item"><view class="info-icon video-icon"><view></view></view><text class="ig-label">本次内容</text><text class="ig-value">{{ order.videoCount || 0 }}条</text></view>
 					<view class="info-item"><view class="info-icon calendar-icon"></view><text class="ig-label">拍摄日期</text><text class="ig-value">{{ shootText }}</text></view>
 					<view class="info-item"><view class="info-icon clock-icon"></view><text class="ig-label">预计交付</text><text class="ig-value">{{ deliverText }}</text></view>
-					<view class="info-item"><view class="info-icon list-icon"></view><text class="ig-label">服务编号</text><text class="ig-value small">{{ order.orderNo || 'YJ-0624-021' }}</text></view>
+					<view class="info-item"><view class="info-icon list-icon"></view><text class="ig-label">服务编号</text><text class="ig-value small">{{ order.orderNo || '—' }}</text></view>
 				</view>
 			</view>
 
@@ -109,29 +110,34 @@ export default {
 	computed: {
 		remain() { return this.customer.remainCount || 0 },
 		producing() {
+			if (!this.order.videoCount) return 0
 			const v = (this.order.videoCount || 0) - (this.order.completedCount || 0)
-			return v > 0 ? v : 10
+			return v > 0 ? v : 0
 		},
 		producingPct() {
+			if (!this.totalQuota) return 0
 			return Math.min(100 - this.reservePct, Math.round((this.producing / this.totalQuota) * 100))
 		},
 		reservePct() {
 			return Math.min(100, Math.round((this.remain / this.totalQuota) * 100))
 		},
 		donePct() {
-			if (!this.order.videoCount) return 60
-			return Math.round((this.order.completedCount / this.order.videoCount) * 100)
+			if (!this.order.videoCount) return 0
+			return Math.round(((this.order.completedCount || 0) / this.order.videoCount) * 100)
 		},
 		displayStatus() {
-			const status = this.order.status || '内容制作中'
+			const status = this.order.status || '暂无订单'
 			if (status === '内容制作中') return '制作中'
 			return status
 		},
 		shootText() { return this.md(this.order.shootDate) },
 		deliverText() { return this.md(this.order.deliverDate) },
 		steps() {
-			const st = this.order.status || '内容制作中'
+			const st = this.order.status || ''
 			const order = ['服务已确认', '方案已确认', '拍摄已完成', '内容制作中', '等待交付', '服务完成']
+			if (!st) {
+				return order.map((name, i) => ({ name, date: '', state: 'todo' }))
+			}
 			const idxMap = { '待拍摄': 2, '待交付': 4, '已完成': 5, '内容制作中': 3 }
 			const cur = idxMap[st] !== undefined ? idxMap[st] : 3
 			return order.map((name, i) => ({

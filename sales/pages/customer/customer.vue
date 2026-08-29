@@ -119,6 +119,7 @@
 						<text class="act-main">{{ nextAction.title }}</text>
 						<text class="act-sub">{{ nextAction.sub }}</text>
 					</view>
+					<view v-if="selected.followStatus!=='待付款' && selected.followStatus!=='已成交'" class="btn btn-primary act-btn" @click="startSelection">开始选片</view>
 					<view v-if="selected.followStatus==='待付款'" class="btn btn-danger act-btn" @click="confirmPay">确认收款并生成订单</view>
 					<view class="btn btn-danger act-btn" :class="{'btn-ghost': selected.followStatus==='待付款'}" @click="goFollow">记录本次跟进</view>
 				</view>
@@ -167,7 +168,7 @@ export default {
 	computed: {
 		shownCustomers() {
 			let list = this.customers.slice()
-			if (this.activeTab === 'unselect') list = list.filter(c => (c.deliveredCount || 0) < (c.selectedCount || 0))
+			if (this.activeTab === 'unselect') list = list.filter(c => !c.followStatus || c.followStatus === '跟进中' || (c.selectedCount || 0) === 0)
 			else if (this.activeTab === 'ending') list = list.filter(c => (c.remainCount || 0) <= 4)
 			else if (this.activeTab === 'repurchase') list = list.filter(c => (c.dealCount || 0) >= 1 && (c.remainCount || 0) <= 6)
 			else if (this.activeTab === 'today') list = list.filter(c => c.intention === '高' || c.followStatus === '跟进中' || c.followStatus === '待付款')
@@ -188,6 +189,7 @@ export default {
 			if (!this.selected) return { title: '', sub: '' }
 			const s = this.selected
 			if (s.followStatus === '待付款') return { title: '提醒客户完成付款', sub: '内容方案已确认，等待付款' }
+			if (!s.selectedCount && s.followStatus !== '已成交') return { title: '开始现场选片', sub: '通过喜欢/不喜欢确认拍摄方向' }
 			if ((s.remainCount || 0) <= 8) return { title: '今天联系客户确认续拍', sub: `现有内容在 ${s.publishDays || 0} 天后发完` }
 			return { title: '保持跟进', sub: '关注客户内容发布进度' }
 		},
@@ -228,7 +230,7 @@ export default {
 				const list = (res.data && res.data.list) || []
 				this.customers = list
 				this.tabs[0].count = list.filter(c => c.intention === '高' || c.followStatus === '跟进中' || c.followStatus === '待付款').length
-				this.tabs[1].count = list.filter(c => (c.deliveredCount || 0) < (c.selectedCount || 0)).length
+				this.tabs[1].count = list.filter(c => !c.followStatus || c.followStatus === '跟进中' || (c.selectedCount || 0) === 0).length
 				this.tabs[2].count = list.filter(c => (c.remainCount || 0) <= 4).length
 				this.tabs[3].count = list.filter(c => (c.dealCount || 0) >= 1 && (c.remainCount || 0) <= 6).length
 				this.tabs[4].count = (res.data && res.data.total) || list.length
@@ -293,6 +295,14 @@ export default {
 		goFollow() {
 			uni.navigateTo({ url: `/pages/customer/follow?customerId=${this.selected.id}&customerName=${encodeURIComponent(this.selected.name)}` })
 		},
+		startSelection() {
+			if (!this.selected) return
+			uni.setStorageSync('hyActiveCustomerId', this.selected.id)
+			uni.setStorageSync('hyActiveCustomerName', this.selected.name || '')
+			uni.navigateTo({
+				url: `/pages/selection/selection?customerId=${this.selected.id}&customerName=${encodeURIComponent(this.selected.name || '')}`
+			})
+		},
 		confirmPay() {
 			if (!this.selected) return
 			uni.showModal({
@@ -300,12 +310,22 @@ export default {
 				content: `确认「${this.selected.name}」已付款？将自动生成订单（待拍摄）并回写内容库存。`,
 				success: (r) => {
 					if (!r.confirm) return
-					this.$api.post('hyCustomer/confirmPay', { customerId: this.selected.id }).then(res => {
-						const no = (res.data && res.data.orderNo) || ''
-						uni.showToast({ title: no ? `订单已生成 ${no}` : '订单已生成', icon: 'success' })
-						this.loadCustomers()
-						setTimeout(() => uni.navigateTo({ url: '/pages/order/order' }), 700)
-					})
+					const doPay = (planId) => {
+						const body = { customerId: this.selected.id }
+						if (planId) body.planId = planId
+						this.$api.post('hyCustomer/confirmPay', body).then(res => {
+							const no = (res.data && res.data.orderNo) || ''
+							uni.showToast({ title: no ? `订单已生成 ${no}` : '订单已生成', icon: 'success' })
+							this.loadCustomers()
+							setTimeout(() => uni.navigateTo({ url: '/pages/order/order' }), 700)
+						})
+					}
+					this.$api.page('hyContentPlan', {
+						customerId: this.selected.id, page: 1, limit: 1, sort: 'addtime', order: 'desc'
+					}).then(res => {
+						const plan = (res.data && res.data.list && res.data.list[0]) || null
+						doPay(plan && plan.id)
+					}).catch(() => doPay(null))
 				}
 			})
 		},

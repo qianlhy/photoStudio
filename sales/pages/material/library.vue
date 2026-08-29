@@ -173,7 +173,10 @@ export default {
 		},
 		viewExamples() {
 			if (!this.currentCategory) return
-			uni.navigateTo({ url: `/pages/selection/selection?biztype=${encodeURIComponent(this.currentCategory.name)}` })
+			const cid = uni.getStorageSync('hyActiveCustomerId')
+			let url = `/pages/selection/selection?biztype=${encodeURIComponent(this.currentCategory.name)}`
+			if (cid) url += `&customerId=${cid}`
+			uni.navigateTo({ url })
 		}
 	}
 }
