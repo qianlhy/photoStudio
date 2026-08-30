@@ -55,6 +55,7 @@ public class HyContentPlanController {
         entity.setId(HyId.next());
         entity.setAddtime(new Date());
         if (entity.getConfirmed() == null) entity.setConfirmed(0);
+        dealService.fillPlanRecipeFromMaterials(entity);
         service.insert(entity);
         dealService.markAwaitingPayment(entity.getCustomerId(), entity.getId());
         return R.ok().put("id", entity.getId());

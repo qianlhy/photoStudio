@@ -39,7 +39,9 @@ function onStatusChange(fn) {
 function fullUrl(path, baseUrl) {
 	if (!path) return ''
 	if (/^https?:\/\//.test(path)) return path
-	return (baseUrl || base.url) + path
+	let p = String(path).replace(/^\//, '')
+	if (p && !p.startsWith('upload/')) p = 'upload/' + p
+	return (baseUrl || base.url) + p
 }
 
 function extFromPath(path, fallback) {

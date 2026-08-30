@@ -3,11 +3,14 @@ package com.controller;
 import com.annotation.IgnoreAuth;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.entity.HyCustomerEntity;
+import com.entity.HyFollowTaskEntity;
 import com.entity.HyOrderEntity;
 import com.entity.YonghuEntity;
 import com.service.YonghuService;
+import com.service.impl.HyCustomerAccountServiceImpl;
 import com.service.impl.HyCustomerServiceImpl;
 import com.service.impl.HyDealServiceImpl;
+import com.service.impl.HyFollowTaskServiceImpl;
 import com.service.impl.HyOrderServiceImpl;
 import com.utils.HyId;
 import com.utils.MPUtil;
@@ -35,6 +38,10 @@ public class HyCustomerController {
     private HyOrderServiceImpl orderService;
     @Autowired
     private YonghuService yonghuService;
+    @Autowired
+    private HyFollowTaskServiceImpl followTaskService;
+    @Autowired
+    private HyCustomerAccountServiceImpl accountService;
 
     @IgnoreAuth
     @RequestMapping("/page")
@@ -55,7 +62,11 @@ public class HyCustomerController {
     @IgnoreAuth
     @RequestMapping("/info/{id}")
     public R info(@PathVariable("id") Long id) {
-        return R.ok().put("data", service.selectById(id));
+        HyCustomerEntity customer = service.selectById(id);
+        if (customer != null) {
+            accountService.fillPreferenceFromYonghu(customer);
+        }
+        return R.ok().put("data", customer);
     }
 
     /**
@@ -141,14 +152,64 @@ public class HyCustomerController {
     public R save(@RequestBody HyCustomerEntity entity) {
         entity.setId(HyId.next());
         entity.setAddtime(new Date());
+        accountService.onAdminSave(entity);
         service.insert(entity);
+        createTodayReceptionTask(entity);
         return R.ok().put("id", entity.getId());
+    }
+
+    /** 新建客户后，为业务经理生成今日接待待办 */
+    private void createTodayReceptionTask(HyCustomerEntity entity) {
+        if (entity.getManagerId() == null) {
+            return;
+        }
+        HyFollowTaskEntity task = new HyFollowTaskEntity();
+        task.setId(HyId.next());
+        task.setAddtime(new Date());
+        task.setCustomerId(entity.getId());
+        task.setCustomerName(entity.getName());
+        task.setOwnerId(entity.getManagerId());
+        task.setOwnerName(entity.getManagerName());
+        task.setTaskTime(new Date());
+        task.setAction("开始接待");
+        task.setStatus("待办");
+        followTaskService.insert(task);
     }
 
     @RequestMapping("/update")
     public R update(@RequestBody HyCustomerEntity entity) {
+        HyCustomerEntity old = service.selectById(entity.getId());
+        if (old != null && (entity.getAuditStatus() == null || entity.getAuditStatus().trim().isEmpty())) {
+            entity.setAuditStatus(old.getAuditStatus());
+        }
+        if (old != null) {
+            if (entity.getOpenid() == null) entity.setOpenid(old.getOpenid());
+            if (entity.getYixiangPinlei() == null) entity.setYixiangPinlei(old.getYixiangPinlei());
+            if (entity.getPreference() == null) entity.setPreference(old.getPreference());
+        }
+        accountService.onAdminSave(entity);
         service.updateById(entity);
+        // 后台改偏好/品类后镜像到登录壳，小程序 session 立刻一致
+        String audit = accountService.resolveAuditForLogin(entity);
+        String sfsh = HyCustomerAccountServiceImpl.AUDIT_APPROVED.equals(audit) ? "是"
+                : HyCustomerAccountServiceImpl.AUDIT_REJECTED.equals(audit) ? "驳回" : "否";
+        accountService.syncYonghuShell(entity, sfsh);
         return R.ok();
+    }
+
+    /** 审核小程序注册客户（通过/驳回） */
+    @PostMapping("/audit")
+    public R audit(@RequestBody Map<String, Object> body) {
+        Object idObj = body.get("id");
+        if (idObj == null) return R.error("客户 id 必填");
+        String auditStatus = body.get("auditStatus") == null ? "" : String.valueOf(body.get("auditStatus"));
+        String auditReply = body.get("auditReply") == null ? "" : String.valueOf(body.get("auditReply"));
+        try {
+            accountService.audit(Long.valueOf(String.valueOf(idObj)), auditStatus, auditReply);
+            return R.ok();
+        } catch (IllegalArgumentException e) {
+            return R.error(e.getMessage());
+        }
     }
 
     @RequestMapping("/delete")

@@ -17,6 +17,11 @@
               <el-option v-for="s in statusOptions" :key="s" :label="s" :value="s"></el-option>
             </el-select>
           </el-form-item>
+          <el-form-item label="审核状态">
+            <el-select v-model="searchForm.auditStatus" placeholder="全部" clearable>
+              <el-option v-for="s in auditOptions" :key="s" :label="s" :value="s"></el-option>
+            </el-select>
+          </el-form-item>
           <el-form-item label="业务经理">
             <el-select v-model="searchForm.managerName" placeholder="全部" clearable>
               <el-option v-for="m in managers" :key="m.id" :label="m.name" :value="m.name"></el-option>
@@ -50,6 +55,12 @@
                       highlight-current-row @current-change="rowClick"
                       @selection-change="selectionChangeHandler" style="width: 100%">
               <el-table-column type="selection" header-align="center" align="center" width="45"></el-table-column>
+              <el-table-column label="头像" align="center" width="70">
+                <template slot-scope="s">
+                  <img v-if="s.row.avatar" :src="img(s.row.avatar)" class="tbl-avatar"/>
+                  <span v-else class="tbl-avatar-ph">{{ (s.row.name||'?').charAt(0) }}</span>
+                </template>
+              </el-table-column>
               <el-table-column prop="name" label="客户名称" min-width="140"></el-table-column>
               <el-table-column label="行业/业务" align="center" width="110">
                 <template slot-scope="s">{{ s.row.industry }}<span v-if="s.row.biztype">·{{ s.row.biztype }}</span></template>
@@ -66,6 +77,11 @@
               <el-table-column label="跟进状态" align="center" width="90">
                 <template slot-scope="s"><el-tag size="mini" :type="statusType(s.row.followStatus)">{{ s.row.followStatus }}</el-tag></template>
               </el-table-column>
+              <el-table-column label="审核状态" align="center" width="100">
+                <template slot-scope="s">
+                  <el-tag size="mini" :type="auditType(s.row.auditStatus)">{{ auditLabel(s.row.auditStatus) }}</el-tag>
+                </template>
+              </el-table-column>
               <el-table-column label="最近跟进" align="center" width="140">
                 <template slot-scope="s">{{ (s.row.lastFollowTime||'').replace('T',' ').substr(0,16) }}</template>
               </el-table-column>
@@ -81,9 +97,10 @@
                   <el-tag v-for="(t,i) in tags(s.row.tags)" :key="i" size="mini" class="ctag">{{ t }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" align="center" width="130" fixed="right">
+              <el-table-column label="操作" align="center" width="180" fixed="right">
                 <template slot-scope="s">
                   <el-button type="text" size="small" @click="addOrUpdateHandler(s.row.id,'info')">查看</el-button>
+                  <el-button v-if="needAudit(s.row)" type="text" size="small" @click="openAudit(s.row)">审核</el-button>
                   <el-button type="text" size="small" @click="openTransfer(s.row)">划拨</el-button>
                   <el-button v-if="isAuth('hyCustomer','删除')" type="text" size="small" @click="deleteHandler(s.row.id)">删除</el-button>
                 </template>
@@ -157,6 +174,27 @@
       </span>
     </el-dialog>
 
+    <!-- 审核客户 -->
+    <el-dialog title="审核客户" :visible.sync="auditVisible" width="460px">
+      <el-form label-width="90px">
+        <el-form-item label="客户名称"><span>{{ auditForm.name }}</span></el-form-item>
+        <el-form-item label="手机号"><span>{{ auditForm.phone || '—' }}</span></el-form-item>
+        <el-form-item label="审核结果">
+          <el-radio-group v-model="auditForm.auditStatus">
+            <el-radio label="已通过">通过</el-radio>
+            <el-radio label="已驳回">驳回</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="审核备注">
+          <el-input type="textarea" v-model="auditForm.auditReply" :rows="3" maxlength="200" show-word-limit placeholder="驳回时请填写原因"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="auditVisible=false">取消</el-button>
+        <el-button type="primary" @click="doAudit()">确认</el-button>
+      </span>
+    </el-dialog>
+
     <add-or-update v-if="addOrUpdateFlag" :parent="this" ref="addOrUpdate"></add-or-update>
   </div>
 </template>
@@ -168,8 +206,9 @@ export default {
   components: {AddOrUpdate},
   data() {
     return {
-      searchForm: {keyword: "", industry: "", followStatus: "", managerName: "", dateRange: []},
+      searchForm: {keyword: "", industry: "", followStatus: "", auditStatus: "", managerName: "", dateRange: []},
       statusOptions: ["跟进中", "已成交", "待付款", "已流失"],
+      auditOptions: ["待审核", "已通过", "已驳回"],
       industries: ["餐饮", "建筑", "企业", "教育培训", "家电"],
       managers: [],
       stat: {total: 0, following: 0, deal: 0, unpaid: 0},
@@ -184,7 +223,9 @@ export default {
       transferVisible: false,
       transferForm: {customerId: null, customerName: "", fromId: null, fromName: "", toId: null, remark: ""},
       batchVisible: false,
-      batchForm: {toId: null, remark: ""}
+      batchForm: {toId: null, remark: ""},
+      auditVisible: false,
+      auditForm: {id: null, name: "", phone: "", auditStatus: "已通过", auditReply: ""}
     };
   },
   created() {
@@ -193,8 +234,28 @@ export default {
     this.loadStat();
   },
   methods: {
+    img(v) {
+      if (!v) return '';
+      if (/^https?:\/\//i.test(v)) return v.split('?')[0];
+      const rel = v.startsWith('upload/') ? v : v.replace(/^\//, '');
+      return '/' + this.$base.name + '/' + rel;
+    },
     tags(v) { return v ? String(v).split(",").filter(Boolean) : []; },
     statusType(s) { return ({"已成交": "success", "待付款": "warning", "已流失": "info"})[s] || "primary"; },
+    auditLabel(s) {
+      if (!s || s === "是") return "已通过";
+      if (s === "否") return "待审核";
+      if (s === "驳回") return "已驳回";
+      return s;
+    },
+    auditType(s) {
+      const v = this.auditLabel(s);
+      return ({"已通过": "success", "待审核": "warning", "已驳回": "danger"})[v] || "info";
+    },
+    needAudit(row) {
+      const v = this.auditLabel(row.auditStatus);
+      return v === "待审核" || v === "已驳回";
+    },
     loadManagers() {
       this.$http({url: "hyEmployee/page", method: "get", params: {page: 1, limit: 100, role: "销售经理"}}).then(({data}) => {
         if (data.code === 0) this.managers = data.data.list || [];
@@ -213,7 +274,7 @@ export default {
       });
     },
     search() { this.pageIndex = 1; this.getDataList(); },
-    reset() { this.searchForm = {keyword: "", industry: "", followStatus: "", managerName: "", dateRange: []}; this.search(); },
+    reset() { this.searchForm = {keyword: "", industry: "", followStatus: "", auditStatus: "", managerName: "", dateRange: []}; this.search(); },
     rowClick(row) { if (row) this.openTransfer(row); },
     getDataList() {
       this.dataListLoading = true;
@@ -221,6 +282,7 @@ export default {
       if (this.searchForm.keyword) params.name = "%" + this.searchForm.keyword + "%";
       if (this.searchForm.industry) params.industry = this.searchForm.industry;
       if (this.searchForm.followStatus) params.followStatus = this.searchForm.followStatus;
+      if (this.searchForm.auditStatus) params.auditStatus = this.searchForm.auditStatus;
       if (this.searchForm.managerName) params.managerName = this.searchForm.managerName;
       this.$http({url: "hyCustomer/page", method: "get", params}).then(({data}) => {
         if (data.code === 0) { this.dataList = data.data.list; this.totalPage = data.data.total; }
@@ -235,6 +297,39 @@ export default {
       this.showFlag = false; this.addOrUpdateFlag = true;
       if (type !== "info") type = "else";
       this.$nextTick(() => this.$refs.addOrUpdate.init(id, type));
+    },
+    openAudit(row) {
+      this.auditForm = {
+        id: row.id,
+        name: row.name,
+        phone: row.phone,
+        auditStatus: "已通过",
+        auditReply: row.auditReply || ""
+      };
+      this.auditVisible = true;
+    },
+    doAudit() {
+      if (this.auditForm.auditStatus === "已驳回" && !this.auditForm.auditReply.trim()) {
+        this.$message.warning("驳回时请填写原因");
+        return;
+      }
+      this.$http({
+        url: "hyCustomer/audit",
+        method: "post",
+        data: {
+          id: this.auditForm.id,
+          auditStatus: this.auditForm.auditStatus,
+          auditReply: this.auditForm.auditReply
+        }
+      }).then(({data}) => {
+        if (data.code === 0) {
+          this.$message.success("审核完成");
+          this.auditVisible = false;
+          this.getDataList();
+        } else {
+          this.$message.error(data.msg);
+        }
+      });
     },
     openTransfer(row) {
       this.transferForm = {customerId: row.id, customerName: row.name, fromId: row.managerId, fromName: row.managerName, toId: null, remark: ""};
@@ -302,6 +397,8 @@ export default {
 .s-l { font-size: 13px; color: #8A94A6; }
 .s-n { font-size: 26px; font-weight: 800; color: #1F2733; line-height: 1.1; }
 .ctag { margin: 2px; }
+.tbl-avatar { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; }
+.tbl-avatar-ph { width: 40px; height: 40px; border-radius: 8px; background: #EEF1F5; color: #8A94A6; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; }
 
 .mgr-cell { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .mgr-av { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg,#4f8bff,#2F6BFF); color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }

@@ -315,8 +315,8 @@ var _default = {
           return v === '写真' || v === '宣传片';
         });
       }
-      if (this.user.pianhao) {
-        this.selectedStyles = this.user.pianhao.split(',').filter(function (i) {
+      if (this.user.pianhao || this.user.preference) {
+        this.selectedStyles = String(this.user.pianhao || this.user.preference).split(',').filter(function (i) {
           return i;
         });
       }

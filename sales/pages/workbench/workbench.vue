@@ -94,9 +94,12 @@
 					</view>
 					<view class="new-grid">
 						<view v-for="m in newMaterials" :key="m.id" class="ng-item" @click="goMaterial">
-							<image class="ng-img" :src="$media(m, 'cover')" mode="aspectFill"></image>
-							<text class="ng-name">{{ m.industrySub || m.industryBig }}</text>
-							<text class="ng-cnt">{{ m.usedCount || m.viewCount || 0 }} 条</text>
+							<image v-if="materialThumb(m)" class="ng-img" :src="materialThumb(m)" mode="aspectFill"></image>
+							<view v-else class="ng-img ng-vid-ph">
+								<text class="ng-play">▶</text>
+							</view>
+							<text class="ng-name">{{ materialLabel(m) }}</text>
+							<text class="ng-cnt">{{ materialMeta(m) }}</text>
 						</view>
 					</view>
 					<view class="more" @click="goMaterial">查看素材库 ›</view>
@@ -158,21 +161,40 @@ export default {
 		},
 		loadData() {
 			const empId = uni.getStorageSync('empId')
-			// 待办任务（用作今日接待 + 待办事项）
-			this.$api.page('hyFollowTask', { page: 1, limit: 20, status: '待办' }).then(res => {
+			// 该经理名下客户（口径与后台客户管理一致）
+			const cq = { page: 1, limit: 100 }
+			if (empId) cq.managerId = empId
+			this.$api.page('hyCustomer', cq).then(res => {
 				const list = (res.data && res.data.list) || []
-				this.todos = list.slice(0, 5)
-				this.receptions = list.slice(0, 3)
-				this.overview.reception = this.receptions.length
-				this.overview.follow = list.length
+				const unpaid = list.filter(c => c.followStatus === '待付款')
+				const following = list.filter(c => c.followStatus === '跟进中')
+				// 待接待：跟进中/未设状态且尚未开始选片
+				const toReceive = list.filter(c => (c.followStatus === '跟进中' || !c.followStatus) && (c.selectedCount || 0) === 0)
+				this.overview.unpaid = unpaid.length
+				this.overview.follow = following.length
+				this.overview.reception = toReceive.length
+				// 今日接待：优先待接待，再补待付款提醒
+				const rec = toReceive.concat(unpaid).slice(0, 3)
+				this.receptions = rec.map(c => ({
+					id: c.id,
+					customerId: c.id,
+					customerName: c.name,
+					action: c.followStatus === '待付款' ? '提醒完成付款' : '开始接待',
+					taskTime: c.lastFollowTime || c.addtime,
+					cover: c.avatar
+				}))
 			})
-			// 待付款客户数
-			this.$api.page('hyCustomer', { page: 1, limit: 100, followStatus: '待付款' }).then(res => {
-				this.overview.unpaid = (res.data && res.data.total) || 0
+			// 待办事项：该经理待办任务
+			const tq = { page: 1, limit: 20, status: '待办', sort: 'task_time', order: 'asc' }
+			if (empId) tq.ownerId = empId
+			this.$api.page('hyFollowTask', tq).then(res => {
+				this.todos = ((res.data && res.data.list) || []).slice(0, 5)
 			})
-			// 新内容
-			this.$api.page('hyMaterial', { page: 1, limit: 3 }).then(res => {
+			// 新内容（最新上架）
+			this.$api.page('hyMaterial', { page: 1, limit: 3, sort: 'addtime', order: 'desc' }).then(res => {
 				this.newMaterials = (res.data && res.data.list) || []
+				const remoteTotal = (res.data && res.data.total) || this.newMaterials.length
+				this.cacheStatus = Object.assign({}, this.cacheStatus, { remoteTotal })
 				if (this.$materialCache.isAppPlus()) {
 					const st = this.$materialCache.getStatus()
 					const stale = !st.lastSyncAt || (Date.now() - st.lastSyncAt > 30 * 60 * 1000)
@@ -181,13 +203,26 @@ export default {
 					}
 				}
 			})
-			// 进行中的选片
-			this.$api.page('hySelectionSession', { page: 1, limit: 1, status: '进行中' }).then(res => {
+			// 进行中的选片（限定当前经理，且客户仍存在）
+			const sq = { page: 1, limit: 5, status: '进行中', sort: 'addtime', order: 'desc' }
+			if (empId) sq.managerId = empId
+			this.$api.page('hySelectionSession', sq).then(res => {
 				const list = (res.data && res.data.list) || []
-				this.lastSession = list[0] || null
-				if (this.lastSession && !this.lastSession.cover) {
-					this.lastSession.cover = 'upload/studio_cover_3.jpg'
+				const s = list[0] || null
+				if (!s) {
+					this.lastSession = null
+					return
 				}
+				this.$api.info('hyCustomer', s.customerId).then(cr => {
+					if (!cr.data) {
+						this.lastSession = null
+						return
+					}
+					this.lastSession = s
+					if (!this.lastSession.cover) {
+						this.lastSession.cover = cr.data.avatar || 'upload/studio_cover_3.jpg'
+					}
+				}).catch(() => { this.lastSession = null })
 			})
 		},
 		formatHm(t) {
@@ -243,6 +278,23 @@ export default {
 		},
 		goMaterial() {
 			uni.reLaunch({ url: '/pages/material/library' })
+		},
+		materialLabel(m) {
+			const t = String((m && m.title) || '').trim()
+			if (t) return t.length > 10 ? t.slice(0, 10) + '…' : t
+			return (m && (m.industrySub || m.industryBig)) || '新素材'
+		},
+		materialMeta(m) {
+			if (!m) return ''
+			if (m.usedCount > 0) return m.usedCount + ' 次使用'
+			if (m.heat > 0) return '热度 ' + m.heat
+			return '新上架'
+		},
+		materialThumb(m) {
+			if (!m || !m.cover) return ''
+			if (/\.(mp4|mov|webm|m4v)(\?.*)?$/i.test(m.cover)) return ''
+			const url = this.$media(m, 'cover')
+			return url || ''
 		}
 	}
 }
@@ -584,6 +636,16 @@ export default {
 	height: 168rpx;
 	border-radius: 14rpx;
 	background: #eee;
+}
+.ng-vid-ph {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, #2a3340 0%, #1a2030 100%);
+}
+.ng-play {
+	font-size: 40rpx;
+	color: rgba(255, 255, 255, 0.88);
 }
 .ng-name {
 	font-size: 24rpx;

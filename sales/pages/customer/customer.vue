@@ -21,7 +21,7 @@
 				<scroll-view scroll-y class="cl-scroll">
 					<view v-for="c in shownCustomers" :key="c.id" class="cl-card" :class="{on:selected&&selected.id===c.id}"
 						@click="select(c)">
-						<image class="cl-img" :src="$img(c.avatar)" mode="aspectFill"></image>
+						<image class="cl-img" :src="customerAvatar(c.avatar)" mode="aspectFill"></image>
 						<view class="cl-body">
 							<view class="cl-row">
 								<text class="cl-name">{{ c.name }}</text>
@@ -43,9 +43,9 @@
 			<!-- 中：客户画像/生命周期 -->
 			<view class="col-center" v-if="selected">
 				<view class="profile card">
-					<image class="pf-cover" :src="$img(selected.avatar)" mode="aspectFill"></image>
+					<image class="pf-cover" :src="customerAvatar(selected.avatar)" mode="aspectFill"></image>
 					<view class="pf-head">
-						<image class="pf-avatar" :src="$img(selected.avatar)" mode="aspectFill"></image>
+						<image class="pf-avatar" :src="customerAvatar(selected.avatar)" mode="aspectFill"></image>
 						<view class="pf-name-block">
 							<text class="pf-name">{{ selected.name }}</text>
 							<view class="pf-tags">
@@ -70,13 +70,13 @@
 						<text class="pc-pct">{{ completePct }}%</text>
 					</view>
 					<view class="steps">
-						<view class="step done"><view class="st-dot">✓</view><text class="st-l">已选 {{ selected.selectedCount||0 }}</text></view>
-						<view class="step-line done"></view>
-						<view class="step done"><view class="st-dot">✓</view><text class="st-l">已拍 {{ selected.shotCount||0 }}</text></view>
-						<view class="step-line done"></view>
-						<view class="step done"><view class="st-dot">✓</view><text class="st-l">已交付 {{ selected.deliveredCount||0 }}</text></view>
-						<view class="step-line"></view>
-						<view class="step"><view class="st-dot grey"></view><text class="st-l">已发布 {{ selected.publishedCount||0 }}</text></view>
+						<block v-for="(st, i) in progressSteps" :key="st.key">
+							<view v-if="i > 0" class="step-line" :class="{done: progressSteps[i - 1].done}"></view>
+							<view class="step" :class="{done: st.done}">
+								<view class="st-dot" :class="{grey: !st.done}">{{ st.done ? '✓' : '' }}</view>
+								<text class="st-l">{{ st.label }} {{ st.count }}</text>
+							</view>
+						</block>
 					</view>
 				</view>
 
@@ -119,9 +119,15 @@
 						<text class="act-main">{{ nextAction.title }}</text>
 						<text class="act-sub">{{ nextAction.sub }}</text>
 					</view>
-					<view v-if="selected.followStatus!=='待付款' && selected.followStatus!=='已成交'" class="btn btn-primary act-btn" @click="startSelection">开始选片</view>
-					<view v-if="selected.followStatus==='待付款'" class="btn btn-danger act-btn" @click="confirmPay">确认收款并生成订单</view>
-					<view class="btn btn-danger act-btn" :class="{'btn-ghost': selected.followStatus==='待付款'}" @click="goFollow">记录本次跟进</view>
+					<view class="act-btns">
+						<view v-if="selected.followStatus!=='待付款' && selected.followStatus!=='已成交'" class="btn btn-primary act-btn" @click="startSelection">开始选片</view>
+						<view v-if="selected.followStatus==='待付款'" class="btn btn-danger act-btn" @click="confirmPay">确认收款</view>
+						<view
+							class="btn act-btn"
+							:class="selected.followStatus==='待付款' ? 'btn-ghost' : 'act-btn-secondary'"
+							@click="goFollow"
+						>记录本次跟进</view>
+					</view>
 				</view>
 
 				<view class="card tl-card grow">
@@ -177,6 +183,16 @@ export default {
 		completePct() {
 			if (!this.selected || !this.selected.selectedCount) return 0
 			return Math.round(((this.selected.deliveredCount || 0) / this.selected.selectedCount) * 100)
+		},
+		progressSteps() {
+			if (!this.selected) return []
+			const s = this.selected
+			return [
+				{ key: 'selected', label: '已选', count: s.selectedCount || 0 },
+				{ key: 'shot', label: '已拍', count: s.shotCount || 0 },
+				{ key: 'delivered', label: '已交付', count: s.deliveredCount || 0 },
+				{ key: 'published', label: '已发布', count: s.publishedCount || 0 }
+			].map(m => ({ ...m, done: m.count > 0 }))
 		},
 		ringStyle() {
 			const remain = (this.selected && this.selected.remainCount) || 0
@@ -288,6 +304,10 @@ export default {
 			if (!t) return ''
 			const d = new Date(t.replace ? t.replace(/-/g, '/') : t)
 			return `${d.getMonth() + 1}月${d.getDate()}日`
+		},
+		customerAvatar(path) {
+			if (path) return this.$img(path)
+			return ''
 		},
 		newCustomer() {
 			uni.showToast({ title: '新建客户（演示）', icon: 'none' })
@@ -463,7 +483,35 @@ export default {
 .act-box { background:#FDF1F0; border-radius:14rpx; padding:20rpx; margin:14rpx 0; }
 .act-main { font-size:27rpx; font-weight:700; display:block; }
 .act-sub { font-size:23rpx; color:$ink-2; margin-top:8rpx; display:block; }
-.act-btn { height: 80rpx; font-size: 28rpx; margin-top: 14rpx; }
+.act-btns {
+	display: flex;
+	align-items: stretch;
+	gap: 20rpx;
+	margin-top: 20rpx;
+	width: 100%;
+}
+.act-btn {
+	flex: 1;
+	min-width: 0;
+	height: 88rpx;
+	margin-top: 0;
+	padding: 0 20rpx;
+	box-sizing: border-box;
+	font-size: 26rpx;
+	line-height: 1.25;
+	white-space: normal;
+	text-align: center;
+}
+.act-btn-secondary {
+	background: #fff;
+	color: $brand;
+	border: 2rpx solid rgba(47, 107, 255, .32);
+	box-shadow: none;
+}
+.act-btns .act-btn:only-child {
+	flex: none;
+	width: 100%;
+}
 .tl-item { display:flex; padding:14rpx 0; }
 .tl-dot { width:14rpx; height:14rpx; border-radius:50%; margin-top:8rpx; margin-right:16rpx; flex-shrink:0; }
 .tl-date { font-size:22rpx; color:$muted; display:block; }
@@ -690,9 +738,16 @@ export default {
 	.act-sub, .tl-text, .sug-text {
 		font-size: clamp(11px, .86vw, 14px);
 	}
+	.act-btns {
+		gap: .75vw;
+		margin-top: 1vh;
+	}
 	.act-btn {
-		height: 5.4vh;
-		font-size: clamp(13px, 1vw, 16px);
+		height: 5.6vh;
+		min-height: 44px;
+		padding: 0 .85vw;
+		font-size: clamp(12px, .92vw, 15px);
+		border-radius: 999px;
 	}
 	.tl-item {
 		padding: .8vh 0;

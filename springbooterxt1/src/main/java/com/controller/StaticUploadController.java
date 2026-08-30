@@ -1,6 +1,7 @@
 package com.controller;
 
 import com.annotation.IgnoreAuth;
+import com.utils.UploadPathUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -48,19 +49,33 @@ public class StaticUploadController {
     }
 
     private Resource resolve(String path) {
+        String fileName = path;
+        if (path.startsWith("upload/")) {
+            fileName = path.substring("upload/".length());
+        }
+        // 外部 static/upload（与 FileController 写入目录一致）
+        File external = UploadPathUtils.resolveUploadFile(fileName);
+        if (external != null && external.exists()) {
+            return new FileSystemResource(external);
+        }
         // JAR 内：classpath:static/upload/...
         ClassPathResource inJar = new ClassPathResource("static/" + path);
         if (inJar.exists()) {
             return inJar;
         }
-        // 服务器 JAR 同级目录：static/upload/...（可不重打 JAR 直接放文件）
-        File external = new File("static/" + path);
-        if (external.exists()) {
-            return new FileSystemResource(external);
+        // 服务器 JAR 同级目录：static/upload/...
+        File externalRel = new File("static/" + path);
+        if (externalRel.exists()) {
+            return new FileSystemResource(externalRel);
         }
         File cwd = new File(System.getProperty("user.dir"), "static/" + path);
         if (cwd.exists()) {
             return new FileSystemResource(cwd);
+        }
+        // 历史错误路径：cwd/upload/xxx
+        File legacy = UploadPathUtils.resolveLegacyUploadFile(fileName);
+        if (legacy != null && legacy.exists()) {
+            return new FileSystemResource(legacy);
         }
         return null;
     }

@@ -28,7 +28,7 @@ const menu = {
             }, {
                 "child": [{
                     "appFrontIcon": "cuIcon-medal",
-                    "buttons": ["查看", "标记", "复用"],
+                    "buttons": ["新增", "查看", "修改", "删除", "标记", "复用"],
                     "menu": "成品与优质作品",
                     "menuJump": "列表",
                     "tableName": "hyDeliverable"

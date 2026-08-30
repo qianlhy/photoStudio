@@ -2,7 +2,10 @@
 	<view class="sel">
 		<!-- 顶栏 -->
 		<view class="topbar">
-			<text class="brand" @click="goBack">‹ {{ brandName }}</text>
+			<view class="brand" hover-class="brand-hover" @tap.stop="goBack">
+				<text class="brand-arrow">‹</text>
+				<text class="brand-text">{{ brandName }}</text>
+			</view>
 			<view class="center">
 				<text class="cust">{{ customerName }}</text>
 			</view>
@@ -70,7 +73,18 @@
 				</view>
 
 				<view class="card sc2">
-					<view class="pentagon" :style="pentagonStyle"></view>
+					<view class="pentagon-wrap">
+						<svg class="pentagon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+							<polygon :points="pentagonOutlinePts" fill="#F1F3F6" />
+							<polygon
+								v-for="(w, i) in pentagonWedges"
+								:key="pentagonKey + '-' + i"
+								:points="w.points"
+								:fill="w.color"
+								fill-opacity="0.82"
+							/>
+						</svg>
+					</view>
 					<view class="advice">
 						<text class="ad-title">{{ adviceTitle }}</text>
 						<text class="ad-sub">{{ adviceSub }}</text>
@@ -114,6 +128,8 @@ export default {
 			liked: [],
 			likedItems: [],
 			disliked: [],
+			_dirty: false,
+			_saving: false,
 			counts: { process: 0, knowledge: 0, story: 0, opinion: 0, ad: 0 },
 			groups: [
 				{ key: 'process', label: '厨过程', color: '#7C5CFF' },
@@ -149,13 +165,41 @@ export default {
 			const min = entries[entries.length - 1]
 			return `稍后建议补充${min.g.label}类`
 		},
-		pentagonStyle() {
-			// 五边形配方填充强度（按已选总量映射颜色透明度）
-			const t = Math.min(1, this.liked.length / Math.max(1, this.targetCount))
-			return {
-				background: `conic-gradient(from -90deg, #7C5CFF, #2F6BFF, #B9C0CC, #22B07D, #FF5A5F, #7C5CFF)`,
-				opacity: (0.35 + t * 0.55).toFixed(2)
-			}
+		pentagonKey() {
+			const c = this.counts
+			return [c.process, c.knowledge, c.story, c.opinion, c.ad, this.liked.length].join('-')
+		},
+		pentagonOutlinePts() {
+			const cx = 50
+			const cy = 50
+			const r = 44
+			return [0, 1, 2, 3, 4].map(i => {
+				const rad = (-90 + i * 72) * Math.PI / 180
+				return `${(cx + r * Math.cos(rad)).toFixed(1)},${(cy + r * Math.sin(rad)).toFixed(1)}`
+			}).join(' ')
+		},
+		pentagonWedges() {
+			const keys = ['process', 'knowledge', 'story', 'opinion', 'ad']
+			const max = Math.max(1, ...keys.map(k => this.counts[k] || 0))
+			const cx = 50
+			const cy = 50
+			const minR = 10
+			const maxR = 44
+			const radius = (key) => minR + ((this.counts[key] || 0) / max) * (maxR - minR)
+			return keys.map((key, i) => {
+				const a1 = (-90 + i * 72) * Math.PI / 180
+				const a2 = (-90 + (i + 1) * 72) * Math.PI / 180
+				const r1 = radius(key)
+				const r2 = radius(keys[(i + 1) % 5])
+				const x1 = (cx + r1 * Math.cos(a1)).toFixed(1)
+				const y1 = (cy + r1 * Math.sin(a1)).toFixed(1)
+				const x2 = (cx + r2 * Math.cos(a2)).toFixed(1)
+				const y2 = (cy + r2 * Math.sin(a2)).toFixed(1)
+				return {
+					points: `${cx},${cy} ${x1},${y1} ${x2},${y2}`,
+					color: this.groups[i].color
+				}
+			})
 		}
 	},
 	onLoad(opt) {
@@ -176,6 +220,13 @@ export default {
 			this.loadMaterials()
 		}
 	},
+	onUnload() {
+		if (this._dirty) this.saveProgress()
+	},
+	onBackPress() {
+		this.goBack()
+		return true
+	},
 	methods: {
 		videoSrc(m) {
 			return m ? this.$media(m, 'video') : ''
@@ -194,32 +245,70 @@ export default {
 			this.$materialCache.prefetchList(slice, this.$base.url, 3)
 		},
 		loadSession() {
-			this.$api.info('hySelectionSession', this.sessionId).then(res => {
-				const s = res.data
-				if (s) {
-					this.customerId = s.customerId
-					this.customerName = s.customerName
-					this.industry = s.industry
-					this.biztype = s.biztype
-					this.targetCount = s.targetCount || 15
-					this.counts = {
-						process: s.cProcess || 0, knowledge: s.cKnowledge || 0,
-						story: s.cStory || 0, opinion: s.cOpinion || 0, ad: s.cAd || 0
-					}
-					if (s.liked) this.liked = String(s.liked).split(',').filter(Boolean)
-				}
-				this.loadMaterials()
-			})
+			return this.$api.info('hySelectionSession', this.sessionId).then(res => {
+				if (res.data) this.applySession(res.data)
+				return this.restoreLikedItems()
+			}).then(() => this.loadMaterials())
 		},
 		loadCustomer() {
-			this.$api.info('hyCustomer', this.customerId).then(res => {
+			return this.$api.info('hyCustomer', this.customerId).then(res => {
 				const c = res.data
 				if (c) {
 					this.customerName = c.name
 					this.industry = c.industry
 					this.biztype = c.biztype
 				}
-				this.loadMaterials()
+				return this.tryResumeSession()
+			})
+		},
+		tryResumeSession() {
+			if (this.sessionId) return this.loadSession()
+			return this.$api.page('hySelectionSession', {
+				page: 1,
+				limit: 1,
+				customerId: this.customerId,
+				status: '进行中',
+				sort: 'addtime',
+				order: 'desc'
+			}).then(res => {
+				const s = (res.data && res.data.list && res.data.list[0]) || null
+				if (s) {
+					this.sessionId = s.id
+					this.applySession(s)
+					return this.restoreLikedItems()
+				}
+			}).then(() => this.loadMaterials())
+		},
+		applySession(s) {
+			this.customerId = s.customerId
+			this.customerName = s.customerName
+			this.industry = s.industry
+			this.biztype = s.biztype
+			this.targetCount = s.targetCount || 15
+			this.liked = s.liked ? String(s.liked).split(',').filter(Boolean) : []
+			this.disliked = s.disliked ? String(s.disliked).split(',').filter(Boolean) : []
+		},
+		rebuildCounts() {
+			const counts = { process: 0, knowledge: 0, story: 0, opinion: 0, ad: 0 }
+			this.likedItems.forEach(m => {
+				if (!m) return
+				const key = this.typeKey(m.contentType)
+				counts[key] = (counts[key] || 0) + 1
+			})
+			this.counts = counts
+		},
+		restoreLikedItems() {
+			if (!this.liked.length) {
+				this.likedItems = []
+				this.rebuildCounts()
+				return Promise.resolve()
+			}
+			return this.$api.page('hyMaterial', { page: 1, limit: 200, status: '上架' }).then(res => {
+				const all = (res.data && res.data.list) || []
+				const map = {}
+				all.forEach(m => { map[String(m.id)] = m })
+				this.likedItems = this.liked.map(id => map[String(id)]).filter(Boolean)
+				this.rebuildCounts()
 			})
 		},
 		loadMaterials() {
@@ -229,7 +318,10 @@ export default {
 			this.$api.page('hyMaterial', q).then(res => {
 				let list = (res.data && res.data.list) || []
 				// 过滤已选/已弃
-				list = list.filter(m => this.liked.indexOf(String(m.id)) < 0)
+				list = list.filter(m => {
+					const id = String(m.id)
+					return this.liked.indexOf(id) < 0 && this.disliked.indexOf(id) < 0
+				})
 				this.materials = list
 				this.idx = 0
 				this.buildChips()
@@ -255,7 +347,10 @@ export default {
 			if (this.biztype) q.industrySub = this.biztype
 			this.$api.page('hyMaterial', q).then(res => {
 				let list = (res.data && res.data.list) || []
-				list = list.filter(m => this.liked.indexOf(String(m.id)) < 0)
+				list = list.filter(m => {
+					const id = String(m.id)
+					return this.liked.indexOf(id) < 0 && this.disliked.indexOf(id) < 0
+				})
 				this.materials = list
 				this.idx = 0
 				this.prefetchAround()
@@ -271,7 +366,9 @@ export default {
 			this.$api.get(`hyMaterial/like/${m.id}`).catch(() => {})
 			this.liked.push(String(m.id))
 			this.likedItems.push(m)
-			this.counts[this.typeKey(m.contentType)]++
+			this.rebuildCounts()
+			this._dirty = true
+			this.saveProgress()
 			this.next()
 		},
 		dislike() {
@@ -279,6 +376,8 @@ export default {
 			if (!m) return
 			this.$api.get(`hyMaterial/dislike/${m.id}`).catch(() => {})
 			this.disliked.push(String(m.id))
+			this._dirty = true
+			this.saveProgress()
 			this.next()
 		},
 		skip() {
@@ -298,8 +397,9 @@ export default {
 			return `0${m}:${ss}`
 		},
 		barH(key) {
-			const v = this.counts[key]
-			return Math.max(8, Math.round((v / this.maxCount) * 60)) + 'rpx'
+			const v = this.counts[key] || 0
+			if (v === 0) return '0'
+			return Math.max(12, Math.round((v / this.maxCount) * 60)) + 'rpx'
 		},
 		buildPayload(status) {
 			return {
@@ -322,6 +422,21 @@ export default {
 				status: status
 			}
 		},
+		saveProgress() {
+			if (!this.customerId || this._saving) return Promise.resolve()
+			this.rebuildCounts()
+			this._saving = true
+			const payload = this.buildPayload('进行中')
+			const req = this.sessionId
+				? this.$api.update('hySelectionSession', payload)
+				: this.$api.save('hySelectionSession', payload)
+			return req.then(res => {
+				if (!this.sessionId && res && res.id) this.sessionId = res.id
+				this._dirty = false
+			}).catch(() => {}).then(() => {
+				this._saving = false
+			})
+		},
 		finish() {
 			if (this.liked.length === 0) {
 				uni.showToast({ title: '请至少选择一条素材', icon: 'none' })
@@ -331,37 +446,49 @@ export default {
 				uni.showToast({ title: '请先从客户页进入选片，再生成方案', icon: 'none' })
 				return
 			}
-			const payload = this.buildPayload('已结束')
-			const saveSession = this.sessionId
-				? this.$api.update('hySelectionSession', payload)
-				: this.$api.save('hySelectionSession', payload)
-			saveSession.then(res => {
-				const sid = this.sessionId || (res && res.id)
-				// 生成内容方案
-				const plan = {
-					customerId: this.customerId,
-					customerName: this.customerName,
-					sessionId: sid,
-					originalSelection: this.liked.join(','),
-					rProcess: this.counts.process,
-					rKnowledge: this.counts.knowledge,
-					rStory: this.counts.story,
-					rOpinion: this.counts.opinion,
-					rAd: this.counts.ad,
-					totalCount: this.liked.length,
-					finalMaterials: this.liked.join(','),
-					confirmed: 0
-				}
-				this.$api.save('hyContentPlan', plan).then(() => {
-					uni.showToast({ title: '方案已生成，客户进入待付款', icon: 'success' })
-					setTimeout(() => {
-						uni.redirectTo({ url: `/pages/customer/customer?id=${this.customerId}` })
-					}, 600)
+			const runFinish = () => {
+				this.rebuildCounts()
+				const payload = this.buildPayload('已结束')
+				const saveSession = this.sessionId
+					? this.$api.update('hySelectionSession', payload)
+					: this.$api.save('hySelectionSession', payload)
+				saveSession.then(res => {
+					const sid = this.sessionId || (res && res.id)
+					const plan = {
+						customerId: this.customerId,
+						customerName: this.customerName,
+						sessionId: sid,
+						originalSelection: this.liked.join(','),
+						rProcess: this.counts.process,
+						rKnowledge: this.counts.knowledge,
+						rStory: this.counts.story,
+						rOpinion: this.counts.opinion,
+						rAd: this.counts.ad,
+						totalCount: this.liked.length,
+						finalMaterials: this.liked.join(','),
+						confirmed: 0
+					}
+					this.$api.save('hyContentPlan', plan).then(() => {
+						uni.showToast({ title: '方案已生成，客户进入待付款', icon: 'success' })
+						setTimeout(() => {
+							uni.redirectTo({ url: `/pages/customer/customer?id=${this.customerId}` })
+						}, 600)
+					})
 				})
-			})
+			}
+			if (this.liked.length > this.likedItems.length) {
+				this.restoreLikedItems().then(runFinish)
+			} else {
+				runFinish()
+			}
 		},
 		goBack() {
-			uni.navigateBack({ delta: 1, fail: () => uni.reLaunch({ url: '/pages/workbench/workbench' }) })
+			if (this._dirty) this.saveProgress()
+			const url = this.customerId
+				? `/pages/customer/customer?id=${this.customerId}`
+				: '/pages/workbench/workbench'
+			// H5 下页面栈与浏览器历史易错位，统一用 reLaunch 保证每次都能返回
+			uni.reLaunch({ url })
 		}
 	}
 }
@@ -385,9 +512,29 @@ export default {
 	box-shadow: 0 1rpx 0 rgba(31,39,51,.025);
 }
 .brand {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	padding: 8rpx 24rpx 8rpx 0;
+	position: relative;
+	z-index: 10;
+	cursor: pointer;
+	user-select: none;
+}
+.brand-arrow {
+	font-size: 36rpx;
+	font-weight: 700;
+	color: $ink;
+	line-height: 1;
+	margin-right: 6rpx;
+}
+.brand-text {
 	font-size: 30rpx;
 	font-weight: 700;
 	color: $ink;
+}
+.brand-hover {
+	opacity: 0.72;
 }
 .center {
 	flex: 1;
@@ -566,7 +713,8 @@ export default {
 	min-width: 0;
 }
 .side .card {
-	padding: 24rpx;
+	padding: 24rpx 24rpx 28rpx;
+	overflow: visible;
 }
 .sc-label {
 	font-size: 24rpx;
@@ -585,6 +733,7 @@ export default {
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-end;
+	padding-bottom: 4rpx;
 }
 .rp {
 	display: flex;
@@ -614,6 +763,9 @@ export default {
 	font-size: 20rpx;
 	color: $muted;
 	margin-top: 8rpx;
+	line-height: 1.35;
+	text-align: center;
+	white-space: nowrap;
 }
 
 .sc2 {
@@ -621,24 +773,33 @@ export default {
 	align-items: center;
 	gap: 22rpx;
 }
-.pentagon {
+.pentagon-wrap {
+	position: relative;
 	width: 110rpx;
 	height: 110rpx;
-	clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
 	flex-shrink: 0;
+}
+.pentagon-svg {
+	width: 100%;
+	height: 100%;
+	display: block;
 }
 .advice {
 	display: flex;
 	flex-direction: column;
+	flex: 1;
+	min-width: 0;
 }
 .ad-title {
 	font-size: 28rpx;
 	font-weight: 700;
+	line-height: 1.35;
 }
 .ad-sub {
 	font-size: 24rpx;
 	color: $muted;
 	margin-top: 8rpx;
+	line-height: 1.45;
 }
 
 .liked-row {
@@ -697,7 +858,14 @@ export default {
 		padding: 0 4.2vw;
 		box-sizing: border-box;
 	}
-	.brand, .cust {
+	.brand {
+		padding: .6vh .9vw .6vh 0;
+	}
+	.brand-arrow {
+		font-size: clamp(22px, 1.9vw, 30px);
+		margin-right: .35vw;
+	}
+	.cust {
 		font-size: clamp(19px, 1.65vw, 26px);
 	}
 	.counter {
@@ -777,19 +945,19 @@ export default {
 		font-size: clamp(11px, .9vw, 15px);
 	}
 	.side .card {
-		padding: 1.5vh 1.15vw;
+		padding: 1.6vh 1.15vw 1.5vh;
 		box-sizing: border-box;
 		border-radius: 13px;
+		overflow: visible;
+		flex-shrink: 0;
 	}
-	.sc1 {
-		height: 26.8%;
+	.sc1, .sc2, .sc3 {
+		height: auto;
+		min-height: 0;
 	}
 	.sc2 {
-		height: 20%;
 		gap: 1vw;
-	}
-	.sc3 {
-		height: 22%;
+		align-items: center;
 	}
 	.sc-label {
 		font-size: clamp(12px, .95vw, 15px);
@@ -811,18 +979,21 @@ export default {
 	}
 	.rp-label {
 		font-size: clamp(10px, .76vw, 12px);
-		margin-top: .35vh;
+		margin-top: .5vh;
+		line-height: 1.4;
 	}
-	.pentagon {
+	.pentagon-wrap {
 		width: 7.1vw;
 		height: 7.1vw;
 	}
 	.ad-title {
 		font-size: clamp(16px, 1.3vw, 21px);
+		line-height: 1.35;
 	}
 	.ad-sub {
 		font-size: clamp(12px, .92vw, 15px);
-		margin-top: .5vh;
+		margin-top: .6vh;
+		line-height: 1.45;
 	}
 	.liked-row {
 		margin-top: .8vh;

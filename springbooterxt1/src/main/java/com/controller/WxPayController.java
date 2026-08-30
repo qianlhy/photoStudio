@@ -48,6 +48,9 @@ public class WxPayController {
     @Autowired
     private YonghuService yonghuService;
 
+    @Autowired
+    private com.service.impl.HyCustomerAccountServiceImpl customerAccountService;
+
     /**
      * 统一下单（JSAPI），返回小程序 wx.requestPayment 所需参数。
      */
@@ -68,6 +71,9 @@ public class WxPayController {
 
         Long uid = (Long) request.getSession().getAttribute("userId");
         YonghuEntity user = uid == null ? null : yonghuService.selectById(uid);
+        if (user != null) {
+            customerAccountService.enrichYonghuFromCustomer(user);
+        }
         String openid = user == null ? null : user.getOpenid();
         if (openid == null || openid.isEmpty()) {
             return R.error("缺少 openid，请先使用微信登录后再支付");

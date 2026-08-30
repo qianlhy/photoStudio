@@ -30,6 +30,8 @@ public class HyOrderController {
     private HyContentItemServiceImpl itemService;
     @Autowired
     private com.service.impl.HyCustomerServiceImpl customerService;
+    @Autowired
+    private com.service.impl.HyMaterialServiceImpl materialService;
 
     @IgnoreAuth
     @RequestMapping("/page")
@@ -55,13 +57,27 @@ public class HyOrderController {
         return R.ok().put("data", service.selectById(id));
     }
 
-    /** 订单详情 + 本次内容清单 */
+    /** 订单详情 + 本次内容清单（清单类型以素材 contentType 为准并回写） */
     @IgnoreAuth
     @RequestMapping("/detail/{id}")
     public R detail(@PathVariable("id") Long id) {
         HyOrderEntity order = service.selectById(id);
         List<HyContentItemEntity> items = itemService.selectList(
                 new EntityWrapper<HyContentItemEntity>().eq("order_id", id).orderBy("sort", true));
+        if (items != null) {
+            for (HyContentItemEntity it : items) {
+                if (it.getMaterialRef() == null) continue;
+                com.entity.HyMaterialEntity m = materialService.selectById(it.getMaterialRef());
+                if (m == null || m.getContentType() == null || m.getContentType().trim().isEmpty()) continue;
+                String norm = com.service.impl.HyDealServiceImpl.normalizeContentType(m.getContentType());
+                if (!norm.equals(it.getContentType())) {
+                    it.setContentType(norm);
+                    itemService.updateById(it);
+                } else {
+                    it.setContentType(norm);
+                }
+            }
+        }
         return R.ok().put("data", order).put("items", items);
     }
 

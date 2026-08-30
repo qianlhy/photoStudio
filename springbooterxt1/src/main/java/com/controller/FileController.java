@@ -5,8 +5,8 @@ import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.entity.ConfigEntity;
 import com.entity.EIException;
 import com.service.ConfigService;
-import com.utils.ProjectPathUtils;
 import com.utils.R;
+import com.utils.UploadPathUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,23 +42,18 @@ public class FileController {
             throw new EIException("上传文件不能为空");
         }
         String fileExt = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1);
-        File path = new File(ResourceUtils.getURL("classpath:static").getPath());
-        if (!path.exists()) {
-            path = new File("");
-        }
-        File upload = new File(path.getAbsolutePath(), "/upload/");
-        if (!upload.exists()) {
-            upload.mkdirs();
-        }
         String fileName = new Date().getTime() + "." + fileExt;
-        File dest = new File(upload.getAbsolutePath() + "/" + fileName);
+        File uploadDir = UploadPathUtils.resolveUploadDir();
+        File dest = new File(uploadDir, fileName);
         file.transferTo(dest);
-        // 同步到源码目录，避免 IDE 重启后 target/classes/static 被清空导致上传文件丢失
-        File persistentUploadDir = ProjectPathUtils.resolveProjectSubDir("src/main/resources/static/upload");
-        if (!persistentUploadDir.exists()) {
-            persistentUploadDir.mkdirs();
+        // 开发环境同步到源码 static/upload
+        File persistentUploadDir = UploadPathUtils.resolveDevSourceUploadDir();
+        if (persistentUploadDir.getParentFile() != null && persistentUploadDir.getParentFile().exists()) {
+            if (!persistentUploadDir.exists()) {
+                persistentUploadDir.mkdirs();
+            }
+            FileUtils.copyFile(dest, new File(persistentUploadDir, fileName));
         }
-        FileUtils.copyFile(dest, new File(persistentUploadDir, fileName));
         if (StringUtils.isNotBlank(type) && type.equals("1")) {
             ConfigEntity configEntity = configService.selectOne(new EntityWrapper<ConfigEntity>().eq("name", "faceFile"));
             if (configEntity == null) {
@@ -81,16 +75,11 @@ public class FileController {
     @RequestMapping("/download")
     public ResponseEntity<byte[]> download(@RequestParam String fileName) {
         try {
-            File path = new File(ResourceUtils.getURL("classpath:static").getPath());
-            if (!path.exists()) {
-                path = new File("");
+            File file = UploadPathUtils.resolveUploadFile(fileName);
+            if (file == null) {
+                file = UploadPathUtils.resolveLegacyUploadFile(fileName);
             }
-            File upload = new File(path.getAbsolutePath(), "/upload/");
-            if (!upload.exists()) {
-                upload.mkdirs();
-            }
-            File file = new File(upload.getAbsolutePath() + "/" + fileName);
-            if (file.exists()) {
+            if (file != null && file.exists()) {
 				/*if(!fileService.canRead(file, SessionManager.getSessionUser())){
 					getResponse().sendError(403);
 				}*/

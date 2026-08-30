@@ -39,6 +39,9 @@ public class TaocanController {
     @Autowired
     private YonghuService yonghuService;
 
+    @Autowired
+    private com.service.impl.HyCustomerAccountServiceImpl customerAccountService;
+
     /**
      * 后端列表
      */
@@ -105,6 +108,7 @@ public class TaocanController {
         if (userId != null) {
             YonghuEntity u = yonghuService.selectById((Long) userId);
             if (u != null) {
+                customerAccountService.enrichYonghuFromCustomer(u);
                 final String prefPinlei = u.getYixiangpinlei();
                 final java.util.Set<String> prefStyles = new java.util.HashSet<>();
                 if (u.getPianhao() != null && !u.getPianhao().isEmpty()) {

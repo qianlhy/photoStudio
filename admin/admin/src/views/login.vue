@@ -28,17 +28,6 @@
                     v-model="rulesForm.username"/>
           <el-input class="lg-input" prefix-icon="el-icon-lock" placeholder="请输入密码" show-password
                     v-model="rulesForm.password" @keyup.enter.native="login()"/>
-          <div class="role-row">
-            <span class="role-label">角色</span>
-            <el-radio
-                v-for="item in menus"
-                v-if="item.hasBackLogin=='是'"
-                v-bind:key="item.roleName"
-                v-model="rulesForm.role"
-                :label="item.roleName"
-            >{{ item.roleName }}
-            </el-radio>
-          </div>
           <el-button type="primary" @click="login()" class="login-btn">登 录</el-button>
         </el-form>
         <div class="login-foot">© 合意传媒 · 运营管理后台</div>
@@ -87,6 +76,12 @@ export default {
   mounted() {
     let menus = menu.list();
     this.menus = menus;
+    // 管理端固定管理员登录，不展示角色选择
+    const admin = (menus || []).find(m => m.hasBackLogin === '是') || (menus || [])[0];
+    if (admin) {
+      this.rulesForm.role = admin.roleName;
+      this.tableName = admin.tableName;
+    }
   },
   created() {
     this.getRandCode()
@@ -107,15 +102,16 @@ export default {
         this.$message.error("请输入密码");
         return;
       }
-      if (!this.rulesForm.role) {
-        this.$message.error("请选择角色");
-        return;
-      }
-      let menus = this.menus;
-      for (let i = 0; i < menus.length; i++) {
-        if (menus[i].roleName == this.rulesForm.role) {
-          this.tableName = menus[i].tableName;
+      if (!this.tableName) {
+        const admin = (this.menus || []).find(m => m.hasBackLogin === '是') || (this.menus || [])[0];
+        if (admin) {
+          this.rulesForm.role = admin.roleName;
+          this.tableName = admin.tableName;
         }
+      }
+      if (!this.tableName) {
+        this.$message.error("登录配置异常");
+        return;
       }
       this.$http({
         url: `${this.tableName}/login?username=${this.rulesForm.username}&password=${this.rulesForm.password}`,
@@ -123,7 +119,7 @@ export default {
       }).then(({data}) => {
         if (data && data.code === 0) {
           this.$storage.set("Token", data.token);
-          this.$storage.set("role", this.rulesForm.role);
+          this.$storage.set("role", this.rulesForm.role || "管理员");
           this.$storage.set("sessionTable", this.tableName);
           this.$storage.set("adminName", this.rulesForm.username);
           this.$router.replace({path: "/index/"});
@@ -337,34 +333,10 @@ $ink-3: #9aa3b2;
     }
   }
 
-  .role-row {
-    display: flex;
-    align-items: center;
-    margin: 6px 0 28px;
-
-    .role-label {
-      font-size: 14px;
-      color: $ink-2;
-      margin-right: 16px;
-    }
-
-    & ::v-deep .el-radio {
-      margin-right: 18px;
-    }
-
-    & ::v-deep .el-radio__input.is-checked .el-radio__inner {
-      border-color: $primary;
-      background: $primary;
-    }
-
-    & ::v-deep .el-radio__input.is-checked + .el-radio__label {
-      color: $primary-deep;
-    }
-  }
-
   .login-btn {
     width: 100%;
     height: 50px;
+    margin-top: 12px;
     border-radius: 12px;
     font-size: 16px;
     letter-spacing: 4px;

@@ -81,6 +81,10 @@ CREATE TABLE `hy_customer` (
   `remain_count` int DEFAULT 0 COMMENT '剩余内容/库存',
   `publish_days` int DEFAULT 0 COMMENT '预计可发布天数',
   `publish_deadline` varchar(50) DEFAULT NULL COMMENT '内容预计发布至',
+  `audit_status` varchar(20) DEFAULT '已通过' COMMENT '小程序审核:待审核/已通过/已驳回',
+  `audit_reply` varchar(500) DEFAULT NULL COMMENT '审核回复',
+  `openid` varchar(100) DEFAULT NULL COMMENT '微信openid',
+  `yixiang_pinlei` varchar(50) DEFAULT NULL COMMENT '意向品类:写真/宣传片/都看看',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='客户档案';
 

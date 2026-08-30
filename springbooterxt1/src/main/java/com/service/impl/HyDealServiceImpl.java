@@ -261,28 +261,35 @@ public class HyDealServiceImpl {
         String materials = plan.getFinalMaterials() == null ? "" : plan.getFinalMaterials();
         String[] ids = materials.isEmpty() ? new String[0] : materials.split(",");
         int sort = 1;
+        int matIdx = 0;
         for (ItemSpec spec : specs) {
             HyContentItemEntity it = new HyContentItemEntity();
             it.setId(HyId.next());
             it.setAddtime(new Date());
             it.setOrderId(order.getId());
             it.setTitle(spec.type + " · 第" + sort + "条");
-            it.setContentType(spec.type);
+            it.setContentType(normalizeContentType(spec.type));
             it.setStatus(0);
             it.setSort(sort);
-            if (ids.length > 0) {
-                String mid = ids[(sort - 1) % ids.length].trim();
-                if (!mid.isEmpty()) {
-                    try {
-                        Long midL = Long.parseLong(mid);
-                        it.setMaterialRef(midL);
-                        HyMaterialEntity m = materialService.selectById(midL);
-                        if (m != null) {
-                            it.setCover(m.getCover());
-                            if (m.getTitle() != null) it.setTitle(m.getTitle());
+            // 与选片一一对应，禁止 (sort % n) 循环错配
+            while (matIdx < ids.length && ids[matIdx].trim().isEmpty()) matIdx++;
+            if (matIdx < ids.length) {
+                String mid = ids[matIdx].trim();
+                matIdx++;
+                try {
+                    Long midL = Long.parseLong(mid);
+                    it.setMaterialRef(midL);
+                    HyMaterialEntity m = materialService.selectById(midL);
+                    if (m != null) {
+                        it.setCover(m.getCover());
+                        if (m.getTitle() != null && !m.getTitle().trim().isEmpty()) {
+                            it.setTitle(m.getTitle());
                         }
-                    } catch (NumberFormatException ignored) {
+                        if (m.getContentType() != null && !m.getContentType().trim().isEmpty()) {
+                            it.setContentType(normalizeContentType(m.getContentType()));
+                        }
                     }
+                } catch (NumberFormatException ignored) {
                 }
             }
             itemService.insert(it);
@@ -291,12 +298,18 @@ public class HyDealServiceImpl {
     }
 
     private List<ItemSpec> expandRecipe(HyContentPlanEntity plan) {
+        fillPlanRecipeFromMaterials(plan);
+        // 选片素材是真相来源：有 finalMaterials 时按素材生成，避免「五类各 1」占位
+        List<ItemSpec> fromMats = specsFromFinalMaterials(plan.getFinalMaterials());
+        if (!fromMats.isEmpty()) {
+            return fromMats;
+        }
         List<ItemSpec> list = new ArrayList<>();
+        addSpecs(list, "硬广", plan.getRAd());
         addSpecs(list, "厨过程", plan.getRProcess());
         addSpecs(list, "教知识", plan.getRKnowledge());
-        addSpecs(list, "讲故事", plan.getRStory());
         addSpecs(list, "说观点", plan.getROpinion());
-        addSpecs(list, "硬广", plan.getRAd());
+        addSpecs(list, "讲故事", plan.getRStory());
         if (list.isEmpty()) {
             int n = plan.getTotalCount() == null || plan.getTotalCount() <= 0 ? 5 : plan.getTotalCount();
             String[] types = {"硬广", "厨过程", "教知识", "说观点", "讲故事"};
@@ -305,12 +318,75 @@ public class HyDealServiceImpl {
         return list;
     }
 
+    /** 按选片素材顺序生成清单（与选片页一致） */
+    private List<ItemSpec> specsFromFinalMaterials(String materials) {
+        List<ItemSpec> list = new ArrayList<>();
+        if (materials == null || materials.trim().isEmpty()) return list;
+        for (String part : materials.split(",")) {
+            String id = part.trim();
+            if (id.isEmpty()) continue;
+            try {
+                HyMaterialEntity m = materialService.selectById(Long.parseLong(id));
+                String type = (m != null && m.getContentType() != null && !m.getContentType().isEmpty())
+                        ? normalizeContentType(m.getContentType()) : "硬广";
+                list.add(new ItemSpec(type));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return list;
+    }
+
+    /** 统一五类名，兼容「硬广短视频」等写法 */
+    public static String normalizeContentType(String raw) {
+        if (raw == null) return "硬广";
+        String t = raw.trim();
+        if (t.isEmpty()) return "硬广";
+        if (t.contains("硬广")) return "硬广";
+        if (t.contains("厨过程") || t.contains("过程")) return "厨过程";
+        if (t.contains("教知识") || t.contains("知识")) return "教知识";
+        if (t.contains("说观点") || t.contains("观点")) return "说观点";
+        if (t.contains("讲故事") || t.contains("故事")) return "讲故事";
+        return t;
+    }
+
     private void addSpecs(List<ItemSpec> list, String type, Integer count) {
         int n = count == null ? 0 : count;
         for (int i = 0; i < n; i++) list.add(new ItemSpec(type));
     }
 
+    /** 方案五类配方为 0 时，按已选素材 contentType 回填 */
+    public void fillPlanRecipeFromMaterials(HyContentPlanEntity plan) {
+        if (plan == null) return;
+        int total = n(plan.getRAd()) + n(plan.getRProcess()) + n(plan.getRKnowledge())
+                + n(plan.getROpinion()) + n(plan.getRStory());
+        if (total > 0) return;
+        String mats = plan.getFinalMaterials();
+        if (mats == null || mats.trim().isEmpty()) return;
+        int ad = 0, process = 0, knowledge = 0, opinion = 0, story = 0;
+        for (String part : mats.split(",")) {
+            String id = part.trim();
+            if (id.isEmpty()) continue;
+            try {
+                HyMaterialEntity m = materialService.selectById(Long.parseLong(id));
+                if (m == null || m.getContentType() == null) continue;
+                String t = m.getContentType();
+                if (t.contains("硬广")) ad++;
+                else if (t.contains("厨过程") || t.contains("过程")) process++;
+                else if (t.contains("教知识") || t.contains("知识")) knowledge++;
+                else if (t.contains("说观点") || t.contains("观点")) opinion++;
+                else if (t.contains("讲故事") || t.contains("故事")) story++;
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        plan.setRAd(ad);
+        plan.setRProcess(process);
+        plan.setRKnowledge(knowledge);
+        plan.setROpinion(opinion);
+        plan.setRStory(story);
+    }
+
     private String buildRecipe(HyContentPlanEntity p) {
+        fillPlanRecipeFromMaterials(p);
         return "硬广" + n(p.getRAd()) + " 厨过程" + n(p.getRProcess()) + " 教知识" + n(p.getRKnowledge())
                 + " 说观点" + n(p.getROpinion()) + " 讲故事" + n(p.getRStory());
     }

@@ -143,7 +143,7 @@ export default {
 				const customerId = Number(cid) || cid
 				this.$api.list('hyCustomer', { id: customerId }).then(res => { this.customer = (res.data && res.data[0]) || {} })
 				// 勿传 sort=sort：会与实体字段 sort(Integer) 冲突，后端已在 Controller 内按 sort 排序
-				this.$api.page('hyDeliverable', { customerId, page: 1, limit: 50 }).then(res => {
+				this.$api.page('hyDeliverable', { customerId, page: 1, limit: 50, status: '上架' }).then(res => {
 					this.list = (res.data && res.data.list) || []
 				})
 				this.$api.page('hyOrder', { customerId, page: 1, limit: 1, sort: 'addtime', order: 'desc' }).then(res => {

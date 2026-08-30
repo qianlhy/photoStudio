@@ -6,6 +6,22 @@
     </div>
     <el-form class="detail-form-content" ref="ruleForm" :model="ruleForm" :rules="rules" label-width="110px" :disabled="type==='info'">
       <el-row>
+        <el-col :span="24">
+          <el-form-item v-if="type!=='info'" label="客户头像" prop="avatar">
+            <file-upload
+              avatar
+              tip="点击上传头像（建议正方形，jpg/png），仅支持一张"
+              action="file/upload"
+              :fileUrls="ruleForm.avatar || ''"
+              @change="avatarUploadChange"
+            ></file-upload>
+          </el-form-item>
+          <el-form-item v-else-if="ruleForm.avatar" label="客户头像">
+            <img :src="avatarPreview(ruleForm.avatar)" class="avatar-preview" alt="客户头像"/>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
         <el-col :span="12"><el-form-item label="客户名称" prop="name"><el-input v-model="ruleForm.name"></el-input></el-form-item></el-col>
         <el-col :span="12"><el-form-item label="联系人" prop="contact"><el-input v-model="ruleForm.contact"></el-input></el-form-item></el-col>
       </el-row>
@@ -47,6 +63,23 @@
         <el-col :span="12"><el-form-item label="客户标签"><el-input v-model="ruleForm.tags" placeholder="逗号分隔，如：重点客户,长期合作"></el-input></el-form-item></el-col>
         <el-col :span="12"><el-form-item label="内容偏好"><el-input v-model="ruleForm.preference" placeholder="逗号分隔，如：硬广,真实烟火气"></el-input></el-form-item></el-col>
       </el-row>
+      <el-row>
+        <el-col :span="12">
+          <el-form-item label="意向品类">
+            <el-select v-model="ruleForm.yixiangPinlei" placeholder="请选择" clearable style="width:100%">
+              <el-option v-for="s in ['写真','宣传片','都看看']" :key="s" :label="s" :value="s"></el-option>
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="审核状态">
+            <el-tag size="small" :type="({已通过:'success',待审核:'warning',已驳回:'danger'})[ruleForm.auditStatus] || 'info'">
+              {{ ruleForm.auditStatus || '已通过' }}
+            </el-tag>
+            <span v-if="ruleForm.auditReply" style="margin-left:8px;color:#8A94A6;font-size:12px;">{{ ruleForm.auditReply }}</span>
+          </el-form-item>
+        </el-col>
+      </el-row>
       <el-form-item>
         <el-button v-if="type!=='info'" type="primary" @click="onSubmit">提交</el-button>
         <el-button @click="back()">{{ type==='info' ? '返回' : '取消' }}</el-button>
@@ -63,7 +96,7 @@ export default {
       id: "",
       type: "",
       managers: [],
-      ruleForm: {name: "", contact: "", phone: "", industry: "", biztype: "", scale: "", managerId: null, managerName: "", followStatus: "跟进中", intention: "中", satisfaction: 5, tags: "", preference: ""},
+      ruleForm: {name: "", contact: "", phone: "", industry: "", biztype: "", scale: "", managerId: null, managerName: "", followStatus: "跟进中", intention: "中", satisfaction: 5, tags: "", preference: "", yixiangPinlei: "", auditStatus: "已通过", auditReply: "", avatar: ""},
       rules: {
         name: [{required: true, message: "客户名称不能为空", trigger: "blur"}],
         phone: [{required: true, message: "手机号不能为空", trigger: "blur"}]
@@ -77,7 +110,26 @@ export default {
   },
   methods: {
     init(id, type) {
-      if (id) { this.id = id; this.type = type; this.info(id); }
+      this.id = id || "";
+      this.type = type || "";
+      if (id) {
+        this.info(id);
+      } else {
+        this.ruleForm = {
+          name: "", contact: "", phone: "", industry: "", biztype: "", scale: "",
+          managerId: null, managerName: "", followStatus: "跟进中", intention: "中",
+          satisfaction: 5, tags: "", preference: "", yixiangPinlei: "", auditStatus: "已通过", auditReply: "", avatar: ""
+        };
+      }
+    },
+    avatarUploadChange(fileUrl) {
+      this.ruleForm.avatar = fileUrl || '';
+    },
+    avatarPreview(path) {
+      if (!path) return '';
+      if (/^https?:\/\//i.test(path)) return path.split('?')[0];
+      const p = path.startsWith('/') ? path : '/' + this.$base.name + '/' + path.replace(/^\//, '');
+      return p;
     },
     info(id) {
       this.$http({url: `hyCustomer/info/${id}`, method: "get"}).then(({data}) => {
@@ -113,4 +165,5 @@ export default {
 .back-arrow { font-size: 20px; cursor: pointer; color: #2F6BFF; }
 .addEdit-title { font-size: 16px; font-weight: 600; margin-left: 8px; cursor: pointer; }
 .detail-form-content { padding: 20px; }
+.avatar-preview { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
 </style>

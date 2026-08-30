@@ -52,4 +52,13 @@ public class HyCustomerEntity implements Serializable {
     private Integer remainCount;
     private Integer publishDays;
     private String publishDeadline;
+
+    /** 小程序登录审核：待审核 / 已通过 / 已驳回 */
+    private String auditStatus;
+    /** 审核回复（驳回原因等） */
+    private String auditReply;
+    /** 微信 openid（小程序登录） */
+    private String openid;
+    /** 意向品类：写真/宣传片/都看看 */
+    private String yixiangPinlei;
 }

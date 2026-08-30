@@ -61,7 +61,30 @@
         <el-card shadow="never" class="blk" style="margin-top:16px">
           <div slot="header" class="blk-head"><b>交付情况</b></div>
           <div class="deliver">
-            <div ref="deliverRing" class="ring-chart"></div>
+            <div class="rate-ring">
+              <svg class="rate-svg" viewBox="0 0 120 120" aria-hidden="true">
+                <defs>
+                  <linearGradient id="deliverRateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#3DD598" />
+                    <stop offset="100%" stop-color="#22B07D" />
+                  </linearGradient>
+                </defs>
+                <circle class="rate-track" cx="60" cy="60" r="50" />
+                <circle
+                  class="rate-bar"
+                  cx="60"
+                  cy="60"
+                  r="50"
+                  transform="rotate(-90 60 60)"
+                  :stroke-dasharray="ringCircumference"
+                  :stroke-dashoffset="ringDashOffset"
+                />
+              </svg>
+              <div class="rate-core">
+                <div class="rate-value">{{ deliver.rate }}<span class="rate-unit">%</span></div>
+                <div class="rate-name">完成率</div>
+              </div>
+            </div>
             <div class="deliver-stats">
               <div class="ds"><i class="ds-ic el-icon-date b1"></i><div><div class="ds-num">{{ deliver.total }}</div><div class="ds-l">本月应交付</div></div></div>
               <div class="ds"><i class="ds-ic el-icon-circle-check b2"></i><div><div class="ds-num green">{{ deliver.done }}</div><div class="ds-l">已完成 {{ deliver.donePct }}%</div></div></div>
@@ -124,13 +147,17 @@ export default {
       unpaidList: [],
       abnormalList: [],
       deliver: {total: 0, done: 0, undone: 0, abnormal: 0, donePct: 0, undonePct: 0, abnPct: 0, rate: 0},
-      trendChart: null,
-      deliverRing: null
+      trendChart: null
     }
   },
   computed: {
     maxFollow() { return Math.max(1, ...this.perf.map(p => p.following || 0)) },
-    maxDeal() { return Math.max(1, ...this.perf.map(p => p.dealCust || 0)) }
+    maxDeal() { return Math.max(1, ...this.perf.map(p => p.dealCust || 0)) },
+    ringCircumference() { return 2 * Math.PI * 50 },
+    ringDashOffset() {
+      const rate = Math.min(100, Math.max(0, Number(this.deliver.rate) || 0))
+      return this.ringCircumference * (1 - rate / 100)
+    }
   },
   mounted() {
     if (!this.$storage.get('Token')) {
@@ -212,7 +239,6 @@ export default {
         abnPct: total ? Math.round(abn / total * 100) : 0,
         rate: total ? Math.round(done / total * 100) : 0
       }
-      this.$nextTick(this.renderRing)
     },
     renderTrend(list) {
       // 按日期聚合成交额/数量
@@ -236,20 +262,6 @@ export default {
           {name: '成交数量', type: 'bar', yAxisIndex: 1, data: days.map(d => byDay[d].count), itemStyle: {color: '#9CC2FF', barBorderRadius: [4, 4, 0, 0]}, barWidth: '40%'},
           {name: '成交额 (元)', type: 'line', smooth: true, data: days.map(d => byDay[d].amount), itemStyle: {color: '#2F6BFF'}, areaStyle: {color: 'rgba(47,107,255,.08)'}}
         ]
-      })
-    },
-    renderRing() {
-      if (!this.deliverRing) this.deliverRing = echarts.init(this.$refs.deliverRing)
-      this.deliverRing.setOption({
-        series: [{
-          type: 'pie', radius: ['62%', '82%'], silent: true, label: {show: false},
-          data: [
-            {value: this.deliver.done, itemStyle: {color: '#22B07D'}},
-            {value: this.deliver.undone, itemStyle: {color: '#FF8A3D'}},
-            {value: this.deliver.abnormal, itemStyle: {color: '#FF5A5F'}}
-          ]
-        }],
-        graphic: {type: 'text', left: 'center', top: 'center', style: {text: this.deliver.rate + '%\n完成率', textAlign: 'center', fill: '#1F2733', fontSize: 18, fontWeight: 700}}
       })
     }
   }
@@ -301,8 +313,58 @@ export default {
 .pf-comm { color: #FF8A3D; font-weight: 600; }
 .red { color: #FF5A5F; font-weight: 600; }
 
-.deliver { display: flex; align-items: center; }
-.ring-chart { width: 82px; height: 82px; flex-shrink: 0; }
+.deliver { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.rate-ring {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+}
+.rate-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 4px 10px rgba(34, 176, 125, 0.12));
+}
+.rate-track {
+  fill: none;
+  stroke: #EEF1F5;
+  stroke-width: 10;
+}
+.rate-bar {
+  fill: none;
+  stroke: url(#deliverRateGrad);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.rate-core {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.rate-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1F2733;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.rate-unit {
+  font-size: 13px;
+  font-weight: 600;
+  margin-left: 1px;
+}
+.rate-name {
+  margin-top: 5px;
+  font-size: 11px;
+  color: #8A94A6;
+  letter-spacing: 0.5px;
+}
 .deliver-stats { flex: 1; display: flex; flex-wrap: wrap; }
 .ds { width: 50%; padding: 8px 12px; display: flex; align-items: center; gap: 10px; }
 .ds-ic { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; color: #fff; flex-shrink: 0; }

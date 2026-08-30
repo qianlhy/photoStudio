@@ -92,8 +92,8 @@
 					// 兼容历史逗号存储
 					this.selectedCats = yx.split(',').filter(v => v === '写真' || v === '宣传片');
 				}
-				if (this.user.pianhao) {
-					this.selectedStyles = this.user.pianhao.split(',').filter(i => i);
+				if (this.user.pianhao || this.user.preference) {
+					this.selectedStyles = String(this.user.pianhao || this.user.preference).split(',').filter(i => i);
 				}
 			},
 			async loadStyles() {

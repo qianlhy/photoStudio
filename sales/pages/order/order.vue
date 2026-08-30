@@ -16,10 +16,11 @@
 			<view class="col-list">
 				<view class="cl-title">{{ activeLabel }}订单</view>
 				<scroll-view scroll-y class="cl-scroll">
+					<view v-if="orders.length===0" class="empty">暂无{{ activeLabel }}订单</view>
 					<view v-for="o in orders" :key="o.id" class="o-card" :class="{on:selected&&selected.id===o.id}"
 						@click="select(o)">
 						<view class="o-top">
-							<image class="o-img" :src="$img(coverOf(o))" mode="aspectFill"></image>
+							<image class="o-img" :src="orderAvatar(o)" mode="aspectFill"></image>
 							<view class="o-info">
 								<text class="o-name">{{ o.customerName }}</text>
 								<text class="o-pkg">{{ o.packageName }}</text>
@@ -47,7 +48,7 @@
 						<text class="d-readonly">销售只读 · 履约由制作侧更新</text>
 					</view>
 					<view class="d-cust">
-						<image class="dc-img" :src="$img(coverOf(selected))" mode="aspectFill"></image>
+						<image class="dc-img" :src="orderAvatar(selected)" mode="aspectFill"></image>
 						<view class="dc-info">
 							<text class="dc-name">{{ selected.customerName }}</text>
 							<view class="dc-meta">
@@ -123,7 +124,10 @@ export default {
 			orders: [],
 			selected: null,
 			items: [],
-			radarColors: ['#FF5A5F', '#FF9F45', '#22B07D', '#2F6BFF', '#7C5CFF']
+			customerAvatarMap: {},
+			employeeAvatarMap: {},
+			materialTypeMap: {},
+			radarColors: ['#7C5CFF', '#2F6BFF', '#B9C0CC', '#22B07D', '#FF5A5F']
 		}
 	},
 	computed: {
@@ -132,7 +136,8 @@ export default {
 			return t ? t.label : ''
 		},
 		radar() {
-			const axes = ['硬广', '厨过程', '教知识', '说观点', '讲故事']
+			// 轴顺序必须与选片页一致：厨过程 → 教知识 → 讲故事 → 说观点 → 硬广
+			const axes = ['厨过程', '教知识', '讲故事', '说观点', '硬广']
 			const counts = axes.map(a => this.distCount(a))
 			const max = Math.max(1, ...counts)
 			const cx = 50, cy = 50, R = 33
@@ -140,7 +145,7 @@ export default {
 			const P = (r, i) => [+(cx + r * Math.cos(ang(i))).toFixed(2), +(cy + r * Math.sin(ang(i))).toFixed(2)]
 			const outer = axes.map((a, i) => P(R, i))
 			const mid = axes.map((a, i) => P(R * 0.6, i))
-			const data = counts.map((v, i) => P((v / max) * R, i))
+			const data = counts.map((v, i) => P((Math.max(0, v) / max) * R, i))
 			const str = pts => pts.map(p => p.join(',')).join(' ')
 			return { axes, counts, outer, data, outerStr: str(outer), midStr: str(mid), dataStr: str(data) }
 		}
@@ -151,47 +156,118 @@ export default {
 		this.loadOrders()
 	},
 	methods: {
+		managerQuery(extra) {
+			const q = Object.assign({ page: 1, limit: 50 }, extra || {})
+			const empId = uni.getStorageSync('empId')
+			if (empId) q.managerId = empId
+			return q
+		},
 		loadCounts() {
 			this.tabs.forEach(t => {
-				this.$api.page('hyOrder', { page: 1, limit: 1, status: t.status }).then(res => {
+				this.$api.page('hyOrder', this.managerQuery({ page: 1, limit: 1, status: t.status })).then(res => {
 					t.count = (res.data && res.data.total) || 0
 				})
 			})
 		},
 		loadOrders() {
 			const t = this.tabs.find(t => t.key === this.activeTab)
-			const q = { page: 1, limit: 50, status: t.status }
+			const q = this.managerQuery({ status: t.status })
 			if (this.keyword) q.customerName = '%' + this.keyword + '%'
 			this.$api.page('hyOrder', q).then(res => {
 				this.orders = (res.data && res.data.list) || []
-				this.select(this.orders[0])
+				this.loadOrderAvatars(this.orders)
+				this.select(this.orders[0] || null)
 			})
+		},
+		loadOrderAvatars(orders) {
+			const customerIds = [...new Set((orders || []).map(o => o.customerId).filter(Boolean))]
+			const managerIds = [...new Set((orders || []).map(o => o.managerId).filter(Boolean))]
+			customerIds.forEach(id => this.fetchCustomerAvatar(id))
+			managerIds.forEach(id => this.fetchEmployeeAvatar(id))
+		},
+		fetchCustomerAvatar(customerId) {
+			if (!customerId || this.customerAvatarMap[customerId]) return
+			this.$api.info('hyCustomer', customerId).then(res => {
+				if (res.data && res.data.avatar) {
+					this.$set(this.customerAvatarMap, customerId, res.data.avatar)
+				}
+			}).catch(() => {})
+		},
+		fetchEmployeeAvatar(empId) {
+			if (!empId || this.employeeAvatarMap[empId]) return
+			this.$api.info('hyEmployee', empId).then(res => {
+				if (res.data && res.data.avatar) {
+					this.$set(this.employeeAvatarMap, empId, res.data.avatar)
+				}
+			}).catch(() => {})
 		},
 		select(o) {
 			if (!o) { this.selected = null; this.items = []; return }
 			this.selected = o
+			this.fetchCustomerAvatar(o.customerId)
+			this.fetchEmployeeAvatar(o.managerId)
 			this.$api.get(`hyOrder/detail/${o.id}`).then(res => {
-				this.items = res.items || []
+				if (res && res.data) this.selected = Object.assign({}, o, res.data)
+				this.items = (res && res.items) || []
+				this.loadMaterialTypes(this.items)
+			}).catch(() => { this.items = [] })
+		},
+		loadMaterialTypes(items) {
+			const ids = [...new Set((items || []).map(it => it.materialRef).filter(Boolean))]
+			ids.forEach(id => {
+				if (this.materialTypeMap[id]) return
+				this.$api.info('hyMaterial', id).then(res => {
+					if (res.data && res.data.contentType) {
+						this.$set(this.materialTypeMap, id, res.data.contentType)
+					}
+				}).catch(() => {})
 			})
+		},
+		itemContentType(it) {
+			if (!it) return ''
+			if (it.materialRef && this.materialTypeMap[it.materialRef]) {
+				return this.normalizeType(this.materialTypeMap[it.materialRef])
+			}
+			return this.normalizeType(it.contentType || '')
+		},
+		normalizeType(raw) {
+			const t = String(raw || '').trim()
+			if (!t) return ''
+			if (t.indexOf('硬广') >= 0) return '硬广'
+			if (t.indexOf('厨过程') >= 0 || t.indexOf('过程') >= 0) return '厨过程'
+			if (t.indexOf('教知识') >= 0 || t.indexOf('知识') >= 0) return '教知识'
+			if (t.indexOf('说观点') >= 0 || t.indexOf('观点') >= 0) return '说观点'
+			if (t.indexOf('讲故事') >= 0 || t.indexOf('故事') >= 0) return '讲故事'
+			return t
 		},
 		pickTab(t) {
 			this.activeTab = t.key
 			this.loadOrders()
 		},
-		// 统计本次内容各类型数量：优先解析 recipe 文案，其次统计明细
 		distCount(axis) {
-			if (this.selected && this.selected.recipe) {
-				const m = String(this.selected.recipe).match(new RegExp(axis + '\\s*(\\d+)'))
-				if (m) return Number(m[1])
-			}
-			const key = axis.slice(0, 2)
-			return (this.items || []).filter(it => String(it.contentType || '').indexOf(key) >= 0).length
+			const fromItems = (this.items || []).filter(it => this.itemContentType(it) === axis).length
+			if ((this.items || []).length > 0) return fromItems
+			// 清单为空时回退解析订单 recipe：「硬广2 厨过程1 ...」
+			return this.parseRecipeCount(axis)
 		},
-		coverOf(o) {
-			return o.cover || 'upload/studio_cover_1.jpg'
+		parseRecipeCount(axis) {
+			const recipe = (this.selected && this.selected.recipe) || ''
+			if (!recipe) return 0
+			const re = new RegExp(axis + '(\\d+)')
+			const m = recipe.match(re)
+			return m ? Number(m[1]) || 0 : 0
+		},
+		orderAvatar(o) {
+			if (!o) return ''
+			const avatar = this.customerAvatarMap[o.customerId]
+			if (avatar) return this.$img(avatar)
+			return ''
 		},
 		ownerAvatar(o) {
-			return 'https://i.pravatar.cc/60?u=' + (o.managerId || o.managerName)
+			if (!o) return ''
+			const avatar = this.employeeAvatarMap[o.managerId]
+			if (avatar) return this.$img(avatar)
+			return ''
 		},
 		daysLeft(o) {
 			if (!o.deliverDate) return 0
@@ -293,6 +369,7 @@ export default {
 .cc-foot .btn { height:84rpx; font-size:26rpx; }
 
 .empty-center { display:flex; align-items:center; justify-content:center; color:$muted; min-height:400rpx; }
+.empty { color:$muted; font-size:26rpx; text-align:center; padding:40rpx 0; }
 
 /* 1-4 标注稿：订单列表 663、详情 609，卡片高约 210 */
 @media #{$pad-mq-landscape} {
