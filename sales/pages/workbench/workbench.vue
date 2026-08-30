@@ -87,10 +87,14 @@
 
 				<!-- 新内容已上线 -->
 				<view class="card side-card">
-					<view class="sc-title">新内容已上线</view>
+					<view class="sc-title-row">
+						<view class="sc-title">新内容已上线</view>
+						<text v-if="cacheStatus.syncing" class="cache-tag syncing">同步中…</text>
+						<text v-else class="cache-tag" @click="syncMaterials">本地 {{ cacheStatus.cachedVideo }}/{{ cacheStatus.remoteTotal || '—' }}</text>
+					</view>
 					<view class="new-grid">
 						<view v-for="m in newMaterials" :key="m.id" class="ng-item" @click="goMaterial">
-							<image class="ng-img" :src="$img(m.cover)" mode="aspectFill"></image>
+							<image class="ng-img" :src="$media(m, 'cover')" mode="aspectFill"></image>
 							<text class="ng-name">{{ m.industrySub || m.industryBig }}</text>
 							<text class="ng-cnt">{{ m.usedCount || m.viewCount || 0 }} 条</text>
 						</view>
@@ -113,7 +117,8 @@ export default {
 			todos: [],
 			newMaterials: [],
 			lastSession: null,
-			overview: { reception: 0, follow: 0, unpaid: 0 }
+			overview: { reception: 0, follow: 0, unpaid: 0 },
+			cacheStatus: { syncing: false, cachedVideo: 0, remoteTotal: 0 }
 		}
 	},
 	computed: {
@@ -129,9 +134,28 @@ export default {
 	onShow() {
 		if (!this.$api.auth()) return
 		this.empName = uni.getStorageSync('empName') || ''
+		this.refreshCacheStatus()
 		this.loadData()
 	},
+	onUnload() {
+		if (this._offCacheStatus) this._offCacheStatus()
+	},
+	onLoad() {
+		this._offCacheStatus = this.$materialCache.onStatusChange(st => {
+			this.cacheStatus = st
+		})
+	},
 	methods: {
+		refreshCacheStatus() {
+			this.cacheStatus = this.$materialCache.getStatus()
+		},
+		syncMaterials() {
+			if (!this.$materialCache.isAppPlus()) {
+				uni.showToast({ title: '请在 Pad App 中使用本地缓存', icon: 'none' })
+				return
+			}
+			this.$materialCache.startSync(this.$api, this.$base.url, { silent: false })
+		},
 		loadData() {
 			const empId = uni.getStorageSync('empId')
 			// 待办任务（用作今日接待 + 待办事项）
@@ -149,6 +173,13 @@ export default {
 			// 新内容
 			this.$api.page('hyMaterial', { page: 1, limit: 3 }).then(res => {
 				this.newMaterials = (res.data && res.data.list) || []
+				if (this.$materialCache.isAppPlus()) {
+					const st = this.$materialCache.getStatus()
+					const stale = !st.lastSyncAt || (Date.now() - st.lastSyncAt > 30 * 60 * 1000)
+					if (stale && !st.syncing) {
+						this.$materialCache.startSync(this.$api, this.$base.url, { silent: true })
+					}
+				}
 			})
 			// 进行中的选片
 			this.$api.page('hySelectionSession', { page: 1, limit: 1, status: '进行中' }).then(res => {
@@ -211,7 +242,7 @@ export default {
 			uni.navigateTo({ url: `/pages/selection/selection?sessionId=${this.lastSession.id}&customerId=${this.lastSession.customerId}` })
 		},
 		goMaterial() {
-			uni.reLaunch({ url: '/pages/material/material' })
+			uni.reLaunch({ url: '/pages/material/library' })
 		}
 	}
 }
@@ -457,6 +488,26 @@ export default {
 	font-size: 30rpx;
 	font-weight: 600;
 	margin-bottom: 24rpx;
+}
+.sc-title-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 24rpx;
+}
+.sc-title-row .sc-title {
+	margin-bottom: 0;
+}
+.cache-tag {
+	font-size: 22rpx;
+	color: $brand;
+	padding: 6rpx 16rpx;
+	background: rgba(47, 107, 255, .08);
+	border-radius: 999rpx;
+}
+.cache-tag.syncing {
+	color: $muted;
+	background: #F1F3F6;
 }
 .overview {
 	display: flex;
@@ -784,6 +835,44 @@ export default {
 		margin-top: .7vh;
 		padding: .8vh 0;
 		border-radius: 8px;
+	}
+}
+
+@media #{$pad-mq-portrait} {
+	.wb {
+		flex-direction: column;
+		overflow-y: auto;
+	}
+	.col-main, .col-side {
+		flex: none;
+		width: 100%;
+	}
+	.col-side {
+		gap: 2vh;
+	}
+	.hero {
+		height: auto;
+		min-height: 22vh;
+		padding: 3vh 5vw;
+	}
+	.reception {
+		flex-direction: column;
+	}
+	.rc-col {
+		width: 100%;
+	}
+	.continue {
+		height: auto;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1.5vh;
+		padding: 2vh 3vw;
+	}
+	.col-side .side-card:nth-child(1),
+	.col-side .side-card:nth-child(2),
+	.col-side .side-card:nth-child(3) {
+		height: auto;
+		min-height: 0;
 	}
 }
 </style>

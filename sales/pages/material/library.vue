@@ -42,27 +42,57 @@
 
 				<view class="featured card">
 					<view class="featured-head">
-						<text class="featured-title">{{ currentCategory ? currentCategory.name : '精选案例' }}</text>
-						<text class="featured-sub">· 精选案例</text>
-						<text class="featured-close">×</text>
+						<text class="featured-title">更多</text>
+						<text class="featured-close" @click.stop>×</text>
 					</view>
 					<view class="featured-list">
-						<view v-for="m in featured" :key="m.id" class="featured-item">
-							<image class="featured-img" :src="$img(m.cover)" mode="aspectFill"></image>
+						<view v-for="m in moreFeatured" :key="m.id" class="featured-item">
+							<image class="featured-img" :src="$media(m, 'cover')" mode="aspectFill"></image>
 							<view class="featured-play"></view>
 							<text class="featured-duration">{{ dur(m.duration) }}</text>
 						</view>
+						<view v-if="moreFeatured.length===0" class="featured-empty">暂无预览</view>
 					</view>
-					<view class="btn btn-danger featured-btn" @click="viewExamples">
-						查看 {{ currentCategory ? (currentCategory.materialCount || featured.length) : featured.length }} 条案例　›
+					<view class="btn btn-danger featured-btn" :class="{disabled:!hasMoreChildren}" @click="openMore">
+						查看更多分类　›
 					</view>
+				</view>
+			</view>
+
+			<!-- 更多小类：当前页放不下的分类 -->
+			<view v-if="showMorePopup" class="more-mask" @click="closeMore">
+				<view class="more-panel card" @click.stop>
+					<view class="more-head">
+						<view>
+							<text class="more-title">{{ currentGroup ? currentGroup.name : '' }}分类</text>
+							<text class="more-path">全部行业　/　{{ currentGroup ? currentGroup.name : '' }}　/　更多</text>
+						</view>
+						<text class="more-close" @click="closeMore">×</text>
+					</view>
+					<scroll-view scroll-y class="more-scroll">
+						<view v-for="(chunk, bi) in moreChildChunks" :key="bi" class="more-block">
+							<view class="more-category-grid">
+								<view v-for="(c, i) in chunk" :key="c.id" class="category-card"
+									:class="'c' + i" @click="pickMoreCategory(c)">
+									<image class="category-bg" :src="$img(categoryCover(c, i + 7 + bi * 7))" mode="aspectFill"></image>
+									<view class="category-mask"></view>
+									<view class="category-copy">
+										<text class="category-name">{{ c.name }}</text>
+										<text class="category-count">{{ c.materialCount || materialCount(c.name) }}</text>
+									</view>
+									<text v-if="i===0" class="hot">热门</text>
+									<view v-if="i===0" class="play"></view>
+								</view>
+							</view>
+						</view>
+					</scroll-view>
 				</view>
 			</view>
 
 			<view class="recent card">
 				<text class="recent-title">最近使用</text>
 				<view v-for="m in recent" :key="m.id" class="recent-item">
-					<image class="recent-img" :src="$img(m.cover)" mode="aspectFill"></image>
+					<image class="recent-img" :src="$media(m, 'cover')" mode="aspectFill"></image>
 					<text class="recent-name">{{ m.industrySub || m.title }}</text>
 					<text class="recent-clock">◷</text>
 				</view>
@@ -82,7 +112,8 @@ export default {
 			groups: [],
 			materials: [],
 			currentGroup: null,
-			currentCategory: null
+			currentCategory: null,
+			showMorePopup: false
 		}
 	},
 	computed: {
@@ -92,10 +123,30 @@ export default {
 		currentChildren() {
 			return this.currentGroup ? (this.currentGroup.children || []).slice(0, 7) : []
 		},
-		featured() {
-			const name = this.currentCategory && this.currentCategory.name
-			let list = name ? this.materials.filter(m => m.industrySub === name) : this.materials
-			return list.slice(0, 3)
+		moreChildren() {
+			return this.currentGroup ? (this.currentGroup.children || []).slice(7) : []
+		},
+		hasMoreChildren() {
+			return this.moreChildren.length > 0
+		},
+		moreChildChunks() {
+			const list = this.moreChildren
+			const chunks = []
+			for (let i = 0; i < list.length; i += 7) {
+				chunks.push(list.slice(i, i + 7))
+			}
+			return chunks
+		},
+		moreFeatured() {
+			const pool = this.moreChildren.length
+				? this.moreChildren
+				: (this.currentGroup ? (this.currentGroup.children || []).slice(6) : [])
+			const names = pool.map(c => c.name)
+			if (!names.length) {
+				const all = this.currentGroup ? (this.currentGroup.children || []).map(c => c.name) : []
+				return this.materials.filter(m => all.includes(m.industrySub)).slice(0, 3)
+			}
+			return this.materials.filter(m => names.includes(m.industrySub)).slice(0, 3)
 		},
 		recent() {
 			return this.materials.slice(0, 3)
@@ -122,8 +173,13 @@ export default {
 			if (!group) group = this.groups[0]
 			this.chooseGroup(group)
 			if (this.initialBiztype) {
-				const child = this.currentChildren.find(c => c.name === this.initialBiztype)
-				if (child) this.chooseCategory(child)
+				const biztype = this.initialBiztype
+				this.initialBiztype = ''
+				const child = (group.children || []).find(c => c.name === biztype)
+				if (child) {
+					this.currentCategory = child
+					this.enterCategory(child)
+				}
 			}
 		})
 	},
@@ -132,9 +188,18 @@ export default {
 			if (!g) return
 			this.currentGroup = g
 			this.currentCategory = (g.children || [])[0] || null
+			this.showMorePopup = false
 		},
 		chooseCategory(c) {
-			this.currentCategory = c
+			if (!c) return
+			this.enterCategory(c)
+		},
+		enterCategory(c) {
+			if (!c) return
+			const cid = uni.getStorageSync('hyActiveCustomerId')
+			let url = `/pages/selection/selection?biztype=${encodeURIComponent(c.name)}`
+			if (cid) url += `&customerId=${cid}`
+			uni.navigateTo({ url })
 		},
 		groupMaterials(g) {
 			return this.materials.filter(m => m.industryBig === g.name)
@@ -167,16 +232,24 @@ export default {
 			const child = this.groups.reduce((out, g) => out.concat(g.children || []), []).find(c => c.name.indexOf(k) >= 0)
 			if (child) {
 				const group = this.groups.find(g => (g.children || []).some(c => c.id === child.id))
-				this.chooseGroup(group)
-				this.chooseCategory(child)
+				this.currentGroup = group
+				this.currentCategory = child
+				this.enterCategory(child)
 			}
 		},
-		viewExamples() {
-			if (!this.currentCategory) return
-			const cid = uni.getStorageSync('hyActiveCustomerId')
-			let url = `/pages/selection/selection?biztype=${encodeURIComponent(this.currentCategory.name)}`
-			if (cid) url += `&customerId=${cid}`
-			uni.navigateTo({ url })
+		openMore() {
+			if (!this.hasMoreChildren) {
+				uni.showToast({ title: '当前分类已全部展示', icon: 'none' })
+				return
+			}
+			this.showMorePopup = true
+		},
+		closeMore() {
+			this.showMorePopup = false
+		},
+		pickMoreCategory(c) {
+			this.closeMore()
+			this.enterCategory(c)
 		}
 	}
 }
@@ -227,8 +300,7 @@ export default {
 .play::after,.featured-play::after { content:""; position:absolute; left:21rpx; top:15rpx; border-left:16rpx solid #fff; border-top:11rpx solid transparent; border-bottom:11rpx solid transparent; }
 .featured { flex:467; min-width:0; padding:22rpx; display:flex; flex-direction:column; }
 .featured-head { display:flex; align-items:center; }
-.featured-title { font-size:28rpx; font-weight:700; white-space:nowrap; }
-.featured-sub { font-size:22rpx; color:$ink-2; margin-left:8rpx; white-space:nowrap; }
+.featured-title { font-size:28rpx; font-weight:700; flex:1; }
 .featured-close { margin-left:auto; font-size:32rpx; color:$muted; }
 .featured-list { flex:1; min-height:0; display:flex; gap:12rpx; margin:16rpx 0; }
 .featured-item { flex:1; position:relative; overflow:hidden; border-radius:12rpx; background:#EEF1F5; }
@@ -236,6 +308,8 @@ export default {
 .featured-img { width:100%; height:100%; }
 .featured-duration { position:absolute; right:8rpx; bottom:6rpx; color:#fff; font-size:18rpx; }
 .featured-btn { height:70rpx; font-size:24rpx; flex-shrink:0; }
+.featured-btn.disabled { opacity:.45; }
+.featured-empty { flex:1; display:flex; align-items:center; justify-content:center; color:$muted; font-size:22rpx; background:#EEF1F5; border-radius:12rpx; }
 .recent { height:100rpx; flex-shrink:0; padding:14rpx 24rpx; display:flex; align-items:center; gap:18rpx; }
 .recent-title { width:120rpx; font-size:28rpx; font-weight:700; }
 .recent-item { flex:1; height:100%; position:relative; overflow:hidden; border-radius:12rpx; background:#EEF1F5; }
@@ -243,6 +317,31 @@ export default {
 .recent-img { width:100%; height:100%; }
 .recent-name { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:#fff; font-size:24rpx; font-weight:600; white-space:nowrap; text-shadow:0 2rpx 8rpx rgba(0,0,0,.5); z-index:2; }
 .recent-clock { position:absolute; right:10rpx; top:8rpx; color:#fff; z-index:2; }
+
+.more-mask {
+	position:fixed; inset:0; z-index:999;
+	background:rgba(31,39,51,.42);
+	display:flex; align-items:center; justify-content:center;
+	padding:40rpx;
+}
+.more-panel {
+	width:920rpx; max-width:94%; max-height:80vh;
+	padding:28rpx 28rpx 24rpx;
+	display:flex; flex-direction:column;
+}
+.more-head { display:flex; align-items:flex-start; margin-bottom:20rpx; }
+.more-title { font-size:30rpx; font-weight:700; display:block; }
+.more-path { font-size:22rpx; color:$muted; margin-top:8rpx; display:block; }
+.more-close { font-size:36rpx; color:$muted; line-height:1; padding:0 8rpx; }
+.more-scroll { flex:1; min-height:0; max-height:66vh; }
+.more-block + .more-block { margin-top:18rpx; }
+.more-category-grid {
+	display:grid;
+	grid-template-columns:repeat(14,1fr);
+	grid-template-rows:1fr 1fr;
+	gap:12rpx;
+	min-height:320rpx;
+}
 
 @media #{$pad-mq-landscape} {
 	.searchbar { width:25vw; height:5.2vh; padding:0 1.2vw; }
@@ -271,12 +370,82 @@ export default {
 	}
 	.featured { padding:1.2vh 1vw; border-radius:13px; }
 	.featured-title { font-size:clamp(15px,1.2vw,19px); }
-	.featured-sub { font-size:clamp(11px,.85vw,14px); }
 	.featured-list { gap:.55vw; margin:1vh 0; }
 	.featured-item { border-radius:8px; }
 	.featured-btn { height:5.2vh; font-size:clamp(12px,.95vw,15px); }
 	.recent { height:9.4vh; padding:1vh 1.2vw; gap:.8vw; border-radius:13px; }
 	.recent-title { width:7vw; font-size:clamp(16px,1.3vw,21px); }
 	.recent-name { font-size:clamp(12px,.95vw,15px); }
+	.more-panel { width:52vw; padding:1.6vh 1.4vw; border-radius:13px; }
+	.more-title { font-size:clamp(16px,1.3vw,21px); }
+	.more-path { font-size:clamp(11px,.85vw,14px); margin-top:.4vh; }
+	.more-category-grid { gap:.55vw; min-height:28vh; }
+	.more-block + .more-block { margin-top:1vh; }
+}
+
+@media #{$pad-mq-portrait} {
+	.industry-row {
+		height: auto;
+		flex-wrap: nowrap;
+		overflow-x: auto;
+	}
+	.industry-card {
+		flex: none !important;
+		width: 72vw;
+		height: 18vh;
+	}
+	.category-area {
+		flex-direction: column;
+	}
+	.category-grid {
+		flex: none;
+		width: 100%;
+		grid-template-columns: repeat(2, 1fr);
+		grid-template-rows: auto;
+		gap: 2vw;
+	}
+	.category-card.c0,
+	.category-card.c1,
+	.category-card.c2,
+	.category-card.c3,
+	.category-card.c4,
+	.category-card.c5,
+	.category-card.c6 {
+		grid-column: span 1;
+		grid-row: span 1;
+		min-height: 14vh;
+	}
+	.featured {
+		flex: none;
+		width: 100%;
+		margin-top: 2vh;
+	}
+	.recent {
+		height: auto;
+		flex-wrap: wrap;
+	}
+	.recent-item {
+		min-width: 28vw;
+		height: 10vh;
+	}
+	.more-panel {
+		width: 92vw;
+	}
+	.more-category-grid {
+		grid-template-columns: repeat(2, 1fr);
+		grid-template-rows: auto;
+		min-height: auto;
+	}
+	.more-category-grid .category-card.c0,
+	.more-category-grid .category-card.c1,
+	.more-category-grid .category-card.c2,
+	.more-category-grid .category-card.c3,
+	.more-category-grid .category-card.c4,
+	.more-category-grid .category-card.c5,
+	.more-category-grid .category-card.c6 {
+		grid-column: span 1;
+		grid-row: span 1;
+		min-height: 14vh;
+	}
 }
 </style>

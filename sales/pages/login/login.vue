@@ -49,6 +49,10 @@ export default {
 				uni.setStorageSync('empId', res.userId)
 				uni.setStorageSync('empName', res.name)
 				uni.showToast({ title: '登录成功', icon: 'success' })
+				// 登录后后台同步远端素材到 Pad 本地
+				if (this.$materialCache.isAppPlus()) {
+					this.$materialCache.startSync(this.$api, this.$base.url, { silent: true })
+				}
 				setTimeout(() => {
 					uni.reLaunch({ url: '/pages/workbench/workbench' })
 				}, 400)
@@ -208,6 +212,17 @@ export default {
 	.tip {
 		font-size: 13px;
 		margin-top: 20px;
+	}
+}
+
+@media #{$pad-mq-portrait} {
+	.login-card {
+		width: 88vw;
+		max-width: 640rpx;
+		padding: 48rpx 56rpx 40rpx;
+	}
+	.field {
+		margin-bottom: 24rpx;
 	}
 }
 </style>

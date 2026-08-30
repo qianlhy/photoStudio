@@ -701,4 +701,29 @@ export default {
 		font-size: clamp(10px, .76vw, 12px);
 	}
 }
+
+@media #{$pad-mq-portrait} {
+	.cm {
+		flex-direction: column;
+		overflow-y: auto;
+	}
+	.col-list, .col-center, .col-side {
+		flex: none;
+		width: 100%;
+	}
+	.col-center, .col-side {
+		margin-top: 2vh;
+	}
+	.tabs {
+		flex-wrap: wrap;
+		height: auto;
+	}
+	.profile, .progress-card, .life-card {
+		height: auto;
+	}
+	.act-card, .tl-card.grow, .sug-card {
+		height: auto;
+		max-height: none;
+	}
+}
 </style>

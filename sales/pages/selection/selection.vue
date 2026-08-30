@@ -24,10 +24,10 @@
 			<view class="stage">
 				<view v-if="current" class="player">
 					<video v-if="current.video" :key="'v-' + current.id + '-' + idx" class="video"
-						:src="videoSrc(current)" :poster="$img(current.cover)"
+						:src="videoSrc(current)" :poster="$media(current, 'cover')"
 						controls autoplay object-fit="contain" show-center-play-btn
 						@error="onVideoError"></video>
-					<image v-else class="video poster" :src="$img(current.cover)" mode="aspectFill"></image>
+					<image v-else class="video poster" :src="$media(current, 'cover')" mode="aspectFill"></image>
 					<view class="overlay">
 						<text class="ov-title">{{ current.title }}</text>
 						<view class="ov-tag">{{ current.contentType }}<text v-if="current.tags"> · {{ firstTag(current.tags) }}</text></view>
@@ -81,7 +81,7 @@
 					<text class="sc-label">刚刚喜欢</text>
 					<scroll-view scroll-x class="liked-row">
 						<view v-for="m in likedItems.slice().reverse()" :key="m.id" class="lk">
-							<image class="lk-img" :src="$img(m.cover)" mode="aspectFill"></image>
+							<image class="lk-img" :src="$media(m, 'cover')" mode="aspectFill"></image>
 							<view class="lk-heart">♥</view>
 							<text class="lk-dur">{{ durText(m.duration) }}</text>
 						</view>
@@ -178,10 +178,20 @@ export default {
 	},
 	methods: {
 		videoSrc(m) {
-			return m && m.video ? this.$img(m.video) : ''
+			return m ? this.$media(m, 'video') : ''
 		},
 		onVideoError() {
-			uni.showToast({ title: '视频加载失败，请确认服务器已上传样片', icon: 'none' })
+			const m = this.current
+			if (m) {
+				this.$materialCache.invalidate(m.id, 'video')
+			}
+			uni.showToast({ title: '视频加载失败，正在尝试在线播放', icon: 'none' })
+		},
+		prefetchAround() {
+			if (!this.$materialCache.isAppPlus()) return
+			const start = Math.max(0, this.idx)
+			const slice = this.materials.slice(start, start + 3)
+			this.$materialCache.prefetchList(slice, this.$base.url, 3)
 		},
 		loadSession() {
 			this.$api.info('hySelectionSession', this.sessionId).then(res => {
@@ -223,6 +233,7 @@ export default {
 				this.materials = list
 				this.idx = 0
 				this.buildChips()
+				this.prefetchAround()
 			})
 		},
 		buildChips() {
@@ -247,6 +258,7 @@ export default {
 				list = list.filter(m => this.liked.indexOf(String(m.id)) < 0)
 				this.materials = list
 				this.idx = 0
+				this.prefetchAround()
 			})
 		},
 		typeKey(ct) {
@@ -274,6 +286,7 @@ export default {
 		},
 		next() {
 			if (this.idx < this.materials.length) this.idx++
+			this.prefetchAround()
 		},
 		firstTag(tags) {
 			return String(tags).split(',')[0]
@@ -824,6 +837,46 @@ export default {
 		height: 7.4vh;
 		font-size: clamp(16px, 1.3vw, 21px);
 		border-radius: 13px;
+	}
+}
+
+@media #{$pad-mq-portrait} {
+	.main {
+		flex-direction: column;
+		overflow-y: auto;
+		padding-bottom: 2vh;
+	}
+	.stage, .side {
+		flex: none;
+		width: 100%;
+		min-width: 0;
+	}
+	.player {
+		min-height: 48vh;
+	}
+	.chips {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+	}
+	.side {
+		overflow-y: visible;
+	}
+	.side .card {
+		min-height: auto;
+	}
+	.sc1, .sc2, .sc3 {
+		height: auto !important;
+	}
+	.actions {
+		flex-wrap: wrap;
+		height: auto;
+		padding: 2vh 0;
+		gap: 3vw;
+	}
+	.hint {
+		width: 100%;
+		text-align: center;
+		order: 10;
 	}
 }
 </style>

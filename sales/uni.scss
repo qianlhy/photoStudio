@@ -18,6 +18,10 @@ $pad-design-h: 800;
 $pad-landscape-min-w: 900px;
 $pad-mq-landscape: "(min-width: #{$pad-landscape-min-w}) and (orientation: landscape)";
 
+/* 设计基准：800×1280 竖屏 Pad（小米平板 6 Pro 竖屏约 1800×2880） */
+$pad-portrait-min-w: 600px;
+$pad-mq-portrait: "(min-width: #{$pad-portrait-min-w}) and (orientation: portrait)";
+
 /* 五类内容配色（厨过程/教知识/讲故事/说观点/硬广） */
 $c-process: #7C5CFF;
 $c-knowledge: #2F6BFF;

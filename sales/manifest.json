@@ -9,7 +9,12 @@
         "usingComponents" : true,
         "nvueCompiler" : "uni-app",
         "compilerVersion" : 3,
-        "screenOrientation" : [ "landscape-primary", "landscape-secondary" ],
+        "screenOrientation" : [
+            "landscape-primary",
+            "landscape-secondary",
+            "portrait-primary",
+            "portrait-secondary"
+        ],
         "fullscreen" : true,
         "softinputNavBar" : "none",
         "splashscreen" : {

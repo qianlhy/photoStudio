@@ -53,11 +53,7 @@
 					</view>
 
 					<text class="f-label">补充备注（选填）</text>
-					<textarea v-model="form.remark" class="textarea" placeholder="例如：客户希望增加门店故事类内容，预算约3000元，周末方便拍摄。" />
-					<view class="voice-row">
-						<view class="btn btn-ghost voice-btn" @click="toggleVoice">{{ recording ? '■ 结束语音' : '🎤 语音输入' }}</view>
-						<text class="voice-hint">{{ recording ? '录音中…结束后写入备注' : '语音先记入备注，后续可接 AI 摘要' }}</text>
-					</view>
+					<textarea v-model="form.remark" class="textarea" placeholder="例如：客户希望增加门店故事类内容，预算约3000元，周末方便拍摄。可直接使用键盘听写输入。" />
 				</view>
 
 				<!-- 右预览 -->
@@ -106,10 +102,7 @@ export default {
 				nextTime: '',
 				nextTimeText: '',
 				remark: ''
-			},
-			recording: false,
-			recorder: null,
-			recordStart: 0
+			}
 		}
 	},
 	computed: {
@@ -134,18 +127,6 @@ export default {
 		this.customerName = decodeURIComponent(opt.customerName || '客户')
 		this.recorderName = uni.getStorageSync('empName') || '我'
 		this.quick(2)
-		try {
-			this.recorder = uni.getRecorderManager && uni.getRecorderManager()
-			if (this.recorder) {
-				this.recorder.onStop(() => {
-					const sec = Math.max(1, Math.round((Date.now() - this.recordStart) / 1000))
-					const note = `[语音备注 ${sec}秒]`
-					this.form.remark = this.form.remark ? (this.form.remark + ' ' + note) : note
-					this.recording = false
-					uni.showToast({ title: '语音已记入备注', icon: 'none' })
-				})
-			}
-		} catch (e) {}
 	},
 	methods: {
 		quick(days) {
@@ -164,29 +145,6 @@ export default {
 			this.form.nextTime = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:00`
 			const w = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()]
 			this.form.nextTimeText = `${d.getMonth() + 1}月${d.getDate()}日 ${w} ${p(d.getHours())}:${p(d.getMinutes())}`
-		},
-		toggleVoice() {
-			if (!this.recorder) {
-				uni.showModal({
-					title: '语音备注',
-					editable: true,
-					placeholderText: '当前环境无录音，请输入要点',
-					success: (r) => {
-						if (r.confirm && r.content) {
-							this.form.remark = this.form.remark ? (this.form.remark + ' ' + r.content) : r.content
-						}
-					}
-				})
-				return
-			}
-			if (this.recording) {
-				this.recorder.stop()
-				return
-			}
-			this.recording = true
-			this.recordStart = Date.now()
-			this.recorder.start({ format: 'mp3', duration: 60000 })
-			uni.showToast({ title: '开始录音', icon: 'none' })
 		},
 		save(withTask) {
 			const payload = {
@@ -262,9 +220,6 @@ export default {
 .date-box { padding:18rpx 26rpx; border:1rpx solid $line; border-radius:14rpx; font-size:25rpx; }
 .quick { padding:18rpx 24rpx; border:1rpx solid $line; border-radius:14rpx; font-size:24rpx; color:$ink-2; }
 .textarea { width:100%; height:140rpx; border:1rpx solid $line; border-radius:14rpx; padding:18rpx; font-size:25rpx; margin-top:4rpx; }
-.voice-row { display:flex; align-items:center; gap:16rpx; margin-top:14rpx; }
-.voice-btn { height:64rpx; padding:0 24rpx; font-size:24rpx; }
-.voice-hint { font-size:22rpx; color:$muted; flex:1; }
 
 .auto { background:#F0F7F3; padding:22rpx; }
 .auto-title { font-size:26rpx; font-weight:700; }
@@ -280,4 +235,33 @@ export default {
 .foot-info { font-size:23rpx; color:$muted; }
 .foot-btns { display:flex; gap:18rpx; }
 .foot-btns .btn { height:84rpx; padding:0 36rpx; font-size:27rpx; }
+
+@media #{$pad-mq-portrait} {
+	.modal {
+		width: 92vw;
+		max-width: none;
+		max-height: 88vh;
+	}
+	.m-body {
+		flex-direction: column;
+	}
+	.form, .side {
+		flex: none;
+		width: 100%;
+	}
+	.m-foot {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 16rpx;
+	}
+	.foot-info {
+		text-align: center;
+	}
+	.foot-btns {
+		flex-direction: column;
+	}
+	.foot-btns .btn {
+		width: 100%;
+	}
+}
 </style>

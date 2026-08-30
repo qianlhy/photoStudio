@@ -445,4 +445,30 @@ export default {
 		margin-top: .55vh;
 	}
 }
+
+@media #{$pad-mq-portrait} {
+	.ac {
+		flex-direction: column;
+		overflow-y: auto;
+	}
+	.col-main, .col-side {
+		flex: none;
+		width: 100%;
+	}
+	.col-side {
+		margin-top: 2vh;
+	}
+	.filters {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+	}
+	.msg-card.grow, .sum-card {
+		height: auto;
+		max-height: none;
+	}
+	.a-actions {
+		max-width: none;
+		flex-wrap: wrap;
+	}
+}
 </style>

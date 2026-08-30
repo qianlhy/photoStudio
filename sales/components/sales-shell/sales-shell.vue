@@ -54,7 +54,7 @@ export default {
 				{ key: 'workbench', label: '工作台', url: '/pages/workbench/workbench' },
 				{ key: 'customer', label: '客户', url: '/pages/customer/customer' },
 				{ key: 'order', label: '订单', url: '/pages/order/order' },
-				{ key: 'material', label: '素材库', url: '/pages/material/material' },
+				{ key: 'material', label: '素材库', url: '/pages/material/library' },
 				{ key: 'message', label: '消息', url: '/pages/message/message' }
 			]
 		}
@@ -393,6 +393,100 @@ export default {
 	}
 	.content {
 		padding: .5vh 2vw 1.2vh .65vw;
+	}
+}
+
+/*
+ * Pad 竖屏：底栏导航 + 全宽内容
+ */
+@media #{$pad-mq-portrait} {
+	.shell {
+		height: 100vh;
+	}
+	.topbar {
+		height: 7vh;
+		padding: 0 3vw;
+		flex-wrap: wrap;
+	}
+	.brand {
+		font-size: clamp(18px, 2.4vw, 24px);
+	}
+	.page-title {
+		margin-left: 2vw;
+		max-width: 42vw;
+	}
+	.page-title .pt-title {
+		font-size: clamp(16px, 2.2vw, 22px);
+	}
+	.page-title .pt-sub {
+		display: none;
+	}
+	.center .title {
+		font-size: clamp(16px, 2.2vw, 22px);
+	}
+	.center .subtitle {
+		font-size: clamp(11px, 1.4vw, 14px);
+	}
+	.search-slot {
+		order: 3;
+		width: 100%;
+		padding: .6vh 0 0;
+		justify-content: flex-start;
+	}
+	.right {
+		gap: 2vw;
+	}
+	.right .date {
+		display: none;
+	}
+	.bell {
+		width: clamp(24px, 3.2vw, 32px);
+		height: clamp(24px, 3.2vw, 32px);
+	}
+	.avatar {
+		width: clamp(32px, 4.2vw, 42px);
+		height: clamp(32px, 4.2vw, 42px);
+	}
+	.body {
+		flex-direction: column;
+		position: relative;
+		padding-bottom: 11vh;
+		box-sizing: border-box;
+	}
+	.nav {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 100;
+		width: 100%;
+		height: 10vh;
+		margin: 0;
+		padding: .8vh 2vw 1.2vh;
+		border-radius: 18px 18px 0 0;
+		flex-direction: row;
+		justify-content: space-around;
+		align-items: stretch;
+		gap: 0;
+		box-sizing: border-box;
+	}
+	.nav-item {
+		flex: 1;
+		padding: .6vh 0;
+		border-radius: 12px;
+	}
+	.nav-item .nav-icon {
+		transform: scale(.82);
+	}
+	.nav-item .nav-label {
+		font-size: clamp(10px, 1.3vw, 13px);
+		margin-top: .4vh;
+	}
+	.content {
+		flex: 1;
+		width: 100%;
+		padding: 1vh 3vw 1.5vh;
+		overflow-y: auto;
 	}
 }
 </style>

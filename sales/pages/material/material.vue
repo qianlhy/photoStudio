@@ -37,7 +37,7 @@
 				<text class="dt-hot">近30天最常被选择</text>
 				<view class="dt-vids">
 					<view v-for="m in detailMaterials" :key="m.id" class="dv">
-						<image class="dv-img" :src="$img(m.cover)" mode="aspectFill"></image>
+						<image class="dv-img" :src="$media(m, 'cover')" mode="aspectFill"></image>
 						<view class="dv-play"></view>
 					</view>
 					<view v-if="detailMaterials.length===0" class="dv-empty">暂无案例</view>
@@ -53,7 +53,9 @@
 </template>
 
 <script>
+// 素材星球（气泡星云界面）— 设计稿二选一，当前入口走 library 方形界面，本页保留供后续使用
 import salesShell from '@/components/sales-shell/sales-shell.vue'
+import orientation from '@/utils/orientation.js'
 export default {
 	components: { salesShell },
 	data() {
@@ -76,6 +78,16 @@ export default {
 		this.$api.page('hyMaterial', { page: 1, limit: 1 }).then(res => {
 			this.total = (res.data && res.data.total) || 0
 		})
+	},
+	onLoad() {
+		this._offOrientation = orientation.onOrientationChange(() => {
+			if (this.groups.length) {
+				this.$nextTick(() => setTimeout(() => this.computeLayout(), 120))
+			}
+		})
+	},
+	onUnload() {
+		if (this._offOrientation) this._offOrientation()
 	},
 	methods: {
 		loadTree() {
@@ -343,6 +355,28 @@ export default {
 	}
 	.dt-add {
 		margin-top: .8vh;
+	}
+}
+
+@media #{$pad-mq-portrait} {
+	.planet {
+		flex-direction: column;
+	}
+	.canvas {
+		width: 100%;
+		min-height: 55vh;
+	}
+	.detail {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 11vh;
+		width: 100%;
+		max-height: 42vh;
+		z-index: 50;
+		box-sizing: border-box;
+		border-radius: 18px 18px 0 0;
+		box-shadow: 0 -8px 32px rgba(31, 39, 51, .15);
 	}
 }
 </style>

@@ -1,11 +1,8 @@
 <script>
+import materialCache from './utils/materialCache.js'
+
 export default {
 	onLaunch: function() {
-		// #ifdef APP-PLUS
-		if (typeof plus !== 'undefined' && plus.screen) {
-			plus.screen.lockOrientation('landscape-primary')
-		}
-		// #endif
 		// 拉取品牌配置，写入全局
 		const api = this.$api
 		api.config().then(res => {
@@ -13,6 +10,10 @@ export default {
 				uni.setStorageSync('brand', res.data)
 			}
 		}).catch(() => {})
+		// 已登录时后台同步素材到 Pad 本地
+		if (uni.getStorageSync('token') && materialCache.isAppPlus()) {
+			materialCache.startSync(api, this.$base.url, { silent: true })
+		}
 	},
 	onShow: function() {},
 	onHide: function() {}
@@ -178,6 +179,13 @@ image {
 	}
 	.searchbar {
 		border-width: 1px;
+	}
+}
+
+@media #{$pad-mq-portrait} {
+	.card {
+		border-color: rgba(31, 39, 51, .055);
+		box-shadow: 0 3px 12px rgba(31, 39, 51, .028);
 	}
 }
 </style>

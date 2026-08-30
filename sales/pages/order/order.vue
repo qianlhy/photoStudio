@@ -485,4 +485,28 @@ export default {
 		font-size: clamp(12px, .95vw, 15px);
 	}
 }
+
+@media #{$pad-mq-portrait} {
+	.om {
+		flex-direction: column;
+		overflow-y: auto;
+	}
+	.col-list, .col-detail {
+		flex: none;
+		width: 100%;
+	}
+	.col-detail {
+		margin-top: 2vh;
+	}
+	.d-card {
+		height: auto;
+	}
+	.it-cell {
+		width: calc((100% - 28rpx) / 3);
+	}
+	.tabs {
+		flex-wrap: wrap;
+		height: auto;
+	}
+}
 </style>
