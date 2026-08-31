@@ -148,27 +148,6 @@ var render = function () {
         }
       })
     : null
-  var g5 = _vm.refCount || _vm.previewList.length
-  var g6 = g5 ? _vm.refCount || _vm.previewList.length : null
-  var l1 = g5
-    ? _vm.__map(_vm.previewList, function (m, i) {
-        var $orig = _vm.__get_orig(m)
-        var m5 = _vm.img(m.cover)
-        return {
-          $orig: $orig,
-          m5: m5,
-        }
-      })
-    : null
-  if (!_vm._isMounted) {
-    _vm.e0 = function ($event, t) {
-      var _temp = arguments[arguments.length - 1].currentTarget.dataset,
-        _temp2 = _temp.eventParams || _temp["event-params"],
-        t = _temp2.t
-      var _temp, _temp2
-      _vm.activeTab = t.key
-    }
-  }
   _vm.$mp.data = Object.assign(
     {},
     {
@@ -179,9 +158,6 @@ var render = function () {
         g3: g3,
         g4: g4,
         l0: l0,
-        g5: g5,
-        g6: g6,
-        l1: l1,
       },
     }
   )
@@ -240,11 +216,16 @@ var _default = {
       customerId: null,
       customer: {},
       order: {},
+      orderVideoTotal: 0,
       list: [],
       refCount: 0,
-      totalQuota: 15,
       activeTab: 'all',
-      types: ['硬广', '晒过程', '教知识', '说观点', '讲故事']
+      types: ['硬广', '晒过程', '教知识', '说观点', '讲故事'],
+      player: {
+        show: false,
+        url: '',
+        poster: ''
+      }
     };
   },
   computed: {
@@ -258,6 +239,12 @@ var _default = {
     },
     publishDays: function publishDays() {
       return this.customer.publishDays || 0;
+    },
+    totalQuota: function totalQuota() {
+      var fromCrm = (this.customer.remainCount || 0) + (this.customer.publishedCount || 0);
+      if (fromCrm > 0) return fromCrm;
+      if (this.orderVideoTotal > 0) return this.orderVideoTotal;
+      return Math.max(this.remain, 1);
     },
     reservePct: function reservePct() {
       return Math.min(100, Math.round(this.remain / this.totalQuota * 100));
@@ -296,10 +283,7 @@ var _default = {
       });
     },
     displayList: function displayList() {
-      return this.shown.slice(0, 9);
-    },
-    previewList: function previewList() {
-      return this.list.slice(0, 3);
+      return this.shown;
     }
   },
   onLoad: function onLoad() {
@@ -318,6 +302,10 @@ var _default = {
     isDownloaded: function isDownloaded(m) {
       return m.downloadStatus === '已下载';
     },
+    syncAvatar: function syncAvatar() {
+      var a = this.customer.avatar;
+      if (a) this.avatar = this.img(a);
+    },
     load: function load() {
       var _this2 = this;
       var finish = function finish(cid) {
@@ -326,23 +314,29 @@ var _default = {
           id: customerId
         }).then(function (res) {
           _this2.customer = res.data && res.data[0] || {};
+          _this2.syncAvatar();
         });
         // 勿传 sort=sort：会与实体字段 sort(Integer) 冲突，后端已在 Controller 内按 sort 排序
         _this2.$api.page('hyDeliverable', {
           customerId: customerId,
           page: 1,
-          limit: 50
+          limit: 50,
+          status: '上架'
         }).then(function (res) {
           _this2.list = res.data && res.data.list || [];
         });
         _this2.$api.page('hyOrder', {
           customerId: customerId,
           page: 1,
-          limit: 1,
+          limit: 20,
           sort: 'addtime',
           order: 'desc'
         }).then(function (res) {
-          _this2.order = res.data && res.data.list && res.data.list[0] || {};
+          var orders = res.data && res.data.list || [];
+          _this2.order = orders[0] || {};
+          _this2.orderVideoTotal = orders.reduce(function (s, o) {
+            return s + (o.videoCount || 0);
+          }, 0);
         });
         _this2.$api.page('hyContentPlan', {
           customerId: customerId,
@@ -353,89 +347,186 @@ var _default = {
           _this2.refCount = p.totalCount || 0;
         });
       };
+      var bindByPhone = function bindByPhone() {
+        var table = uni.getStorageSync('nowTable') || 'yonghu';
+        _this2.$api.session(table).then(function (res) {
+          var phone = res.data && res.data.shoujihaoma || '';
+          if (!phone) {
+            uni.showToast({
+              title: '请先完善手机号以查看内容',
+              icon: 'none'
+            });
+            return;
+          }
+          uni.request({
+            url: _this2.$base.url + 'hyCustomer/bindByPhone',
+            method: 'GET',
+            data: {
+              phone: phone
+            },
+            header: {
+              Token: uni.getStorageSync('token')
+            },
+            success: function success(r) {
+              var body = r.data || {};
+              if (body.code === 0 && body.data && body.data.id) {
+                _this2.customerId = body.data.id;
+                uni.setStorageSync('hyCustomerId', body.data.id);
+                finish(body.data.id);
+              } else {
+                uni.showToast({
+                  title: body.msg || '未绑定服务账号',
+                  icon: 'none'
+                });
+              }
+            }
+          });
+        });
+      };
+      // 缓存的客户 ID 可能是旧种子数据（如 6001），线上已换成雪花 ID，需校验后再用
       var cached = uni.getStorageSync('hyCustomerId');
-      if (cached) {
-        this.customerId = cached;
-        finish(cached);
+      if (!cached) {
+        bindByPhone();
         return;
       }
-      var table = uni.getStorageSync('nowTable') || 'yonghu';
-      this.$api.session(table).then(function (res) {
-        var phone = res.data && res.data.shoujihaoma || '';
-        if (!phone) {
-          uni.showToast({
-            title: '请先完善手机号以查看内容',
-            icon: 'none'
-          });
-          return;
+      this.$api.list('hyCustomer', {
+        id: cached
+      }).then(function (res) {
+        var row = res.data && res.data[0] || null;
+        if (row && row.id) {
+          _this2.customerId = cached;
+          finish(cached);
+        } else {
+          uni.removeStorageSync('hyCustomerId');
+          bindByPhone();
         }
-        uni.request({
-          url: _this2.$base.url + 'hyCustomer/bindByPhone',
-          method: 'GET',
-          data: {
-            phone: phone
-          },
-          header: {
-            Token: uni.getStorageSync('token')
-          },
-          success: function success(r) {
-            var body = r.data || {};
-            if (body.code === 0 && body.data && body.data.id) {
-              _this2.customerId = body.data.id;
-              uni.setStorageSync('hyCustomerId', body.data.id);
-              finish(body.data.id);
-            } else {
-              uni.showToast({
-                title: body.msg || '未绑定服务账号',
-                icon: 'none'
-              });
-            }
-          }
-        });
+      }).catch(function () {
+        uni.removeStorageSync('hyCustomerId');
+        bindByPhone();
       });
     },
-    play: function play(m) {
-      if (m.video) {
-        uni.showToast({
-          title: '播放：' + (m.title || '成品'),
-          icon: 'none'
-        });
-      } else {
+    setTab: function setTab(key) {
+      this.activeTab = key;
+    },
+    itemAt: function itemAt(i) {
+      var idx = Number(i);
+      return this.displayList[idx] || null;
+    },
+    videoUrl: function videoUrl(m) {
+      if (!m) return '';
+      var raw = m.video || m.shipin || '';
+      if (!raw) return '';
+      return this.img(String(raw).split(',')[0]);
+    },
+    play: function play(i) {
+      var m = this.itemAt(i);
+      var url = this.videoUrl(m);
+      if (!url) {
         uni.showToast({
           title: '暂无视频文件',
           icon: 'none'
         });
+        return;
       }
+      this.player = {
+        show: true,
+        url: url,
+        poster: this.img(m.cover) || ''
+      };
     },
-    download: function download(m) {
+    closePlayer: function closePlayer() {
+      this.player = {
+        show: false,
+        url: '',
+        poster: ''
+      };
+    },
+    markDownloaded: function markDownloaded(m) {
       var _this3 = this;
+      if (!m || !m.id) return;
       uni.request({
         url: "".concat(this.$base.url, "hyDeliverable/download/").concat(m.id),
         method: 'GET',
         header: {
           Token: uni.getStorageSync('token')
         },
-        success: function success(r) {
-          var body = r.data || {};
-          if (body.code === 0) {
-            _this3.$set(m, 'downloadStatus', '已下载');
-            uni.showToast({
-              title: '已标记下载',
-              icon: 'success'
+        success: function success() {
+          _this3.$set(m, 'downloadStatus', '已下载');
+        }
+      });
+    },
+    saveVideoAlbum: function saveVideoAlbum(filePath, m) {
+      var _this4 = this;
+      uni.saveVideoToPhotosAlbum({
+        filePath: filePath,
+        success: function success() {
+          _this4.markDownloaded(m);
+          uni.showToast({
+            title: '已保存到相册',
+            icon: 'success'
+          });
+        },
+        fail: function fail(err) {
+          var msg = err && err.errMsg || '';
+          if (/auth|authorize|permission/i.test(msg) || msg.indexOf('auth') >= 0) {
+            uni.showModal({
+              title: '需要相册权限',
+              content: '请允许保存到相册后重试',
+              success: function success(r) {
+                if (r.confirm) uni.openSetting({});
+              }
             });
           } else {
             uni.showToast({
-              title: body.msg || '下载失败',
+              title: '保存失败，请重试',
               icon: 'none'
             });
           }
         }
       });
     },
+    download: function download(i) {
+      var _this5 = this;
+      var m = this.itemAt(i);
+      var url = this.videoUrl(m);
+      if (!url) {
+        uni.showToast({
+          title: '暂无视频文件',
+          icon: 'none'
+        });
+        return;
+      }
+      uni.showLoading({
+        title: '下载中',
+        mask: true
+      });
+      uni.downloadFile({
+        url: url,
+        success: function success(res) {
+          uni.hideLoading();
+          if (res.statusCode === 200 && res.tempFilePath) {
+            _this5.saveVideoAlbum(res.tempFilePath, m);
+          } else {
+            uni.showToast({
+              title: '下载失败',
+              icon: 'none'
+            });
+          }
+        },
+        fail: function fail() {
+          uni.hideLoading();
+          uni.showToast({
+            title: '下载失败，请检查网络',
+            icon: 'none'
+          });
+        }
+      });
+    },
     viewRef: function viewRef() {
-      uni.showToast({
-        title: '对标参考为只读，不可下载',
-        icon: 'none'
+      uni.showModal({
+        title: '对标参考',
+        content: '对标参考仅供确认拍摄方向，不可下载。请联系服务经理查看完整方案。',
+        showCancel: false
       });
     },
     goService: function goService() {

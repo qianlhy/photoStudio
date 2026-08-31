@@ -175,8 +175,8 @@
     </el-dialog>
 
     <!-- 审核客户 -->
-    <el-dialog title="审核客户" :visible.sync="auditVisible" width="460px">
-      <el-form label-width="90px">
+    <el-dialog title="审核客户" :visible.sync="auditVisible" width="480px">
+      <el-form label-width="100px">
         <el-form-item label="客户名称"><span>{{ auditForm.name }}</span></el-form-item>
         <el-form-item label="手机号"><span>{{ auditForm.phone || '—' }}</span></el-form-item>
         <el-form-item label="审核结果">
@@ -184,6 +184,11 @@
             <el-radio label="已通过">通过</el-radio>
             <el-radio label="已驳回">驳回</el-radio>
           </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="auditForm.auditStatus === '已通过'" label="服务经理" required>
+          <el-select v-model="auditForm.managerId" placeholder="审核通过后 Pad 可见，请指定经理" clearable style="width:100%">
+            <el-option v-for="m in managers" :key="m.id" :label="m.name" :value="m.id"></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="审核备注">
           <el-input type="textarea" v-model="auditForm.auditReply" :rows="3" maxlength="200" show-word-limit placeholder="驳回时请填写原因"></el-input>
@@ -225,7 +230,7 @@ export default {
       batchVisible: false,
       batchForm: {toId: null, remark: ""},
       auditVisible: false,
-      auditForm: {id: null, name: "", phone: "", auditStatus: "已通过", auditReply: ""}
+      auditForm: {id: null, name: "", phone: "", auditStatus: "已通过", auditReply: "", managerId: null}
     };
   },
   created() {
@@ -304,7 +309,8 @@ export default {
         name: row.name,
         phone: row.phone,
         auditStatus: "已通过",
-        auditReply: row.auditReply || ""
+        auditReply: row.auditReply || "",
+        managerId: row.managerId || null
       };
       this.auditVisible = true;
     },
@@ -313,19 +319,27 @@ export default {
         this.$message.warning("驳回时请填写原因");
         return;
       }
+      if (this.auditForm.auditStatus === "已通过" && !this.auditForm.managerId) {
+        this.$message.warning("审核通过请指定服务经理，以便 Pad 可见");
+        return;
+      }
+      const mgr = this.managers.find(m => m.id === this.auditForm.managerId);
       this.$http({
         url: "hyCustomer/audit",
         method: "post",
         data: {
           id: this.auditForm.id,
           auditStatus: this.auditForm.auditStatus,
-          auditReply: this.auditForm.auditReply
+          auditReply: this.auditForm.auditReply,
+          managerId: this.auditForm.auditStatus === "已通过" ? this.auditForm.managerId : null,
+          managerName: this.auditForm.auditStatus === "已通过" && mgr ? mgr.name : null
         }
       }).then(({data}) => {
         if (data.code === 0) {
           this.$message.success("审核完成");
           this.auditVisible = false;
           this.getDataList();
+          this.loadStat();
         } else {
           this.$message.error(data.msg);
         }

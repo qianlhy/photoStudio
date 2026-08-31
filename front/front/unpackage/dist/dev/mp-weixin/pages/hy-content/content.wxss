@@ -192,6 +192,34 @@
   top: 25rpx;
   width: 230rpx;
   height: 220rpx;
+  pointer-events: none;
+  z-index: 1;
+}
+.cell-mask.data-v-22d984e0, .play.data-v-22d984e0, .stamp.data-v-22d984e0, .cell-foot.data-v-22d984e0 {
+  pointer-events: none;
+}
+.player-mask.data-v-22d984e0 {
+  position: fixed;
+  z-index: 99;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.86);
+}
+.player-video.data-v-22d984e0 {
+  width: 100%;
+  height: 70vh;
+  background: #000;
+}
+.player-close.data-v-22d984e0 {
+  margin-top: 28rpx;
+  padding: 14rpx 48rpx;
+  border-radius: 40rpx;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 28rpx;
 }
 .ticket-shadow.data-v-22d984e0 {
   position: absolute;

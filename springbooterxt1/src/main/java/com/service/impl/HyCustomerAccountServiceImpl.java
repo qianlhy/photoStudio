@@ -157,6 +157,10 @@ public class HyCustomerAccountServiceImpl {
     }
 
     public void audit(Long customerId, String auditStatus, String auditReply) {
+        audit(customerId, auditStatus, auditReply, null, null);
+    }
+
+    public void audit(Long customerId, String auditStatus, String auditReply, Long managerId, String managerName) {
         HyCustomerEntity customer = customerService.selectById(customerId);
         if (customer == null) throw new IllegalArgumentException("客户不存在");
         String status = normalizeAudit(auditStatus);
@@ -165,11 +169,30 @@ public class HyCustomerAccountServiceImpl {
         }
         customer.setAuditStatus(status);
         customer.setAuditReply(auditReply == null ? "" : auditReply.trim());
+        // 审核通过时绑定业务经理，Pad 工作台按 managerId 可见
+        if (AUDIT_APPROVED.equals(status) && managerId != null) {
+            customer.setManagerId(managerId);
+            if (managerName != null && !managerName.trim().isEmpty()) {
+                customer.setManagerName(managerName.trim());
+            }
+            if (customer.getFollowStatus() == null || customer.getFollowStatus().trim().isEmpty()) {
+                customer.setFollowStatus("跟进中");
+            }
+        }
         customerService.updateById(customer);
         if (customer.getPhone() == null || customer.getPhone().trim().isEmpty()) return;
         if (AUDIT_APPROVED.equals(status)) syncYonghuShell(customer, "是");
         else if (AUDIT_REJECTED.equals(status)) syncYonghuShell(customer, "驳回");
         else syncYonghuShell(customer, "否");
+    }
+
+    /** 登录时回写 openid 到客户主表 */
+    public void bindOpenid(Long customerId, String openid) {
+        if (customerId == null || openid == null || openid.trim().isEmpty()) return;
+        HyCustomerEntity customer = customerService.selectById(customerId);
+        if (customer == null) return;
+        customer.setOpenid(openid.trim());
+        customerService.updateById(customer);
     }
 
     /** 兼容旧名：审核通过时确保登录壳 */

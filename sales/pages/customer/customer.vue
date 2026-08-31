@@ -240,16 +240,23 @@ export default {
 	},
 	methods: {
 		loadCustomers() {
+			const empId = uni.getStorageSync('empId')
 			const q = { page: 1, limit: 100 }
 			if (this.keyword) q.name = '%' + this.keyword + '%'
+			// 与工作台一致：优先看本经理名下客户；审核通过后会写入 managerId
+			if (empId) q.managerId = empId
 			this.$api.page('hyCustomer', q).then(res => {
-				const list = (res.data && res.data.list) || []
+				const list = ((res.data && res.data.list) || []).filter(c => {
+					const a = c.auditStatus
+					// 待审核/已驳回不进 Pad 接待；空或已通过可见
+					return !a || a === '已通过' || a === '是'
+				})
 				this.customers = list
 				this.tabs[0].count = list.filter(c => c.intention === '高' || c.followStatus === '跟进中' || c.followStatus === '待付款').length
 				this.tabs[1].count = list.filter(c => !c.followStatus || c.followStatus === '跟进中' || (c.selectedCount || 0) === 0).length
 				this.tabs[2].count = list.filter(c => (c.remainCount || 0) <= 4).length
 				this.tabs[3].count = list.filter(c => (c.dealCount || 0) >= 1 && (c.remainCount || 0) <= 6).length
-				this.tabs[4].count = (res.data && res.data.total) || list.length
+				this.tabs[4].count = list.length
 				let sel = null
 				if (this.preselectId) sel = list.find(c => String(c.id) === String(this.preselectId))
 				this.select(sel || this.shownCustomers[0] || list[0])

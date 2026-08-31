@@ -35,7 +35,7 @@
 						<view class="cp-bar"><view class="cp-in" :style="{width: donePct+'%'}"></view></view>
 					</view>
 				</view>
-				<view class="cur-badge">进度正常</view>
+				<view class="cur-badge" v-if="order.id">{{ progressBadge }}</view>
 				<view class="service-art">
 					<view class="art-orb"></view>
 					<view class="art-folder"><view class="art-play"></view></view>
@@ -77,8 +77,8 @@
 				<view class="manager-row">
 					<image class="manager-avatar" :src="mgrAvatar" mode="aspectFill"></image>
 					<view class="manager-info">
-						<view class="manager-name-row"><text class="manager-name">{{ order.managerName || '阿杰' }}</text><text class="manager-tag">你的服务经理</text></view>
-						<text class="manager-time">09:00–18:00</text>
+						<view class="manager-name-row"><text class="manager-name">{{ order.managerName || customer.managerName || '服务经理' }}</text><text class="manager-tag">你的服务经理</text></view>
+						<text class="manager-time">工作日 09:00–18:00</text>
 					</view>
 					<view class="manager-action" @tap="callMgr"><view class="bubble-icon">•••</view><text>联系经理</text></view>
 					<view class="manager-action" @tap="askQuestion"><view class="question-icon">?</view><text>提交问题</text></view>
@@ -103,8 +103,8 @@ export default {
 			customerId: null,
 			customer: {},
 			order: {},
-			totalQuota: 15,
-			batch: 2
+			orderCount: 0,
+			orderVideoTotal: 0
 		}
 	},
 	computed: {
@@ -113,6 +113,12 @@ export default {
 			if (!this.order.videoCount) return 0
 			const v = (this.order.videoCount || 0) - (this.order.completedCount || 0)
 			return v > 0 ? v : 0
+		},
+		totalQuota() {
+			const fromCrm = (this.customer.remainCount || 0) + (this.customer.publishedCount || 0)
+			if (fromCrm > 0) return fromCrm
+			if (this.orderVideoTotal > 0) return this.orderVideoTotal
+			return Math.max(this.remain, 1)
 		},
 		producingPct() {
 			if (!this.totalQuota) return 0
@@ -124,6 +130,14 @@ export default {
 		donePct() {
 			if (!this.order.videoCount) return 0
 			return Math.round(((this.order.completedCount || 0) / this.order.videoCount) * 100)
+		},
+		batch() {
+			const n = this.customer.dealCount || this.orderCount || 0
+			return n > 0 ? n : 1
+		},
+		progressBadge() {
+			if (this.order.abnormal) return '需关注'
+			return '进度正常'
 		},
 		displayStatus() {
 			const status = this.order.status || '暂无订单'
@@ -154,51 +168,74 @@ export default {
 		this.load()
 	},
 	methods: {
+		img(v) { return v ? (/^https?:/.test(v) ? v : this.$base.url + String(v).split(',')[0]) : '' },
+		syncAvatar() {
+			const a = this.customer.avatar
+			if (a) this.avatar = this.img(a)
+		},
 		load() {
 			const finish = (cid) => {
 				this.$api.list('hyCustomer', { id: cid }).then(res => {
 					this.customer = (res.data && res.data[0]) || {}
+					this.syncAvatar()
 				})
-				this.$api.page('hyOrder', { customerId: cid, page: 1, limit: 1, sort: 'addtime', order: 'desc' }).then(res => {
+				this.$api.page('hyOrder', { customerId: cid, page: 1, limit: 20, sort: 'addtime', order: 'desc' }).then(res => {
 					const list = (res.data && res.data.list) || []
 					this.order = list[0] || {}
+					this.orderCount = (res.data && res.data.total) || list.length
+					this.orderVideoTotal = list.reduce((s, o) => s + (o.videoCount || 0), 0)
 				})
 			}
 			this.bindThen(finish)
 		},
 		bindThen(finish) {
+			const bindByPhone = () => {
+				const table = uni.getStorageSync('nowTable') || 'yonghu'
+				this.$api.session(table).then(res => {
+					const u = res.data || {}
+					const phone = u.shoujihaoma
+					if (!phone) {
+						uni.showToast({ title: '请先完善手机号以查看服务', icon: 'none' })
+						return
+					}
+					uni.request({
+						url: this.$base.url + 'hyCustomer/bindByPhone',
+						method: 'GET',
+						data: { phone },
+						header: { Token: uni.getStorageSync('token') },
+						success: (r) => {
+							const body = r.data || {}
+							if (body.code === 0 && body.data && body.data.id) {
+								this.customerId = body.data.id
+								uni.setStorageSync('hyCustomerId', body.data.id)
+								finish(body.data.id)
+							} else {
+								uni.showToast({ title: body.msg || '未绑定服务账号', icon: 'none' })
+							}
+						}
+					})
+				}).catch(() => {
+					uni.showToast({ title: '请先登录', icon: 'none' })
+				})
+			}
 			const cached = uni.getStorageSync('hyCustomerId')
-			if (cached) {
-				this.customerId = cached
-				finish(cached)
+			if (!cached) {
+				bindByPhone()
 				return
 			}
-			const table = uni.getStorageSync('nowTable') || 'yonghu'
-			this.$api.session(table).then(res => {
-				const u = res.data || {}
-				const phone = u.shoujihaoma
-				if (!phone) {
-					uni.showToast({ title: '请先完善手机号以查看服务', icon: 'none' })
-					return
+			// 旧缓存 ID（如种子 6001）在线上已不存在，校验失败则按手机号重绑
+			this.$api.list('hyCustomer', { id: cached }).then(res => {
+				const row = (res.data && res.data[0]) || null
+				if (row && row.id) {
+					this.customerId = cached
+					finish(cached)
+				} else {
+					uni.removeStorageSync('hyCustomerId')
+					bindByPhone()
 				}
-				uni.request({
-					url: this.$base.url + 'hyCustomer/bindByPhone',
-					method: 'GET',
-					data: { phone },
-					header: { Token: uni.getStorageSync('token') },
-					success: (r) => {
-						const body = r.data || {}
-						if (body.code === 0 && body.data && body.data.id) {
-							this.customerId = body.data.id
-							uni.setStorageSync('hyCustomerId', body.data.id)
-							finish(body.data.id)
-						} else {
-							uni.showToast({ title: body.msg || '未绑定服务账号', icon: 'none' })
-						}
-					}
-				})
 			}).catch(() => {
-				uni.showToast({ title: '请先登录', icon: 'none' })
+				uni.removeStorageSync('hyCustomerId')
+				bindByPhone()
 			})
 		},
 		md(t) {

@@ -144,7 +144,6 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 54));
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 56));
-var _http = _interopRequireDefault(__webpack_require__(/*! @/api/http.js */ 35));
 //
 //
 //
@@ -257,7 +256,7 @@ var _default = {
         provider: 'weixin',
         success: function () {
           var _success = (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee(r) {
-            var res;
+            var res, q;
             return _regenerator.default.wrap(function _callee$(_context) {
               while (1) {
                 switch (_context.prev = _context.next) {
@@ -271,39 +270,45 @@ var _default = {
                   case 3:
                     _context.prev = 3;
                     _context.next = 6;
-                    return _http.default.get('yonghu/wxlogin', {
+                    return _this2.requestLogin('yonghu/wxlogin', {
                       code: r.code
                     });
                   case 6:
                     res = _context.sent;
-                    if (!(res && res.needApply)) {
-                      _context.next = 10;
+                    _context.next = 9;
+                    return _this2.afterLogin(res);
+                  case 9:
+                    _context.next = 21;
+                    break;
+                  case 11:
+                    _context.prev = 11;
+                    _context.t0 = _context["catch"](3);
+                    if (!(_context.t0 && _context.t0.needApply)) {
+                      _context.next = 16;
                       break;
                     }
                     uni.navigateTo({
-                      url: '../apply/apply?openid=' + (res.openid || '')
+                      url: '../apply/apply?openid=' + encodeURIComponent(_context.t0.openid || '')
                     });
                     return _context.abrupt("return");
-                  case 10:
-                    _context.next = 12;
-                    return _this2.afterLogin(res);
-                  case 12:
-                    _context.next = 17;
-                    break;
-                  case 14:
-                    _context.prev = 14;
-                    _context.t0 = _context["catch"](3);
-                    if (_context.t0 && _context.t0.needApply) {
-                      uni.navigateTo({
-                        url: '../apply/apply'
-                      });
+                  case 16:
+                    if (!(_context.t0 && (_context.t0.sfsh === '否' || _context.t0.sfsh === '驳回'))) {
+                      _context.next = 20;
+                      break;
                     }
-                  case 17:
+                    q = _context.t0.sfsh === '驳回' ? 'rejected=1' : 'pending=1';
+                    uni.navigateTo({
+                      url: '../apply/apply?' + q
+                    });
+                    return _context.abrupt("return");
+                  case 20:
+                    _this2.$utils.msg(_context.t0 && _context.t0.msg || '微信登录失败');
+                  case 21:
                   case "end":
                     return _context.stop();
                 }
               }
-            }, _callee, null, [[3, 14]]);
+            }, _callee, null, [[3, 11]]);
           }));
           function success(_x) {
             return _success.apply(this, arguments);
@@ -338,7 +343,7 @@ var _default = {
               case 5:
                 _context2.prev = 5;
                 _context2.next = 8;
-                return _http.default.get('yonghu/sendSmsCode', {
+                return _this3.requestLogin('yonghu/sendSmsCode', {
                   phone: _this3.phone
                 });
               case 8:
@@ -350,12 +355,13 @@ var _default = {
                   _this3.smsCountdown--;
                   if (_this3.smsCountdown <= 0) clearInterval(_this3.timer);
                 }, 1000);
-                _context2.next = 17;
+                _context2.next = 18;
                 break;
               case 15:
                 _context2.prev = 15;
                 _context2.t0 = _context2["catch"](5);
-              case 17:
+                _this3.$utils.msg(_context2.t0 && _context2.t0.msg || '验证码发送失败');
+              case 18:
               case "end":
                 return _context2.stop();
             }
@@ -366,7 +372,7 @@ var _default = {
     phoneLogin: function phoneLogin() {
       var _this4 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
-        var res;
+        var res, q;
         return _regenerator.default.wrap(function _callee3$(_context3) {
           while (1) {
             switch (_context3.prev = _context3.next) {
@@ -387,102 +393,164 @@ var _default = {
               case 6:
                 _context3.prev = 6;
                 _context3.next = 9;
-                return _http.default.get('yonghu/smslogin', {
+                return _this4.requestLogin('yonghu/smslogin', {
                   phone: _this4.phone,
                   code: _this4.smsCode
                 });
               case 9:
                 res = _context3.sent;
-                if (!(res && res.needApply)) {
-                  _context3.next = 13;
+                _context3.next = 12;
+                return _this4.afterLogin(res);
+              case 12:
+                _context3.next = 24;
+                break;
+              case 14:
+                _context3.prev = 14;
+                _context3.t0 = _context3["catch"](6);
+                if (!(_context3.t0 && _context3.t0.needApply)) {
+                  _context3.next = 19;
                   break;
                 }
                 uni.navigateTo({
                   url: '../apply/apply'
                 });
                 return _context3.abrupt("return");
-              case 13:
-                _context3.next = 15;
-                return _this4.afterLogin(res);
-              case 15:
-                _context3.next = 19;
-                break;
-              case 17:
-                _context3.prev = 17;
-                _context3.t0 = _context3["catch"](6);
               case 19:
+                if (!(_context3.t0 && (_context3.t0.sfsh === '否' || _context3.t0.sfsh === '驳回'))) {
+                  _context3.next = 23;
+                  break;
+                }
+                q = _context3.t0.sfsh === '驳回' ? 'rejected=1' : 'pending=1';
+                uni.navigateTo({
+                  url: '../apply/apply?' + q
+                });
+                return _context3.abrupt("return");
+              case 23:
+                _this4.$utils.msg(_context3.t0 && _context3.t0.msg || '登录失败');
+              case 24:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, null, [[6, 17]]);
+        }, _callee3, null, [[6, 14]]);
       }))();
     },
     goApply: function goApply() {
-      uni.navigateTo({
-        url: '../apply/apply'
+      var _this5 = this;
+      uni.login({
+        provider: 'weixin',
+        success: function () {
+          var _success2 = (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4(r) {
+            var oid;
+            return _regenerator.default.wrap(function _callee4$(_context4) {
+              while (1) {
+                switch (_context4.prev = _context4.next) {
+                  case 0:
+                    if (!(!r || !r.code)) {
+                      _context4.next = 3;
+                      break;
+                    }
+                    uni.navigateTo({
+                      url: '../apply/apply'
+                    });
+                    return _context4.abrupt("return");
+                  case 3:
+                    _context4.prev = 3;
+                    _context4.next = 6;
+                    return _this5.requestLogin('yonghu/wxlogin', {
+                      code: r.code
+                    });
+                  case 6:
+                    // 已有账号则直接提示去登录
+                    _this5.$utils.msg('该微信已有账号，请直接登录');
+                    _context4.next = 13;
+                    break;
+                  case 9:
+                    _context4.prev = 9;
+                    _context4.t0 = _context4["catch"](3);
+                    oid = _context4.t0 && _context4.t0.openid ? encodeURIComponent(_context4.t0.openid) : '';
+                    uni.navigateTo({
+                      url: '../apply/apply' + (oid ? '?openid=' + oid : '')
+                    });
+                  case 13:
+                  case "end":
+                    return _context4.stop();
+                }
+              }
+            }, _callee4, null, [[3, 9]]);
+          }));
+          function success(_x2) {
+            return _success2.apply(this, arguments);
+          }
+          return success;
+        }(),
+        fail: function fail() {
+          uni.navigateTo({
+            url: '../apply/apply'
+          });
+        }
       });
     },
     devLogin: function devLogin() {
-      var _this5 = this;
-      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee4() {
-        var res, _res, msg;
-        return _regenerator.default.wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                uni.removeStorageSync('hyCustomerId');
-                _context4.prev = 1;
-                _context4.next = 4;
-                return _this5.requestLogin('yonghu/smslogin', {
-                  phone: DEV_PHONE,
-                  code: DEV_CODE
-                });
-              case 4:
-                res = _context4.sent;
-                _context4.next = 7;
-                return _this5.afterLogin(res);
-              case 7:
-                return _context4.abrupt("return");
-              case 10:
-                _context4.prev = 10;
-                _context4.t0 = _context4["catch"](1);
-              case 12:
-                _context4.prev = 12;
-                _context4.next = 15;
-                return _this5.requestLogin('yonghu/login', {
-                  username: '账号1',
-                  password: DEV_CODE
-                });
-              case 15:
-                _res = _context4.sent;
-                _context4.next = 18;
-                return _this5.afterLogin(_res);
-              case 18:
-                return _context4.abrupt("return");
-              case 21:
-                _context4.prev = 21;
-                _context4.t1 = _context4["catch"](12);
-                msg = _context4.t1 && _context4.t1.msg ? _context4.t1.msg : '体验登录失败，请确认后端已启动';
-                _this5.$utils.msg(msg);
-              case 25:
-              case "end":
-                return _context4.stop();
-            }
-          }
-        }, _callee4, null, [[1, 10], [12, 21]]);
-      }))();
-    },
-    afterLogin: function afterLogin(res) {
       var _this6 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee5() {
-        var s;
+        var res, _res, msg;
         return _regenerator.default.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
+                uni.removeStorageSync('hyCustomerId');
+                _context5.prev = 1;
+                _context5.next = 4;
+                return _this6.requestLogin('yonghu/smslogin', {
+                  phone: DEV_PHONE,
+                  code: DEV_CODE
+                });
+              case 4:
+                res = _context5.sent;
+                _context5.next = 7;
+                return _this6.afterLogin(res);
+              case 7:
+                return _context5.abrupt("return");
+              case 10:
+                _context5.prev = 10;
+                _context5.t0 = _context5["catch"](1);
+              case 12:
+                _context5.prev = 12;
+                _context5.next = 15;
+                return _this6.requestLogin('yonghu/login', {
+                  username: '账号1',
+                  password: DEV_CODE
+                });
+              case 15:
+                _res = _context5.sent;
+                _context5.next = 18;
+                return _this6.afterLogin(_res);
+              case 18:
+                return _context5.abrupt("return");
+              case 21:
+                _context5.prev = 21;
+                _context5.t1 = _context5["catch"](12);
+                msg = _context5.t1 && _context5.t1.msg ? _context5.t1.msg : '体验登录失败，请确认后端已启动';
+                _this6.$utils.msg(msg);
+              case 25:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, null, [[1, 10], [12, 21]]);
+      }))();
+    },
+    afterLogin: function afterLogin(res) {
+      var _this7 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee6() {
+        var s;
+        return _regenerator.default.wrap(function _callee6$(_context6) {
+          while (1) {
+            switch (_context6.prev = _context6.next) {
+              case 0:
                 if (!(!res || !res.token)) {
-                  _context5.next = 3;
+                  _context6.next = 3;
                   break;
                 }
                 if (res && res.sfsh) {
@@ -493,23 +561,23 @@ var _default = {
                     url: '../apply/apply?rejected=1'
                   });
                 }
-                return _context5.abrupt("return");
+                return _context6.abrupt("return");
               case 3:
                 uni.removeStorageSync('useridTag');
                 uni.setStorageSync('token', res.token);
                 uni.setStorageSync('nowTable', 'yonghu');
                 uni.setStorageSync('role', '用户');
-                _context5.next = 9;
-                return _this6.$api.session('yonghu');
+                _context6.next = 9;
+                return _this7.$api.session('yonghu');
               case 9:
-                s = _context5.sent;
+                s = _context6.sent;
                 uni.setStorageSync('userid', s.data.id);
                 uni.setStorageSync('nickname', s.data.xingming || s.data.zhanghao || '');
                 if (s.data.vip) {
                   uni.setStorageSync('vip', s.data.vip);
                 }
                 if (!(res.needPreference || !s.data.pianhao)) {
-                  _context5.next = 16;
+                  _context6.next = 16;
                   break;
                 }
                 uni.navigateTo({
@@ -520,17 +588,17 @@ var _default = {
                     });
                   }
                 });
-                return _context5.abrupt("return");
+                return _context6.abrupt("return");
               case 16:
                 uni.reLaunch({
                   url: '../hy-service/service'
                 });
               case 17:
               case "end":
-                return _context5.stop();
+                return _context6.stop();
             }
           }
-        }, _callee5);
+        }, _callee6);
       }))();
     }
   }

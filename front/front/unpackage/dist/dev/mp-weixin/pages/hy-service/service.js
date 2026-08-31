@@ -190,8 +190,8 @@ var _default = {
       customerId: null,
       customer: {},
       order: {},
-      totalQuota: 15,
-      batch: 2
+      orderCount: 0,
+      orderVideoTotal: 0
     };
   },
   computed: {
@@ -203,6 +203,12 @@ var _default = {
       var v = (this.order.videoCount || 0) - (this.order.completedCount || 0);
       return v > 0 ? v : 0;
     },
+    totalQuota: function totalQuota() {
+      var fromCrm = (this.customer.remainCount || 0) + (this.customer.publishedCount || 0);
+      if (fromCrm > 0) return fromCrm;
+      if (this.orderVideoTotal > 0) return this.orderVideoTotal;
+      return Math.max(this.remain, 1);
+    },
     producingPct: function producingPct() {
       if (!this.totalQuota) return 0;
       return Math.min(100 - this.reservePct, Math.round(this.producing / this.totalQuota * 100));
@@ -213,6 +219,14 @@ var _default = {
     donePct: function donePct() {
       if (!this.order.videoCount) return 0;
       return Math.round((this.order.completedCount || 0) / this.order.videoCount * 100);
+    },
+    batch: function batch() {
+      var n = this.customer.dealCount || this.orderCount || 0;
+      return n > 0 ? n : 1;
+    },
+    progressBadge: function progressBadge() {
+      if (this.order.abnormal) return '需关注';
+      return '进度正常';
     },
     displayStatus: function displayStatus() {
       var status = this.order.status || '暂无订单';
@@ -261,6 +275,13 @@ var _default = {
     this.load();
   },
   methods: {
+    img: function img(v) {
+      return v ? /^https?:/.test(v) ? v : this.$base.url + String(v).split(',')[0] : '';
+    },
+    syncAvatar: function syncAvatar() {
+      var a = this.customer.avatar;
+      if (a) this.avatar = this.img(a);
+    },
     load: function load() {
       var _this2 = this;
       var finish = function finish(cid) {
@@ -268,67 +289,89 @@ var _default = {
           id: cid
         }).then(function (res) {
           _this2.customer = res.data && res.data[0] || {};
+          _this2.syncAvatar();
         });
         _this2.$api.page('hyOrder', {
           customerId: cid,
           page: 1,
-          limit: 1,
+          limit: 20,
           sort: 'addtime',
           order: 'desc'
         }).then(function (res) {
           var list = res.data && res.data.list || [];
           _this2.order = list[0] || {};
+          _this2.orderCount = res.data && res.data.total || list.length;
+          _this2.orderVideoTotal = list.reduce(function (s, o) {
+            return s + (o.videoCount || 0);
+          }, 0);
         });
       };
       this.bindThen(finish);
     },
     bindThen: function bindThen(finish) {
       var _this3 = this;
-      var cached = uni.getStorageSync('hyCustomerId');
-      if (cached) {
-        this.customerId = cached;
-        finish(cached);
-        return;
-      }
-      var table = uni.getStorageSync('nowTable') || 'yonghu';
-      this.$api.session(table).then(function (res) {
-        var u = res.data || {};
-        var phone = u.shoujihaoma;
-        if (!phone) {
+      var bindByPhone = function bindByPhone() {
+        var table = uni.getStorageSync('nowTable') || 'yonghu';
+        _this3.$api.session(table).then(function (res) {
+          var u = res.data || {};
+          var phone = u.shoujihaoma;
+          if (!phone) {
+            uni.showToast({
+              title: '请先完善手机号以查看服务',
+              icon: 'none'
+            });
+            return;
+          }
+          uni.request({
+            url: _this3.$base.url + 'hyCustomer/bindByPhone',
+            method: 'GET',
+            data: {
+              phone: phone
+            },
+            header: {
+              Token: uni.getStorageSync('token')
+            },
+            success: function success(r) {
+              var body = r.data || {};
+              if (body.code === 0 && body.data && body.data.id) {
+                _this3.customerId = body.data.id;
+                uni.setStorageSync('hyCustomerId', body.data.id);
+                finish(body.data.id);
+              } else {
+                uni.showToast({
+                  title: body.msg || '未绑定服务账号',
+                  icon: 'none'
+                });
+              }
+            }
+          });
+        }).catch(function () {
           uni.showToast({
-            title: '请先完善手机号以查看服务',
+            title: '请先登录',
             icon: 'none'
           });
-          return;
+        });
+      };
+      var cached = uni.getStorageSync('hyCustomerId');
+      if (!cached) {
+        bindByPhone();
+        return;
+      }
+      // 旧缓存 ID（如种子 6001）在线上已不存在，校验失败则按手机号重绑
+      this.$api.list('hyCustomer', {
+        id: cached
+      }).then(function (res) {
+        var row = res.data && res.data[0] || null;
+        if (row && row.id) {
+          _this3.customerId = cached;
+          finish(cached);
+        } else {
+          uni.removeStorageSync('hyCustomerId');
+          bindByPhone();
         }
-        uni.request({
-          url: _this3.$base.url + 'hyCustomer/bindByPhone',
-          method: 'GET',
-          data: {
-            phone: phone
-          },
-          header: {
-            Token: uni.getStorageSync('token')
-          },
-          success: function success(r) {
-            var body = r.data || {};
-            if (body.code === 0 && body.data && body.data.id) {
-              _this3.customerId = body.data.id;
-              uni.setStorageSync('hyCustomerId', body.data.id);
-              finish(body.data.id);
-            } else {
-              uni.showToast({
-                title: body.msg || '未绑定服务账号',
-                icon: 'none'
-              });
-            }
-          }
-        });
       }).catch(function () {
-        uni.showToast({
-          title: '请先登录',
-          icon: 'none'
-        });
+        uni.removeStorageSync('hyCustomerId');
+        bindByPhone();
       });
     },
     md: function md(t) {

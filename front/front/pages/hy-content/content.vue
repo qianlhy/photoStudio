@@ -23,7 +23,7 @@
 					<text class="eyebrow">当前服务</text>
 					<text class="current-title" v-if="list.length">本批{{ list.length }}条已交付</text>
 					<text class="current-title" v-else>暂无已交付内容</text>
-					<text class="current-sub">{{ order.packageName || '—' }} · {{ deliverText }}</text>
+					<text class="current-sub">{{ order.packageName || '—' }}<text v-if="deliverText !== '—'"> · 预计{{ deliverText }}交付</text></text>
 					<view class="service-link" @tap="goService">查看服务记录 <text>›</text></view>
 				</view>
 				<view class="deliver-art">
@@ -36,15 +36,15 @@
 			<view class="section-head"><text class="section-title">我的成品</text><text class="section-count">共 {{ list.length }} 条</text></view>
 			<scroll-view scroll-x class="chips" :show-scrollbar="false" v-if="list.length">
 				<view class="chips-inner">
-					<view v-for="t in tabs" :key="t.key" class="chip" :class="{on:t.key===activeTab}" @tap="activeTab=t.key">{{ t.label }} <text>{{ t.count }}</text></view>
+					<view v-for="t in tabs" :key="t.key" class="chip" :class="{on:t.key===activeTab}" @tap="setTab(t.key)">{{ t.label }} <text>{{ t.count }}</text></view>
 				</view>
 			</scroll-view>
 
 			<view class="grid" v-if="displayList.length">
-				<view v-for="(m,i) in displayList" :key="m.id || i" class="cell" @tap="play(m)">
+				<view v-for="(m,i) in displayList" :key="m.id || i" class="cell" @tap="play(i)">
 					<image class="cover" :src="img(m.cover)" mode="aspectFill"></image>
 					<view class="cell-mask"></view>
-					<view class="download" :class="{done:isDownloaded(m)}" @tap.stop="download(m)">
+					<view class="download" :class="{done:isDownloaded(m)}" @tap.stop="download(i)">
 						<text v-if="isDownloaded(m)">✓</text><view v-else class="download-icon"></view>
 					</view>
 					<view v-if="isDownloaded(m)" class="stamp">已下载</view>
@@ -56,17 +56,28 @@
 				<text>暂无成品，制作完成后将出现在这里</text>
 			</view>
 
-			<view class="reference-card" v-if="refCount || previewList.length">
+			<view class="reference-card" v-if="refCount > 0">
 				<view class="lock-orb"><view class="lock-icon"></view></view>
-				<view class="reference-copy"><text class="reference-title">对标参考 {{ refCount || previewList.length }}</text><text class="reference-sub">交付前用于确认拍摄方向 · 只读</text><view class="reference-note"><view class="mini-lock"></view><text>不可下载</text></view></view>
-				<view class="reference-preview">
-					<image v-for="(m,i) in previewList" :key="i" :src="img(m.cover)" mode="aspectFill"></image>
-				</view>
+				<view class="reference-copy"><text class="reference-title">对标参考 {{ refCount }}</text><text class="reference-sub">交付前用于确认拍摄方向 · 只读</text><view class="reference-note"><view class="mini-lock"></view><text>不可下载</text></view></view>
 				<view class="view-ref" @tap="viewRef">查看 <text>›</text></view>
 			</view>
 			<view class="bottom-space"></view>
 		</scroll-view>
 		<client-tabbar active="content" state-text="已交付"></client-tabbar>
+
+		<view v-if="player.show" class="player-mask" @tap="closePlayer">
+			<video
+				class="player-video"
+				:src="player.url"
+				:poster="player.poster"
+				controls
+				autoplay
+				show-center-play-btn
+				object-fit="contain"
+				@tap.stop
+			></video>
+			<view class="player-close" @tap.stop="closePlayer">关闭</view>
+		</view>
 	</view>
 </template>
 
@@ -81,11 +92,12 @@ export default {
 			customerId: null,
 			customer: {},
 			order: {},
+			orderVideoTotal: 0,
 			list: [],
 			refCount: 0,
-			totalQuota: 15,
 			activeTab: 'all',
-			types: ['硬广', '晒过程', '教知识', '说观点', '讲故事']
+			types: ['硬广', '晒过程', '教知识', '说观点', '讲故事'],
+			player: { show: false, url: '', poster: '' }
 		}
 	},
 	computed: {
@@ -96,6 +108,12 @@ export default {
 		},
 		remain() { return this.customer.remainCount || 0 },
 		publishDays() { return this.customer.publishDays || 0 },
+		totalQuota() {
+			const fromCrm = (this.customer.remainCount || 0) + (this.customer.publishedCount || 0)
+			if (fromCrm > 0) return fromCrm
+			if (this.orderVideoTotal > 0) return this.orderVideoTotal
+			return Math.max(this.remain, 1)
+		},
 		reservePct() { return Math.min(100, Math.round((this.remain / this.totalQuota) * 100)) },
 		deliverText() {
 			const t = this.order.deliverDate
@@ -118,10 +136,7 @@ export default {
 			return this.list.filter(m => m.contentType === this.activeTab)
 		},
 		displayList() {
-			return this.shown.slice(0, 9)
-		},
-		previewList() {
-			return this.list.slice(0, 3)
+			return this.shown
 		}
 	},
 	onLoad() {
@@ -138,77 +153,163 @@ export default {
 		isDownloaded(m) {
 			return m.downloadStatus === '已下载'
 		},
+		syncAvatar() {
+			const a = this.customer.avatar
+			if (a) this.avatar = this.img(a)
+		},
 		load() {
 			const finish = (cid) => {
 				const customerId = Number(cid) || cid
-				this.$api.list('hyCustomer', { id: customerId }).then(res => { this.customer = (res.data && res.data[0]) || {} })
+				this.$api.list('hyCustomer', { id: customerId }).then(res => {
+					this.customer = (res.data && res.data[0]) || {}
+					this.syncAvatar()
+				})
 				// 勿传 sort=sort：会与实体字段 sort(Integer) 冲突，后端已在 Controller 内按 sort 排序
 				this.$api.page('hyDeliverable', { customerId, page: 1, limit: 50, status: '上架' }).then(res => {
 					this.list = (res.data && res.data.list) || []
 				})
-				this.$api.page('hyOrder', { customerId, page: 1, limit: 1, sort: 'addtime', order: 'desc' }).then(res => {
-					this.order = (res.data && res.data.list && res.data.list[0]) || {}
+				this.$api.page('hyOrder', { customerId, page: 1, limit: 20, sort: 'addtime', order: 'desc' }).then(res => {
+					const orders = (res.data && res.data.list) || []
+					this.order = orders[0] || {}
+					this.orderVideoTotal = orders.reduce((s, o) => s + (o.videoCount || 0), 0)
 				})
 				this.$api.page('hyContentPlan', { customerId, page: 1, limit: 1 }).then(res => {
 					const p = (res.data && res.data.list && res.data.list[0]) || {}
 					this.refCount = p.totalCount || 0
 				})
 			}
+			const bindByPhone = () => {
+				const table = uni.getStorageSync('nowTable') || 'yonghu'
+				this.$api.session(table).then(res => {
+					const phone = (res.data && res.data.shoujihaoma) || ''
+					if (!phone) {
+						uni.showToast({ title: '请先完善手机号以查看内容', icon: 'none' })
+						return
+					}
+					uni.request({
+						url: this.$base.url + 'hyCustomer/bindByPhone',
+						method: 'GET',
+						data: { phone },
+						header: { Token: uni.getStorageSync('token') },
+						success: (r) => {
+							const body = r.data || {}
+							if (body.code === 0 && body.data && body.data.id) {
+								this.customerId = body.data.id
+								uni.setStorageSync('hyCustomerId', body.data.id)
+								finish(body.data.id)
+							} else {
+								uni.showToast({ title: body.msg || '未绑定服务账号', icon: 'none' })
+							}
+						}
+					})
+				})
+			}
+			// 缓存的客户 ID 可能是旧种子数据（如 6001），线上已换成雪花 ID，需校验后再用
 			const cached = uni.getStorageSync('hyCustomerId')
-			if (cached) {
-				this.customerId = cached
-				finish(cached)
+			if (!cached) {
+				bindByPhone()
 				return
 			}
-			const table = uni.getStorageSync('nowTable') || 'yonghu'
-			this.$api.session(table).then(res => {
-				const phone = (res.data && res.data.shoujihaoma) || ''
-				if (!phone) {
-					uni.showToast({ title: '请先完善手机号以查看内容', icon: 'none' })
-					return
+			this.$api.list('hyCustomer', { id: cached }).then(res => {
+				const row = (res.data && res.data[0]) || null
+				if (row && row.id) {
+					this.customerId = cached
+					finish(cached)
+				} else {
+					uni.removeStorageSync('hyCustomerId')
+					bindByPhone()
 				}
-				uni.request({
-					url: this.$base.url + 'hyCustomer/bindByPhone',
-					method: 'GET',
-					data: { phone },
-					header: { Token: uni.getStorageSync('token') },
-					success: (r) => {
-						const body = r.data || {}
-						if (body.code === 0 && body.data && body.data.id) {
-							this.customerId = body.data.id
-							uni.setStorageSync('hyCustomerId', body.data.id)
-							finish(body.data.id)
-						} else {
-							uni.showToast({ title: body.msg || '未绑定服务账号', icon: 'none' })
-						}
-					}
-				})
+			}).catch(() => {
+				uni.removeStorageSync('hyCustomerId')
+				bindByPhone()
 			})
 		},
-		play(m) {
-			if (m.video) {
-				uni.showToast({ title: '播放：' + (m.title || '成品'), icon: 'none' })
-			} else {
-				uni.showToast({ title: '暂无视频文件', icon: 'none' })
-			}
+		setTab(key) {
+			this.activeTab = key
 		},
-		download(m) {
+		itemAt(i) {
+			const idx = Number(i)
+			return this.displayList[idx] || null
+		},
+		videoUrl(m) {
+			if (!m) return ''
+			const raw = m.video || m.shipin || ''
+			if (!raw) return ''
+			return this.img(String(raw).split(',')[0])
+		},
+		play(i) {
+			const m = this.itemAt(i)
+			const url = this.videoUrl(m)
+			if (!url) {
+				uni.showToast({ title: '暂无视频文件', icon: 'none' })
+				return
+			}
+			this.player = { show: true, url, poster: this.img(m.cover) || '' }
+		},
+		closePlayer() {
+			this.player = { show: false, url: '', poster: '' }
+		},
+		markDownloaded(m) {
+			if (!m || !m.id) return
 			uni.request({
 				url: `${this.$base.url}hyDeliverable/download/${m.id}`,
 				method: 'GET',
 				header: { Token: uni.getStorageSync('token') },
-				success: (r) => {
-					const body = r.data || {}
-					if (body.code === 0) {
-						this.$set(m, 'downloadStatus', '已下载')
-						uni.showToast({ title: '已标记下载', icon: 'success' })
+				success: () => { this.$set(m, 'downloadStatus', '已下载') }
+			})
+		},
+		saveVideoAlbum(filePath, m) {
+			uni.saveVideoToPhotosAlbum({
+				filePath,
+				success: () => {
+					this.markDownloaded(m)
+					uni.showToast({ title: '已保存到相册', icon: 'success' })
+				},
+				fail: (err) => {
+					const msg = (err && err.errMsg) || ''
+					if (/auth|authorize|permission/i.test(msg) || msg.indexOf('auth') >= 0) {
+						uni.showModal({
+							title: '需要相册权限',
+							content: '请允许保存到相册后重试',
+							success: (r) => { if (r.confirm) uni.openSetting({}) }
+						})
 					} else {
-						uni.showToast({ title: body.msg || '下载失败', icon: 'none' })
+						uni.showToast({ title: '保存失败，请重试', icon: 'none' })
 					}
 				}
 			})
 		},
-		viewRef() { uni.showToast({ title: '对标参考为只读，不可下载', icon: 'none' }) },
+		download(i) {
+			const m = this.itemAt(i)
+			const url = this.videoUrl(m)
+			if (!url) {
+				uni.showToast({ title: '暂无视频文件', icon: 'none' })
+				return
+			}
+			uni.showLoading({ title: '下载中', mask: true })
+			uni.downloadFile({
+				url,
+				success: (res) => {
+					uni.hideLoading()
+					if (res.statusCode === 200 && res.tempFilePath) {
+						this.saveVideoAlbum(res.tempFilePath, m)
+					} else {
+						uni.showToast({ title: '下载失败', icon: 'none' })
+					}
+				},
+				fail: () => {
+					uni.hideLoading()
+					uni.showToast({ title: '下载失败，请检查网络', icon: 'none' })
+				}
+			})
+		},
+		viewRef() {
+			uni.showModal({
+				title: '对标参考',
+				content: '对标参考仅供确认拍摄方向，不可下载。请联系服务经理查看完整方案。',
+				showCancel: false
+			})
+		},
 		goService() { uni.redirectTo({ url: '/pages/hy-service/service' }) }
 	}
 }
@@ -240,7 +341,11 @@ export default {
 .current-sub { margin-top:8rpx; color:#7F8B9C; font-size:21rpx; }
 .service-link { width:190rpx; height:48rpx; margin-top:30rpx; display:flex; align-items:center; justify-content:center; gap:12rpx; border:1rpx solid #FF8D72; border-radius:26rpx; background:rgba(255,255,255,.42); color:#FF8267; font-size:20rpx; }
 .service-link text { font-size:28rpx; }
-.deliver-art { position:absolute; right:15rpx; top:25rpx; width:230rpx; height:220rpx; }
+.deliver-art { position:absolute; right:15rpx; top:25rpx; width:230rpx; height:220rpx; pointer-events:none; z-index:1; }
+.cell-mask,.play,.stamp,.cell-foot { pointer-events:none; }
+.player-mask { position:fixed; z-index:99; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,.86); }
+.player-video { width:100%; height:70vh; background:#000; }
+.player-close { margin-top:28rpx; padding:14rpx 48rpx; border-radius:40rpx; background:rgba(255,255,255,.18); color:#fff; font-size:28rpx; }
 .ticket-shadow { position:absolute; right:26rpx; bottom:22rpx; width:130rpx; height:46rpx; border-radius:50%; background:rgba(237,122,117,.16); filter:blur(13rpx); }
 .ticket { position:absolute; right:34rpx; top:45rpx; width:115rpx; height:105rpx; border:4rpx solid rgba(255,255,255,.78); border-radius:28rpx; background:linear-gradient(145deg,#FFB09C,#FF716D); box-shadow:0 14rpx 26rpx rgba(237,98,100,.25); transform:rotate(6deg); }
 .ticket::after { content:""; position:absolute; inset:8rpx; border:2rpx solid rgba(255,255,255,.25); border-radius:21rpx; }

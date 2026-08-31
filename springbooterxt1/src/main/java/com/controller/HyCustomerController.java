@@ -197,15 +197,20 @@ public class HyCustomerController {
         return R.ok();
     }
 
-    /** 审核小程序注册客户（通过/驳回） */
+    /** 审核小程序注册客户（通过/驳回）；通过时可指定业务经理供 Pad 可见 */
     @PostMapping("/audit")
     public R audit(@RequestBody Map<String, Object> body) {
         Object idObj = body.get("id");
         if (idObj == null) return R.error("客户 id 必填");
         String auditStatus = body.get("auditStatus") == null ? "" : String.valueOf(body.get("auditStatus"));
         String auditReply = body.get("auditReply") == null ? "" : String.valueOf(body.get("auditReply"));
+        Long managerId = null;
+        if (body.get("managerId") != null && !"".equals(String.valueOf(body.get("managerId")))) {
+            managerId = Long.valueOf(String.valueOf(body.get("managerId")));
+        }
+        String managerName = body.get("managerName") == null ? null : String.valueOf(body.get("managerName"));
         try {
-            accountService.audit(Long.valueOf(String.valueOf(idObj)), auditStatus, auditReply);
+            accountService.audit(Long.valueOf(String.valueOf(idObj)), auditStatus, auditReply, managerId, managerName);
             return R.ok();
         } catch (IllegalArgumentException e) {
             return R.error(e.getMessage());

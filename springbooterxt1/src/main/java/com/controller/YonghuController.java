@@ -119,7 +119,8 @@ public class YonghuController {
         if (code == null || code.trim().isEmpty()) {
             return R.error("缺少微信登录凭证 code");
         }
-        if (wxAppid == null || wxAppid.trim().isEmpty() || "your_wx_appid".equals(wxAppid)) {
+        if (wxAppid == null || wxAppid.trim().isEmpty() || "your_wx_appid".equals(wxAppid)
+                || wxSecret == null || wxSecret.trim().isEmpty() || "your_wx_secret".equals(wxSecret)) {
             return R.error("尚未配置微信小程序 AppID/AppSecret（application.yml: wx.appid / wx.secret）");
         }
         String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + wxAppid
@@ -150,6 +151,7 @@ public class YonghuController {
             }
             if (customer.getOpenid() == null || !openid.equals(customer.getOpenid())) {
                 customer.setOpenid(openid);
+                customerAccountService.bindOpenid(customer.getId(), openid);
             }
             user = customerAccountService.syncYonghuApproved(customer);
         } else {

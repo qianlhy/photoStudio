@@ -58,12 +58,17 @@ export default {
 						uni.navigateTo({
 							url: '../login/login'
 						})
+						reject(rs)
 					} else {
-						uni.showToast({
-							title: rs.msg,
-							icon: 'none',
-							duration: 2000
-						});
+						// needApply 等业务码交给调用方处理，避免 Promise 悬挂
+						if (!(rs.needApply || rs.code === 1001)) {
+							uni.showToast({
+								title: rs.msg || '请求失败',
+								icon: 'none',
+								duration: 2000
+							});
+						}
+						reject(rs)
 					}
 				} else {
 					uni.showToast({

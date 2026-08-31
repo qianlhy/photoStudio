@@ -390,29 +390,76 @@ var _default = {
                 _this4.$utils.msg('请填写手机号和姓名');
                 return _context3.abrupt("return");
               case 3:
-                _context3.prev = 3;
+                if (/^1\d{10}$/.test(_this4.form.shoujihaoma)) {
+                  _context3.next = 6;
+                  break;
+                }
+                _this4.$utils.msg('请输入正确的手机号');
+                return _context3.abrupt("return");
+              case 6:
+                _context3.prev = 6;
+                if (_this4.form.openid) {
+                  _context3.next = 10;
+                  break;
+                }
+                _context3.next = 10;
+                return _this4.ensureOpenid();
+              case 10:
                 payload = Object.assign({}, _this4.form, {
                   pianhao: _this4.selectedStyles.join(',')
                 });
-                _context3.next = 7;
+                _context3.next = 13;
                 return _http.default.post('yonghu/apply', payload);
-              case 7:
+              case 13:
                 res = _context3.sent;
                 _this4.$utils.msg(res.msg || '申请已提交');
                 _this4.pending = true;
                 _this4.rejected = false;
-                _context3.next = 15;
+                _context3.next = 22;
                 break;
-              case 13:
-                _context3.prev = 13;
-                _context3.t0 = _context3["catch"](3);
-              case 15:
+              case 19:
+                _context3.prev = 19;
+                _context3.t0 = _context3["catch"](6);
+                _this4.$utils.msg(_context3.t0 && _context3.t0.msg || '提交失败，请重试');
+              case 22:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, null, [[3, 13]]);
+        }, _callee3, null, [[6, 19]]);
       }))();
+    },
+    ensureOpenid: function ensureOpenid() {
+      var _this5 = this;
+      return new Promise(function (resolve) {
+        uni.login({
+          provider: 'weixin',
+          success: function success(r) {
+            if (!r || !r.code) {
+              resolve();
+              return;
+            }
+            uni.request({
+              url: _this5.$base.url + 'yonghu/wxlogin',
+              method: 'GET',
+              data: {
+                code: r.code
+              },
+              success: function success(resp) {
+                var body = resp.data || {};
+                if (body.openid) _this5.form.openid = body.openid;
+                resolve();
+              },
+              fail: function fail() {
+                return resolve();
+              }
+            });
+          },
+          fail: function fail() {
+            return resolve();
+          }
+        });
+      });
     },
     goLogin: function goLogin() {
       uni.navigateTo({

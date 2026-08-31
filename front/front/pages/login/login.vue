@@ -65,7 +65,6 @@
 </template>
 
 <script>
-	import http from '@/api/http.js'
 	// 与 db_full 用户 id=11、hy_customer id=6001 对齐，便于登录后绑定服务档案
 	const DEV_PHONE = '13823888881'
 	const DEV_CODE = '123456'
@@ -114,18 +113,23 @@
 							return
 						}
 						try {
-							const res = await http.get('yonghu/wxlogin', {
+							const res = await this.requestLogin('yonghu/wxlogin', {
 								code: r.code
 							})
-							if (res && res.needApply) {
-								uni.navigateTo({ url: '../apply/apply?openid=' + (res.openid || '') });
-								return;
-							}
 							await this.afterLogin(res)
 						} catch (e) {
 							if (e && e.needApply) {
-								uni.navigateTo({ url: '../apply/apply' });
+								uni.navigateTo({
+									url: '../apply/apply?openid=' + encodeURIComponent(e.openid || '')
+								})
+								return
 							}
+							if (e && (e.sfsh === '否' || e.sfsh === '驳回')) {
+								const q = e.sfsh === '驳回' ? 'rejected=1' : 'pending=1'
+								uni.navigateTo({ url: '../apply/apply?' + q })
+								return
+							}
+							this.$utils.msg((e && e.msg) || '微信登录失败')
 						}
 					},
 					fail: () => {
@@ -140,7 +144,7 @@
 					return
 				}
 				try {
-					const res = await http.get('yonghu/sendSmsCode', {
+					const res = await this.requestLogin('yonghu/sendSmsCode', {
 						phone: this.phone
 					})
 					this.$utils.msg((res && res.msg) || '验证码已发送')
@@ -150,7 +154,9 @@
 						this.smsCountdown--
 						if (this.smsCountdown <= 0) clearInterval(this.timer)
 					}, 1000)
-				} catch (e) {}
+				} catch (e) {
+					this.$utils.msg((e && e.msg) || '验证码发送失败')
+				}
 			},
 			async phoneLogin() {
 				if (!this.phone) {
@@ -162,19 +168,45 @@
 					return
 				}
 				try {
-					const res = await http.get('yonghu/smslogin', {
+					const res = await this.requestLogin('yonghu/smslogin', {
 						phone: this.phone,
 						code: this.smsCode
 					})
-					if (res && res.needApply) {
-						uni.navigateTo({ url: '../apply/apply' });
-						return;
-					}
 					await this.afterLogin(res)
-				} catch (e) {}
+				} catch (e) {
+					if (e && e.needApply) {
+						uni.navigateTo({ url: '../apply/apply' })
+						return
+					}
+					if (e && (e.sfsh === '否' || e.sfsh === '驳回')) {
+						const q = e.sfsh === '驳回' ? 'rejected=1' : 'pending=1'
+						uni.navigateTo({ url: '../apply/apply?' + q })
+						return
+					}
+					this.$utils.msg((e && e.msg) || '登录失败')
+				}
 			},
 			goApply() {
-				uni.navigateTo({ url: '../apply/apply' });
+				uni.login({
+					provider: 'weixin',
+					success: async (r) => {
+						if (!r || !r.code) {
+							uni.navigateTo({ url: '../apply/apply' })
+							return
+						}
+						try {
+							await this.requestLogin('yonghu/wxlogin', { code: r.code })
+							// 已有账号则直接提示去登录
+							this.$utils.msg('该微信已有账号，请直接登录')
+						} catch (e) {
+							const oid = (e && e.openid) ? encodeURIComponent(e.openid) : ''
+							uni.navigateTo({ url: '../apply/apply' + (oid ? ('?openid=' + oid) : '') })
+						}
+					},
+					fail: () => {
+						uni.navigateTo({ url: '../apply/apply' })
+					}
+				})
 			},
 			async devLogin() {
 				uni.removeStorageSync('hyCustomerId')

@@ -138,13 +138,47 @@
 					this.$utils.msg('请填写手机号和姓名');
 					return;
 				}
+				if (!/^1\d{10}$/.test(this.form.shoujihaoma)) {
+					this.$utils.msg('请输入正确的手机号');
+					return;
+				}
 				try {
+					if (!this.form.openid) {
+						await this.ensureOpenid();
+					}
 					let payload = Object.assign({}, this.form, { pianhao: this.selectedStyles.join(',') });
 					let res = await http.post('yonghu/apply', payload);
 					this.$utils.msg(res.msg || '申请已提交');
 					this.pending = true;
 					this.rejected = false;
-				} catch (e) {}
+				} catch (e) {
+					this.$utils.msg((e && e.msg) || '提交失败，请重试');
+				}
+			},
+			ensureOpenid() {
+				return new Promise((resolve) => {
+					uni.login({
+						provider: 'weixin',
+						success: (r) => {
+							if (!r || !r.code) {
+								resolve();
+								return;
+							}
+							uni.request({
+								url: this.$base.url + 'yonghu/wxlogin',
+								method: 'GET',
+								data: { code: r.code },
+								success: (resp) => {
+									const body = resp.data || {};
+									if (body.openid) this.form.openid = body.openid;
+									resolve();
+								},
+								fail: () => resolve()
+							});
+						},
+						fail: () => resolve()
+					});
+				});
 			},
 			goLogin() {
 				uni.navigateTo({ url: '../login/login' });
