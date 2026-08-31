@@ -31,7 +31,7 @@
 						<text class="cuIcon-weixin"></text>
 						<text class="btn-wx-text">微信一键登录</text>
 					</button>
-					<view class="tip">使用微信账号快速登录 / 注册</view>
+					<view class="tip">使用微信账号快速登录</view>
 				</view>
 
 				<!-- 手机号登录 -->
@@ -57,7 +57,7 @@
 			<view class="apply-link" @tap="goApply">没有账号？提交注册申请</view>
 
 			<!-- 开发体验挡板：一键登录，免校验 -->
-			<view class="dev-login" @tap="devLogin">一键体验登录（开发用）</view>
+			<view v-if="showDevLogin" class="dev-login" @tap="devLogin">一键体验登录（开发用）</view>
 
 			<view class="agreement">登录即代表同意《用户协议》与《隐私政策》</view>
 		</view>
@@ -65,6 +65,7 @@
 </template>
 
 <script>
+	import { clearCustomerCache, bindCustomerByPhone } from '@/utils/customerBind.js'
 	// 与 db_full 用户 id=11、hy_customer id=6001 对齐，便于登录后绑定服务档案
 	const DEV_PHONE = '13823888881'
 	const DEV_CODE = '123456'
@@ -72,6 +73,7 @@
 	export default {
 		data() {
 			return {
+				showDevLogin: false,
 				loginType: 'wx',
 				phone: '',
 				smsCode: '',
@@ -104,6 +106,45 @@
 					})
 				})
 			},
+			handleLoginReject(e) {
+				if (!e) {
+					this.$utils.msg('登录失败')
+					return true
+				}
+				// 已提交申请、审核中：只提示，不再进入注册页
+				if (e.sfsh === '否' || e.auditPending) {
+					uni.showModal({
+						title: '审核中',
+						content: e.msg || '您的注册申请正在审核中，请耐心等待商家审核通过后再登录',
+						showCancel: false
+					})
+					return true
+				}
+				// 已驳回：提示原因，可去修改后重新提交
+				if (e.sfsh === '驳回' || e.auditRejected) {
+					uni.showModal({
+						title: '审核未通过',
+						content: e.msg || '您的申请未通过审核，可修改信息后重新提交',
+						confirmText: '去修改',
+						cancelText: '知道了',
+						success: (r) => {
+							if (r.confirm) {
+								uni.navigateTo({ url: '../apply/apply?rejected=1' })
+							}
+						}
+					})
+					return true
+				}
+				// 未注册：才去申请页
+				if (e.needApply || e.code === 1001) {
+					const q = []
+					if (e.openid) q.push('openid=' + encodeURIComponent(e.openid))
+					if (this.phone) q.push('phone=' + encodeURIComponent(this.phone))
+					uni.navigateTo({ url: '../apply/apply' + (q.length ? ('?' + q.join('&')) : '') })
+					return true
+				}
+				return false
+			},
 			wxLogin() {
 				uni.login({
 					provider: 'weixin',
@@ -118,18 +159,9 @@
 							})
 							await this.afterLogin(res)
 						} catch (e) {
-							if (e && e.needApply) {
-								uni.navigateTo({
-									url: '../apply/apply?openid=' + encodeURIComponent(e.openid || '')
-								})
-								return
+							if (!this.handleLoginReject(e)) {
+								this.$utils.msg((e && e.msg) || '微信登录失败')
 							}
-							if (e && (e.sfsh === '否' || e.sfsh === '驳回')) {
-								const q = e.sfsh === '驳回' ? 'rejected=1' : 'pending=1'
-								uni.navigateTo({ url: '../apply/apply?' + q })
-								return
-							}
-							this.$utils.msg((e && e.msg) || '微信登录失败')
 						}
 					},
 					fail: () => {
@@ -174,42 +206,16 @@
 					})
 					await this.afterLogin(res)
 				} catch (e) {
-					if (e && e.needApply) {
-						uni.navigateTo({ url: '../apply/apply' })
-						return
+					if (!this.handleLoginReject(e)) {
+						this.$utils.msg((e && e.msg) || '登录失败')
 					}
-					if (e && (e.sfsh === '否' || e.sfsh === '驳回')) {
-						const q = e.sfsh === '驳回' ? 'rejected=1' : 'pending=1'
-						uni.navigateTo({ url: '../apply/apply?' + q })
-						return
-					}
-					this.$utils.msg((e && e.msg) || '登录失败')
 				}
 			},
 			goApply() {
-				uni.login({
-					provider: 'weixin',
-					success: async (r) => {
-						if (!r || !r.code) {
-							uni.navigateTo({ url: '../apply/apply' })
-							return
-						}
-						try {
-							await this.requestLogin('yonghu/wxlogin', { code: r.code })
-							// 已有账号则直接提示去登录
-							this.$utils.msg('该微信已有账号，请直接登录')
-						} catch (e) {
-							const oid = (e && e.openid) ? encodeURIComponent(e.openid) : ''
-							uni.navigateTo({ url: '../apply/apply' + (oid ? ('?openid=' + oid) : '') })
-						}
-					},
-					fail: () => {
-						uni.navigateTo({ url: '../apply/apply' })
-					}
-				})
+				uni.navigateTo({ url: '../apply/apply' })
 			},
 			async devLogin() {
-				uni.removeStorageSync('hyCustomerId')
+				clearCustomerCache()
 				try {
 					const res = await this.requestLogin('yonghu/smslogin', {
 						phone: DEV_PHONE,
@@ -232,13 +238,25 @@
 			},
 			async afterLogin(res) {
 				if (!res || !res.token) {
-					if (res && res.sfsh) {
-						if (res.sfsh === '否') uni.navigateTo({ url: '../apply/apply?pending=1' });
-						if (res.sfsh === '驳回') uni.navigateTo({ url: '../apply/apply?rejected=1' });
+					if (res && (res.sfsh === '否' || res.auditPending)) {
+						uni.showModal({
+							title: '审核中',
+							content: res.msg || '您的注册申请正在审核中，请耐心等待',
+							showCancel: false
+						})
+					} else if (res && (res.sfsh === '驳回' || res.auditRejected)) {
+						uni.showModal({
+							title: '审核未通过',
+							content: res.msg || '请修改信息后重新提交申请',
+							confirmText: '去修改',
+							showCancel: false,
+							success: () => uni.navigateTo({ url: '../apply/apply?rejected=1' })
+						})
 					}
-					return;
+					return
 				}
 				uni.removeStorageSync('useridTag')
+				clearCustomerCache()
 				uni.setStorageSync('token', res.token)
 				uni.setStorageSync('nowTable', 'yonghu')
 				uni.setStorageSync('role', '用户')
@@ -248,6 +266,9 @@
 				if (s.data.vip) {
 					uni.setStorageSync('vip', s.data.vip)
 				}
+				try {
+					await bindCustomerByPhone(this)
+				} catch (e) {}
 				if (res.needPreference || !s.data.pianhao) {
 					uni.navigateTo({
 						url: '../preference/preference',

@@ -83,6 +83,7 @@
 
 <script>
 import clientTabbar from '@/components/client-tabbar/client-tabbar.vue'
+import { ensureCustomerBound } from '@/utils/customerBind.js'
 export default {
 	components: { clientTabbar },
 	data() {
@@ -178,50 +179,11 @@ export default {
 					this.refCount = p.totalCount || 0
 				})
 			}
-			const bindByPhone = () => {
-				const table = uni.getStorageSync('nowTable') || 'yonghu'
-				this.$api.session(table).then(res => {
-					const phone = (res.data && res.data.shoujihaoma) || ''
-					if (!phone) {
-						uni.showToast({ title: '请先完善手机号以查看内容', icon: 'none' })
-						return
-					}
-					uni.request({
-						url: this.$base.url + 'hyCustomer/bindByPhone',
-						method: 'GET',
-						data: { phone },
-						header: { Token: uni.getStorageSync('token') },
-						success: (r) => {
-							const body = r.data || {}
-							if (body.code === 0 && body.data && body.data.id) {
-								this.customerId = body.data.id
-								uni.setStorageSync('hyCustomerId', body.data.id)
-								finish(body.data.id)
-							} else {
-								uni.showToast({ title: body.msg || '未绑定服务账号', icon: 'none' })
-							}
-						}
-					})
-				})
-			}
-			// 缓存的客户 ID 可能是旧种子数据（如 6001），线上已换成雪花 ID，需校验后再用
-			const cached = uni.getStorageSync('hyCustomerId')
-			if (!cached) {
-				bindByPhone()
-				return
-			}
-			this.$api.list('hyCustomer', { id: cached }).then(res => {
-				const row = (res.data && res.data[0]) || null
-				if (row && row.id) {
-					this.customerId = cached
-					finish(cached)
-				} else {
-					uni.removeStorageSync('hyCustomerId')
-					bindByPhone()
-				}
-			}).catch(() => {
-				uni.removeStorageSync('hyCustomerId')
-				bindByPhone()
+			ensureCustomerBound(this).then(c => {
+				this.customerId = c.id
+				finish(c.id)
+			}).catch(err => {
+				uni.showToast({ title: (err && err.msg) || '未绑定服务账号', icon: 'none' })
 			})
 		},
 		setTab(key) {

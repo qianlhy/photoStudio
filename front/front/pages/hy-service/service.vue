@@ -93,6 +93,7 @@
 
 <script>
 import clientTabbar from '@/components/client-tabbar/client-tabbar.vue'
+import { ensureCustomerBound } from '@/utils/customerBind.js'
 export default {
 	components: { clientTabbar },
 	data() {
@@ -189,53 +190,11 @@ export default {
 			this.bindThen(finish)
 		},
 		bindThen(finish) {
-			const bindByPhone = () => {
-				const table = uni.getStorageSync('nowTable') || 'yonghu'
-				this.$api.session(table).then(res => {
-					const u = res.data || {}
-					const phone = u.shoujihaoma
-					if (!phone) {
-						uni.showToast({ title: '请先完善手机号以查看服务', icon: 'none' })
-						return
-					}
-					uni.request({
-						url: this.$base.url + 'hyCustomer/bindByPhone',
-						method: 'GET',
-						data: { phone },
-						header: { Token: uni.getStorageSync('token') },
-						success: (r) => {
-							const body = r.data || {}
-							if (body.code === 0 && body.data && body.data.id) {
-								this.customerId = body.data.id
-								uni.setStorageSync('hyCustomerId', body.data.id)
-								finish(body.data.id)
-							} else {
-								uni.showToast({ title: body.msg || '未绑定服务账号', icon: 'none' })
-							}
-						}
-					})
-				}).catch(() => {
-					uni.showToast({ title: '请先登录', icon: 'none' })
-				})
-			}
-			const cached = uni.getStorageSync('hyCustomerId')
-			if (!cached) {
-				bindByPhone()
-				return
-			}
-			// 旧缓存 ID（如种子 6001）在线上已不存在，校验失败则按手机号重绑
-			this.$api.list('hyCustomer', { id: cached }).then(res => {
-				const row = (res.data && res.data[0]) || null
-				if (row && row.id) {
-					this.customerId = cached
-					finish(cached)
-				} else {
-					uni.removeStorageSync('hyCustomerId')
-					bindByPhone()
-				}
-			}).catch(() => {
-				uni.removeStorageSync('hyCustomerId')
-				bindByPhone()
+			ensureCustomerBound(this).then(c => {
+				this.customerId = c.id
+				finish(c.id)
+			}).catch(err => {
+				uni.showToast({ title: (err && err.msg) || '请先登录', icon: 'none' })
 			})
 		},
 		md(t) {

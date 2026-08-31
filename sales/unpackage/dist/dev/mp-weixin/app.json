@@ -1,0 +1,21 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/workbench/workbench",
+    "pages/selection/selection",
+    "pages/material/material",
+    "pages/material/library",
+    "pages/customer/customer",
+    "pages/customer/follow",
+    "pages/order/order",
+    "pages/message/message"
+  ],
+  "subPackages": [],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "合意传媒-销售经理端",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F4F6FA"
+  },
+  "usingComponents": {}
+}

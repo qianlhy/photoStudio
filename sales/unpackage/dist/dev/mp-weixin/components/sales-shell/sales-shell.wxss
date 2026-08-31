@@ -1,0 +1,464 @@
+@charset "UTF-8";
+/* 合意传媒 · 销售经理端 全局主题变量（uni-app 自动注入各组件） */
+/* 主色·蓝 */
+/* 主色浅底 */
+/* 主文字：避免纯黑，长时间查看更柔和 */
+/* 次文字 */
+/* 弱文字 */
+/* 描边 */
+/* 页面底 */
+/* 卡片 */
+/* 警示红 */
+/* 橙 */
+/* 绿 */
+/* 设计基准：1280×800 横屏 Pad（16:10，与小米平板6 Pro 同比例） */
+/* 设计基准：800×1280 竖屏 Pad（小米平板 6 Pro 竖屏约 1800×2880） */
+/* 五类内容配色（厨过程/教知识/讲故事/说观点/硬广） */
+.shell.data-v-3e06e964 {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #F5F7FA;
+}
+.topbar.data-v-3e06e964 {
+  height: 112rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #E9EDF3;
+  display: flex;
+  align-items: center;
+  padding: 0 40rpx;
+  flex-shrink: 0;
+  box-shadow: 0 1rpx 0 rgba(31, 39, 51, 0.025);
+}
+.brand.data-v-3e06e964 {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #202938;
+  letter-spacing: 2rpx;
+}
+.center.data-v-3e06e964 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.center .title.data-v-3e06e964 {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #202938;
+}
+.center .subtitle.data-v-3e06e964 {
+  font-size: 22rpx;
+  color: #8C98A9;
+  margin-top: 2rpx;
+}
+.page-title.data-v-3e06e964 {
+  display: flex;
+  flex-direction: column;
+  margin-left: 36rpx;
+}
+.page-title .pt-title.data-v-3e06e964 {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #202938;
+}
+.page-title .pt-sub.data-v-3e06e964 {
+  font-size: 22rpx;
+  color: #8C98A9;
+  margin-top: 2rpx;
+}
+.search-slot.data-v-3e06e964 {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 24rpx;
+}
+.right.data-v-3e06e964 {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+.right .date.data-v-3e06e964 {
+  font-size: 24rpx;
+  color: #8C98A9;
+}
+.bell.data-v-3e06e964 {
+  position: relative;
+  width: 42rpx;
+  height: 42rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #667085;
+}
+.bell-shape.data-v-3e06e964 {
+  position: relative;
+  width: 19rpx;
+  height: 22rpx;
+  border: 3rpx solid currentColor;
+  border-top-left-radius: 12rpx;
+  border-top-right-radius: 12rpx;
+  border-bottom: 0;
+}
+.bell-shape.data-v-3e06e964::before {
+  content: "";
+  position: absolute;
+  left: -6rpx;
+  bottom: -5rpx;
+  width: 25rpx;
+  height: 3rpx;
+  border-radius: 3rpx;
+  background: currentColor;
+}
+.bell-shape.data-v-3e06e964::after {
+  content: "";
+  position: absolute;
+  left: 6rpx;
+  bottom: -10rpx;
+  width: 7rpx;
+  height: 7rpx;
+  border-radius: 50%;
+  background: currentColor;
+}
+.bell .dot.data-v-3e06e964 {
+  position: absolute;
+  top: -2rpx;
+  right: -2rpx;
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: #FF5A5F;
+}
+.avatar.data-v-3e06e964 {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: #eee;
+  border: 2rpx solid #fff;
+  box-shadow: 0 3rpx 12rpx rgba(31, 39, 51, 0.12);
+}
+.body.data-v-3e06e964 {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+.nav.data-v-3e06e964 {
+  width: 150rpx;
+  flex-shrink: 0;
+  margin: 28rpx 0 28rpx 28rpx;
+  padding: 24rpx 14rpx;
+  background: #fff;
+  border-radius: 28rpx;
+  border: 1rpx solid rgba(31, 39, 51, 0.035);
+  box-shadow: 0 6rpx 24rpx rgba(31, 39, 51, 0.055);
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+.nav-item.data-v-3e06e964 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 22rpx 0;
+  border-radius: 24rpx;
+  color: #8C98A9;
+  transition: background-color 0.18s ease, color 0.18s ease, -webkit-transform 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease, -webkit-transform 0.18s ease;
+}
+.nav-item .nav-icon.data-v-3e06e964 {
+  position: relative;
+  width: 40rpx;
+  height: 40rpx;
+  color: #98A2B3;
+}
+.nav-icon .icon-core.data-v-3e06e964,
+.nav-icon.data-v-3e06e964::before,
+.nav-icon.data-v-3e06e964::after,
+.nav-icon .icon-core.data-v-3e06e964::before,
+.nav-icon .icon-core.data-v-3e06e964::after {
+  position: absolute;
+  box-sizing: border-box;
+  content: "";
+}
+.nav-icon .icon-core.data-v-3e06e964 {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+.icon-workbench.data-v-3e06e964::before, .icon-workbench.data-v-3e06e964::after, .icon-workbench .icon-core.data-v-3e06e964::before, .icon-workbench .icon-core.data-v-3e06e964::after {
+  width: 15rpx;
+  height: 15rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 4rpx;
+}
+.icon-workbench.data-v-3e06e964::before {
+  left: 2rpx;
+  top: 2rpx;
+}
+.icon-workbench.data-v-3e06e964::after {
+  right: 2rpx;
+  top: 2rpx;
+}
+.icon-workbench .icon-core.data-v-3e06e964::before {
+  left: 2rpx;
+  bottom: 2rpx;
+}
+.icon-workbench .icon-core.data-v-3e06e964::after {
+  right: 2rpx;
+  bottom: 2rpx;
+}
+.icon-customer.data-v-3e06e964::before {
+  left: 14rpx;
+  top: 2rpx;
+  width: 14rpx;
+  height: 14rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 50%;
+}
+.icon-customer.data-v-3e06e964::after {
+  left: 8rpx;
+  bottom: 2rpx;
+  width: 26rpx;
+  height: 17rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 16rpx 16rpx 6rpx 6rpx;
+}
+.icon-order.data-v-3e06e964::before {
+  left: 7rpx;
+  top: 1rpx;
+  width: 27rpx;
+  height: 36rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 4rpx;
+}
+.icon-order.data-v-3e06e964::after {
+  left: 14rpx;
+  top: 11rpx;
+  width: 14rpx;
+  height: 3rpx;
+  background: currentColor;
+  box-shadow: 0 8rpx 0 currentColor, 0 16rpx 0 currentColor;
+}
+.icon-material.data-v-3e06e964::before {
+  left: 3rpx;
+  top: 6rpx;
+  width: 34rpx;
+  height: 28rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 5rpx;
+}
+.icon-material.data-v-3e06e964::after {
+  left: 16rpx;
+  top: 14rpx;
+  border-left: 10rpx solid currentColor;
+  border-top: 6rpx solid transparent;
+  border-bottom: 6rpx solid transparent;
+}
+.icon-message.data-v-3e06e964::before {
+  left: 3rpx;
+  top: 5rpx;
+  width: 34rpx;
+  height: 27rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 8rpx;
+}
+.icon-message.data-v-3e06e964::after {
+  left: 10rpx;
+  bottom: 2rpx;
+  width: 10rpx;
+  height: 10rpx;
+  border-left: 3rpx solid currentColor;
+  -webkit-transform: skewY(-35deg);
+          transform: skewY(-35deg);
+}
+.nav-item .nav-label.data-v-3e06e964 {
+  font-size: 22rpx;
+  margin-top: 10rpx;
+}
+.nav-item.active.data-v-3e06e964 {
+  background: #2F6BFF;
+  color: #fff;
+  box-shadow: 0 10rpx 24rpx rgba(47, 107, 255, 0.24);
+}
+.nav-item.active .nav-icon.data-v-3e06e964 {
+  color: #fff;
+}
+.nav-item.active .nav-label.data-v-3e06e964 {
+  color: #fff;
+}
+.content.data-v-3e06e964 {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  padding: 28rpx 36rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+/*
+ * Pad 横屏：设计基准 1280×800（16:10）
+ */
+@media (min-width: 900px) and (orientation: landscape) {
+.topbar.data-v-3e06e964 {
+    height: 10vh;
+    padding: 0 2.1vw;
+}
+.brand.data-v-3e06e964 {
+    font-size: clamp(20px, 1.7vw, 27px);
+}
+.page-title.data-v-3e06e964 {
+    margin-left: 1.2vw;
+    max-width: 16vw;
+}
+.page-title .pt-title.data-v-3e06e964 {
+    font-size: clamp(18px, 1.55vw, 25px);
+    line-height: 1.2;
+}
+.page-title .pt-sub.data-v-3e06e964 {
+    font-size: clamp(11px, 0.85vw, 14px);
+}
+.center .title.data-v-3e06e964 {
+    font-size: clamp(18px, 1.55vw, 25px);
+}
+.center .subtitle.data-v-3e06e964 {
+    font-size: clamp(12px, 0.92vw, 15px);
+}
+.right.data-v-3e06e964 {
+    gap: 1.25vw;
+}
+.right .date.data-v-3e06e964 {
+    font-size: clamp(12px, 0.95vw, 15px);
+}
+.bell.data-v-3e06e964 {
+    width: clamp(26px, 2.2vw, 34px);
+    height: clamp(26px, 2.2vw, 34px);
+}
+.avatar.data-v-3e06e964 {
+    width: clamp(34px, 3vw, 46px);
+    height: clamp(34px, 3vw, 46px);
+}
+.nav.data-v-3e06e964 {
+    width: 8.9vw;
+    box-sizing: border-box;
+    margin: 0.5vh 0 1.2vh 0.8vw;
+    padding: 2vh 0.7vw;
+    border-radius: 18px;
+    gap: 1.1vh;
+}
+.nav-item.data-v-3e06e964 {
+    padding: 1.5vh 0;
+    border-radius: 14px;
+}
+.nav-item .nav-icon.data-v-3e06e964 {
+    -webkit-transform: scale(0.88);
+            transform: scale(0.88);
+}
+.nav-item .nav-label.data-v-3e06e964 {
+    font-size: clamp(12px, 0.95vw, 15px);
+    margin-top: 0.7vh;
+}
+.content.data-v-3e06e964 {
+    padding: 0.5vh 2vw 1.2vh 0.65vw;
+}
+}
+/*
+ * Pad 竖屏：底栏导航 + 全宽内容
+ */
+@media (min-width: 600px) and (orientation: portrait) {
+.shell.data-v-3e06e964 {
+    height: 100vh;
+}
+.topbar.data-v-3e06e964 {
+    height: 7vh;
+    padding: 0 3vw;
+    flex-wrap: wrap;
+}
+.brand.data-v-3e06e964 {
+    font-size: clamp(18px, 2.4vw, 24px);
+}
+.page-title.data-v-3e06e964 {
+    margin-left: 2vw;
+    max-width: 42vw;
+}
+.page-title .pt-title.data-v-3e06e964 {
+    font-size: clamp(16px, 2.2vw, 22px);
+}
+.page-title .pt-sub.data-v-3e06e964 {
+    display: none;
+}
+.center .title.data-v-3e06e964 {
+    font-size: clamp(16px, 2.2vw, 22px);
+}
+.center .subtitle.data-v-3e06e964 {
+    font-size: clamp(11px, 1.4vw, 14px);
+}
+.search-slot.data-v-3e06e964 {
+    order: 3;
+    width: 100%;
+    padding: 0.6vh 0 0;
+    justify-content: flex-start;
+}
+.right.data-v-3e06e964 {
+    gap: 2vw;
+}
+.right .date.data-v-3e06e964 {
+    display: none;
+}
+.bell.data-v-3e06e964 {
+    width: clamp(24px, 3.2vw, 32px);
+    height: clamp(24px, 3.2vw, 32px);
+}
+.avatar.data-v-3e06e964 {
+    width: clamp(32px, 4.2vw, 42px);
+    height: clamp(32px, 4.2vw, 42px);
+}
+.body.data-v-3e06e964 {
+    flex-direction: column;
+    position: relative;
+    padding-bottom: 11vh;
+    box-sizing: border-box;
+}
+.nav.data-v-3e06e964 {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    width: 100%;
+    height: 10vh;
+    margin: 0;
+    padding: 0.8vh 2vw 1.2vh;
+    border-radius: 18px 18px 0 0;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: stretch;
+    gap: 0;
+    box-sizing: border-box;
+}
+.nav-item.data-v-3e06e964 {
+    flex: 1;
+    padding: 0.6vh 0;
+    border-radius: 12px;
+}
+.nav-item .nav-icon.data-v-3e06e964 {
+    -webkit-transform: scale(0.82);
+            transform: scale(0.82);
+}
+.nav-item .nav-label.data-v-3e06e964 {
+    font-size: clamp(10px, 1.3vw, 13px);
+    margin-top: 0.4vh;
+}
+.content.data-v-3e06e964 {
+    flex: 1;
+    width: 100%;
+    padding: 1vh 3vw 1.5vh;
+    overflow-y: auto;
+}
+}

@@ -50,11 +50,10 @@ mybatis-plus:
     #log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 # 微信小程序登录（请填写自己的小程序 AppID / AppSecret）
-# secret 必须与微信公众平台 → 开发 → 开发管理 → 开发设置 中的 AppSecret 一致，
-# 占位 your_wx_secret 会导致「微信一键登录」失败
+# secret 必须与微信公众平台 → 开发 → 开发管理 → 开发设置 中的 AppSecret 一致
 wx:
   appid: wx9b6abdb5b925b115
-  secret: your_wx_secret
+  secret: d2b4586a8652f45ae3343adb490bdca5
 # 手机号短信验证码登录
 # mock-enabled=true 为开发模拟模式：任意手机号使用 mock-code 即可登录；
 # 接入真实短信网关后，将 mock-enabled 置为 false，并在 sendSmsCode 中实现真实下发逻辑

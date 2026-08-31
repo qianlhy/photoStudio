@@ -3,7 +3,9 @@ package com.controller;
 import com.annotation.IgnoreAuth;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.entity.HyIndustryEntity;
+import com.entity.HyMaterialEntity;
 import com.service.impl.HyIndustryServiceImpl;
+import com.service.impl.HyMaterialServiceImpl;
 import com.utils.HyId;
 import com.utils.MPUtil;
 import com.utils.PageUtils;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,6 +26,9 @@ public class HyIndustryController {
 
     @Autowired
     private HyIndustryServiceImpl service;
+
+    @Autowired
+    private HyMaterialServiceImpl materialService;
 
     @IgnoreAuth
     @RequestMapping("/page")
@@ -37,7 +44,34 @@ public class HyIndustryController {
     public R list(HyIndustryEntity entity) {
         EntityWrapper<HyIndustryEntity> ew = new EntityWrapper<>();
         ew.orderBy("sort", true);
-        return R.ok().put("data", service.selectList(MPUtil.likeOrEq(ew, entity)));
+        List<HyIndustryEntity> list = service.selectList(MPUtil.likeOrEq(ew, entity));
+        fillMaterialCounts(list);
+        return R.ok().put("data", list);
+    }
+
+    /** 按已上架素材实时统计各行业条数，避免使用种子数据里的假数字 */
+    private void fillMaterialCounts(List<HyIndustryEntity> list) {
+        List<HyMaterialEntity> materials = materialService.selectList(
+                new EntityWrapper<HyMaterialEntity>().eq("status", "上架"));
+        Map<String, Integer> sub = new HashMap<>();
+        Map<String, Integer> big = new HashMap<>();
+        for (HyMaterialEntity m : materials) {
+            if (m.getIndustrySub() != null) {
+                sub.put(m.getIndustrySub(), sub.getOrDefault(m.getIndustrySub(), 0) + 1);
+            }
+            if (m.getIndustryBig() != null) {
+                big.put(m.getIndustryBig(), big.getOrDefault(m.getIndustryBig(), 0) + 1);
+            }
+        }
+        for (HyIndustryEntity ind : list) {
+            if (ind.getLevel() != null && ind.getLevel() == 1) {
+                ind.setMaterialCount(big.getOrDefault(ind.getName(), 0));
+            } else if (ind.getLevel() != null && ind.getLevel() == 2) {
+                ind.setMaterialCount(sub.getOrDefault(ind.getName(), 0));
+            } else {
+                ind.setMaterialCount(0);
+            }
+        }
     }
 
     @IgnoreAuth

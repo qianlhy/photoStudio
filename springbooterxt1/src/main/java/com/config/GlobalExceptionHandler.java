@@ -37,10 +37,18 @@ public class GlobalExceptionHandler {
         return R.error(400, "请求参数有误");
     }
 
-    /** 兜底：记录完整堆栈，对外只返回通用提示，避免泄露内部细节 */
+    /** 兜底：记录完整堆栈；wxlogin 临时带回根因，便于排查部署/库表问题 */
     @ExceptionHandler(Exception.class)
     public R handleAll(Exception e, HttpServletRequest request) {
         log.error("系统异常 [" + request.getRequestURI() + "]", e);
+        String uri = request.getRequestURI() == null ? "" : request.getRequestURI();
+        if (uri.contains("wxlogin")) {
+            Throwable cause = e;
+            while (cause.getCause() != null) cause = cause.getCause();
+            String cmsg = cause.getMessage() == null ? e.getClass().getSimpleName() : cause.getMessage();
+            if (cmsg.length() > 160) cmsg = cmsg.substring(0, 160);
+            return R.error(500, "wxlogin异常: " + cmsg);
+        }
         return R.error(500, "系统繁忙，请稍后重试");
     }
 }

@@ -165,6 +165,7 @@ var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 56));
 var _menu = _interopRequireDefault(__webpack_require__(/*! @/utils/menu */ 39));
 var _http = _interopRequireDefault(__webpack_require__(/*! @/api/http.js */ 35));
+var _customerBind = __webpack_require__(/*! @/utils/customerBind.js */ 266);
 //
 //
 //
@@ -415,10 +416,7 @@ var _default = {
               case 7:
                 res = _context3.sent;
                 c = res.data || {};
-                if (c.id) {
-                  uni.setStorageSync('hyCustomerId', c.id);
-                  uni.setStorageSync('hyCustomerName', c.name || '');
-                }
+                if (c.id) (0, _customerBind.saveCustomerCache)(c);
                 uni.navigateTo({
                   url: which === 'content' ? '../hy-content/content' : '../hy-service/service'
                 });
@@ -456,8 +454,7 @@ var _default = {
             uni.removeStorageSync('nowTable');
             uni.removeStorageSync('role');
             uni.removeStorageSync('userid');
-            uni.removeStorageSync('hyCustomerId');
-            uni.removeStorageSync('hyCustomerName');
+            (0, _customerBind.clearCustomerCache)();
             uni.reLaunch({
               url: '../login/login'
             });

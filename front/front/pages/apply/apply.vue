@@ -87,6 +87,7 @@
 			this.pending = opt.pending === '1';
 			this.rejected = opt.rejected === '1';
 			if (opt.openid) this.form.openid = opt.openid;
+			if (opt.phone) this.form.shoujihaoma = opt.phone;
 			this.loadStyles();
 			this.loadUser();
 		},

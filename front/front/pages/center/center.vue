@@ -99,6 +99,7 @@
 <script>
 	import menu from '@/utils/menu'
 	import http from '@/api/http.js'
+	import { clearCustomerCache, saveCustomerCache } from '@/utils/customerBind.js'
 	export default {
 		data() {
 			return {
@@ -186,10 +187,7 @@
 				try {
 					const res = await http.get('hyCustomer/bindByPhone', { phone });
 					const c = res.data || {};
-					if (c.id) {
-						uni.setStorageSync('hyCustomerId', c.id);
-						uni.setStorageSync('hyCustomerName', c.name || '');
-					}
+					if (c.id) saveCustomerCache(c);
 					uni.navigateTo({
 						url: which === 'content' ? '../hy-content/content' : '../hy-service/service'
 					});
@@ -216,8 +214,7 @@
 							uni.removeStorageSync('nowTable');
 							uni.removeStorageSync('role');
 							uni.removeStorageSync('userid');
-							uni.removeStorageSync('hyCustomerId');
-							uni.removeStorageSync('hyCustomerName');
+							clearCustomerCache();
 							uni.reLaunch({
 								url: '../login/login'
 							});

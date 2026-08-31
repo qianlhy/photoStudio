@@ -1,0 +1,328 @@
+@charset "UTF-8";
+/* 合意传媒 · 销售经理端 全局主题变量（uni-app 自动注入各组件） */
+/* 主色·蓝 */
+/* 主色浅底 */
+/* 主文字：避免纯黑，长时间查看更柔和 */
+/* 次文字 */
+/* 弱文字 */
+/* 描边 */
+/* 页面底 */
+/* 卡片 */
+/* 警示红 */
+/* 橙 */
+/* 绿 */
+/* 设计基准：1280×800 横屏 Pad（16:10，与小米平板6 Pro 同比例） */
+/* 设计基准：800×1280 竖屏 Pad（小米平板 6 Pro 竖屏约 1800×2880） */
+/* 五类内容配色（厨过程/教知识/讲故事/说观点/硬广） */
+.searchbar.data-v-706ec266 {
+  width: 560rpx;
+  height: 64rpx;
+  background: #F4F6FA;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+}
+.s-ico.data-v-706ec266 {
+  font-size: 26rpx;
+  margin-right: 12rpx;
+}
+.s-input.data-v-706ec266 {
+  flex: 1;
+  font-size: 26rpx;
+}
+.total.data-v-706ec266 {
+  font-size: 24rpx;
+  color: #8C98A9;
+}
+.planet.data-v-706ec266 {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  gap: 24rpx;
+  align-items: stretch;
+}
+.canvas.data-v-706ec266 {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 30% 30%, #F7FAFF 0%, #EEF2F8 70%);
+  border-radius: 20rpx;
+}
+.halo.data-v-706ec266 {
+  position: absolute;
+  z-index: 1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.cluster-label.data-v-706ec266 {
+  position: absolute;
+  z-index: 3;
+  font-size: 28rpx;
+  font-weight: 700;
+  letter-spacing: -0.5rpx;
+}
+.bubble.data-v-706ec266 {
+  position: absolute;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3rpx solid rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  box-shadow: 0 7rpx 22rpx rgba(31, 39, 51, 0.14);
+  z-index: 2;
+}
+.bubble.on.data-v-706ec266 {
+  box-shadow: 0 0 0 5rpx rgba(47, 107, 255, 0.24), 0 10rpx 26rpx rgba(31, 39, 51, 0.18);
+  z-index: 4;
+}
+.b-img.data-v-706ec266 {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+.b-mask.data-v-706ec266 {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.58));
+}
+.b-txt.data-v-706ec266 {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding-bottom: 12%;
+  width: 100%;
+}
+.b-name.data-v-706ec266 {
+  color: #fff;
+  font-weight: 700;
+  display: block;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  line-height: 1.2;
+}
+.b-cnt.data-v-706ec266 {
+  color: #fff;
+  font-weight: 700;
+  display: block;
+  line-height: 1.2;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.52);
+}
+.hint.data-v-706ec266 {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14rpx;
+  z-index: 3;
+  text-align: center;
+  font-size: 22rpx;
+  color: #8C98A9;
+}
+.detail.data-v-706ec266 {
+  width: 360rpx;
+  flex-shrink: 0;
+  padding: 24rpx;
+  min-height: 0;
+  overflow-y: auto;
+}
+.dt-head.data-v-706ec266 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dt-name.data-v-706ec266 {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+.dt-close.data-v-706ec266 {
+  font-size: 40rpx;
+  color: #8C98A9;
+}
+.dt-cnt.data-v-706ec266 {
+  font-size: 24rpx;
+  color: #526071;
+  display: block;
+  margin-top: 8rpx;
+}
+.dt-hot.data-v-706ec266 {
+  font-size: 22rpx;
+  color: #FF5A5F;
+  display: block;
+  margin: 6rpx 0 16rpx;
+}
+.dt-vids.data-v-706ec266 {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+.dv.data-v-706ec266 {
+  position: relative;
+  width: 100%;
+  height: 170rpx;
+  border-radius: 14rpx;
+  overflow: hidden;
+  background: #eee;
+  box-shadow: 0 4rpx 14rpx rgba(31, 39, 51, 0.06);
+}
+.dv-img.data-v-706ec266 {
+  width: 100%;
+  height: 100%;
+}
+.dv-play.data-v-706ec266 {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  -webkit-transform: translate(-50%, -50%);
+          transform: translate(-50%, -50%);
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: #2F6BFF;
+  box-shadow: 0 4rpx 14rpx rgba(31, 39, 51, 0.16);
+}
+.dv-play.data-v-706ec266::after {
+  content: "";
+  position: absolute;
+  left: 22rpx;
+  top: 16rpx;
+  border-left: 16rpx solid currentColor;
+  border-top: 12rpx solid transparent;
+  border-bottom: 12rpx solid transparent;
+}
+.dv-empty.data-v-706ec266 {
+  color: #8C98A9;
+  font-size: 24rpx;
+  padding: 30rpx 0;
+  text-align: center;
+}
+.dt-tags.data-v-706ec266 {
+  display: flex;
+  gap: 12rpx;
+  margin: 18rpx 0;
+  flex-wrap: wrap;
+}
+.dt-tag.data-v-706ec266 {
+  padding: 6rpx 18rpx;
+  background: #F1F3F6;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  color: #526071;
+}
+.dt-enter.data-v-706ec266 {
+  height: 84rpx;
+  font-size: 27rpx;
+}
+.dt-add.data-v-706ec266 {
+  height: 80rpx;
+  font-size: 26rpx;
+  margin-top: 14rpx;
+}
+/* 1-5a 标注稿：气泡画布约 1027 宽，详情栏保持窄列 */
+@media (min-width: 900px) and (orientation: landscape) {
+.searchbar.data-v-706ec266 {
+    width: 25vw;
+    height: 5.2vh;
+    padding: 0 1.2vw;
+}
+.s-input.data-v-706ec266, .total.data-v-706ec266 {
+    font-size: clamp(12px, 0.95vw, 15px);
+}
+.planet.data-v-706ec266 {
+    gap: 0.75vw;
+}
+.canvas.data-v-706ec266 {
+    border-radius: 14px;
+}
+.cluster-label.data-v-706ec266 {
+    font-size: clamp(17px, 1.4vw, 22px);
+}
+.hint.data-v-706ec266 {
+    bottom: 1vh;
+    font-size: clamp(11px, 0.85vw, 14px);
+}
+.detail.data-v-706ec266 {
+    width: 18.2vw;
+    box-sizing: border-box;
+    padding: 1.8vh 1vw;
+    border-radius: 13px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.dt-name.data-v-706ec266 {
+    font-size: clamp(19px, 1.6vw, 26px);
+}
+.dt-close.data-v-706ec266 {
+    font-size: clamp(23px, 1.9vw, 30px);
+}
+.dt-cnt.data-v-706ec266 {
+    font-size: clamp(12px, 0.95vw, 15px);
+    margin-top: 0.5vh;
+}
+.dt-hot.data-v-706ec266 {
+    font-size: clamp(11px, 0.85vw, 14px);
+    margin: 0.45vh 0 1vh;
+}
+.dt-vids.data-v-706ec266 {
+    flex: 1;
+    min-height: 0;
+    gap: 0.8vh;
+}
+.dv.data-v-706ec266 {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    border-radius: 9px;
+}
+.dv-play.data-v-706ec266 {
+    width: 34px;
+    height: 34px;
+}
+.dt-tags.data-v-706ec266 {
+    gap: 0.45vw;
+    margin: 1vh 0;
+}
+.dt-tag.data-v-706ec266 {
+    padding: 0.35vh 0.7vw;
+    font-size: clamp(10px, 0.76vw, 12px);
+}
+.dt-enter.data-v-706ec266, .dt-add.data-v-706ec266 {
+    height: 5.8vh;
+    font-size: clamp(12px, 0.95vw, 15px);
+    flex-shrink: 0;
+}
+.dt-add.data-v-706ec266 {
+    margin-top: 0.8vh;
+}
+}
+@media (min-width: 600px) and (orientation: portrait) {
+.planet.data-v-706ec266 {
+    flex-direction: column;
+}
+.canvas.data-v-706ec266 {
+    width: 100%;
+    min-height: 55vh;
+}
+.detail.data-v-706ec266 {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 11vh;
+    width: 100%;
+    max-height: 42vh;
+    z-index: 50;
+    box-sizing: border-box;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -8px 32px rgba(31, 39, 51, 0.15);
+}
+}

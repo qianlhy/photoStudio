@@ -1,0 +1,176 @@
+@charset "UTF-8";
+/* 合意传媒 · 销售经理端 全局主题变量（uni-app 自动注入各组件） */
+/* 主色·蓝 */
+/* 主色浅底 */
+/* 主文字：避免纯黑，长时间查看更柔和 */
+/* 次文字 */
+/* 弱文字 */
+/* 描边 */
+/* 页面底 */
+/* 卡片 */
+/* 警示红 */
+/* 橙 */
+/* 绿 */
+/* 设计基准：1280×800 横屏 Pad（16:10，与小米平板6 Pro 同比例） */
+/* 设计基准：800×1280 竖屏 Pad（小米平板 6 Pro 竖屏约 1800×2880） */
+/* 五类内容配色（厨过程/教知识/讲故事/说观点/硬广） */
+.login.data-v-b237504c {
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(135deg, #F3EEE4 0%, #EAF1FF 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-card.data-v-b237504c {
+  width: 720rpx;
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 64rpx 64rpx 56rpx;
+  box-shadow: 0 24rpx 60rpx rgba(31, 39, 51, 0.12);
+  text-align: center;
+}
+.logo.data-v-b237504c {
+  font-size: 52rpx;
+  font-weight: 700;
+  color: #202938;
+  letter-spacing: 4rpx;
+}
+.slogan.data-v-b237504c {
+  font-size: 26rpx;
+  color: #8C98A9;
+  margin-top: 12rpx;
+  margin-bottom: 56rpx;
+}
+.field.data-v-b237504c {
+  display: flex;
+  align-items: center;
+  height: 96rpx;
+  border: 1rpx solid #E9EDF3;
+  border-radius: 16rpx;
+  padding: 0 28rpx;
+  margin-bottom: 28rpx;
+  background: #FAFBFD;
+}
+.field .ico.data-v-b237504c {
+  position: relative;
+  display: inline-block;
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 18rpx;
+  flex-shrink: 0;
+  color: #A6B0C0;
+}
+.ico-user.data-v-b237504c::before {
+  content: "";
+  position: absolute;
+  left: 10rpx;
+  top: 3rpx;
+  width: 13rpx;
+  height: 13rpx;
+  box-sizing: border-box;
+  border: 3rpx solid currentColor;
+  border-radius: 50%;
+}
+.ico-user.data-v-b237504c::after {
+  content: "";
+  position: absolute;
+  left: 4rpx;
+  bottom: 3rpx;
+  width: 25rpx;
+  height: 14rpx;
+  box-sizing: border-box;
+  border: 3rpx solid currentColor;
+  border-radius: 14rpx 14rpx 5rpx 5rpx;
+}
+.ico-lock.data-v-b237504c::before {
+  content: "";
+  position: absolute;
+  left: 9rpx;
+  top: 3rpx;
+  width: 15rpx;
+  height: 13rpx;
+  box-sizing: border-box;
+  border: 3rpx solid currentColor;
+  border-bottom: 0;
+  border-radius: 8rpx 8rpx 0 0;
+}
+.ico-lock.data-v-b237504c::after {
+  content: "";
+  position: absolute;
+  left: 4rpx;
+  bottom: 3rpx;
+  width: 25rpx;
+  height: 16rpx;
+  box-sizing: border-box;
+  border: 3rpx solid currentColor;
+  border-radius: 4rpx;
+}
+.input.data-v-b237504c {
+  flex: 1;
+  font-size: 30rpx;
+  color: #202938;
+}
+.ph.data-v-b237504c {
+  color: #B9C0CC;
+}
+.btn-login.data-v-b237504c {
+  height: 96rpx;
+  line-height: 96rpx;
+  border-radius: 16rpx;
+  background: #2F6BFF;
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 700;
+  margin-top: 16rpx;
+  box-shadow: 0 12rpx 28rpx rgba(47, 107, 255, 0.28);
+}
+.tip.data-v-b237504c {
+  margin-top: 32rpx;
+  font-size: 22rpx;
+  color: #8C98A9;
+}
+/* 小米平板 6 Pro 横屏登录页 */
+@media (min-width: 900px) and (orientation: landscape) {
+.login-card.data-v-b237504c {
+    width: 520px;
+    max-width: 36vw;
+    padding: 48px 56px 40px;
+    border-radius: 20px;
+}
+.logo.data-v-b237504c {
+    font-size: 34px;
+}
+.slogan.data-v-b237504c {
+    font-size: 16px;
+    margin-bottom: 36px;
+}
+.field.data-v-b237504c {
+    height: 52px;
+    margin-bottom: 18px;
+    border-radius: 12px;
+}
+.field input.data-v-b237504c {
+    font-size: 16px;
+}
+.btn-login.data-v-b237504c {
+    height: 52px;
+    line-height: 52px;
+    font-size: 18px;
+    border-radius: 12px;
+}
+.tip.data-v-b237504c {
+    font-size: 13px;
+    margin-top: 20px;
+}
+}
+@media (min-width: 600px) and (orientation: portrait) {
+.login-card.data-v-b237504c {
+    width: 88vw;
+    max-width: 640rpx;
+    padding: 48rpx 56rpx 40rpx;
+}
+.field.data-v-b237504c {
+    margin-bottom: 24rpx;
+}
+}

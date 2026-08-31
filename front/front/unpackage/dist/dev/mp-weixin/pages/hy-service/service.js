@@ -173,6 +173,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+var _customerBind = __webpack_require__(/*! @/utils/customerBind.js */ 266);
 var clientTabbar = function clientTabbar() {
   __webpack_require__.e(/*! require.ensure | components/client-tabbar/client-tabbar */ "components/client-tabbar/client-tabbar").then((function () {
     return resolve(__webpack_require__(/*! @/components/client-tabbar/client-tabbar.vue */ 226));
@@ -310,68 +311,14 @@ var _default = {
     },
     bindThen: function bindThen(finish) {
       var _this3 = this;
-      var bindByPhone = function bindByPhone() {
-        var table = uni.getStorageSync('nowTable') || 'yonghu';
-        _this3.$api.session(table).then(function (res) {
-          var u = res.data || {};
-          var phone = u.shoujihaoma;
-          if (!phone) {
-            uni.showToast({
-              title: '请先完善手机号以查看服务',
-              icon: 'none'
-            });
-            return;
-          }
-          uni.request({
-            url: _this3.$base.url + 'hyCustomer/bindByPhone',
-            method: 'GET',
-            data: {
-              phone: phone
-            },
-            header: {
-              Token: uni.getStorageSync('token')
-            },
-            success: function success(r) {
-              var body = r.data || {};
-              if (body.code === 0 && body.data && body.data.id) {
-                _this3.customerId = body.data.id;
-                uni.setStorageSync('hyCustomerId', body.data.id);
-                finish(body.data.id);
-              } else {
-                uni.showToast({
-                  title: body.msg || '未绑定服务账号',
-                  icon: 'none'
-                });
-              }
-            }
-          });
-        }).catch(function () {
-          uni.showToast({
-            title: '请先登录',
-            icon: 'none'
-          });
+      (0, _customerBind.ensureCustomerBound)(this).then(function (c) {
+        _this3.customerId = c.id;
+        finish(c.id);
+      }).catch(function (err) {
+        uni.showToast({
+          title: err && err.msg || '请先登录',
+          icon: 'none'
         });
-      };
-      var cached = uni.getStorageSync('hyCustomerId');
-      if (!cached) {
-        bindByPhone();
-        return;
-      }
-      // 旧缓存 ID（如种子 6001）在线上已不存在，校验失败则按手机号重绑
-      this.$api.list('hyCustomer', {
-        id: cached
-      }).then(function (res) {
-        var row = res.data && res.data[0] || null;
-        if (row && row.id) {
-          _this3.customerId = cached;
-          finish(cached);
-        } else {
-          uni.removeStorageSync('hyCustomerId');
-          bindByPhone();
-        }
-      }).catch(function () {
-        uni.removeStorageSync('hyCustomerId');
-        bindByPhone();
       });
     },
     md: function md(t) {

@@ -10257,6 +10257,126 @@ internalMixin(Vue);
 
 /***/ }),
 
+/***/ 266:
+/*!***************************************************************************************************************************!*\
+  !*** C:/Users/Administrator/Desktop/2026年1月7日/卡歌/照相馆小程序（重要）/参照模板/muban/springbooterxt1/front/front/utils/customerBind.js ***!
+  \***************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(uni) {
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.bindCustomerByPhone = bindCustomerByPhone;
+exports.clearCustomerCache = clearCustomerCache;
+exports.ensureCustomerBound = ensureCustomerBound;
+exports.normalizePhone = normalizePhone;
+exports.phoneMatches = phoneMatches;
+exports.saveCustomerCache = saveCustomerCache;
+/** 客户档案绑定：按当前登录手机号匹配 hy_customer，避免 hyCustomerId 串号 */
+
+function normalizePhone(phone) {
+  if (!phone) return '';
+  return String(phone).replace(/\D/g, '');
+}
+function phoneMatches(userPhone, customerPhone) {
+  if (!userPhone || !customerPhone) return false;
+  if (userPhone === customerPhone) return true;
+  var ud = normalizePhone(userPhone);
+  var cd = String(customerPhone);
+  if (cd.includes('*') && ud.length >= 7) {
+    var star = cd.indexOf('*');
+    var lastStar = cd.lastIndexOf('*');
+    var prefix = cd.substring(0, star);
+    var suffix = cd.substring(lastStar + 1);
+    return ud.startsWith(normalizePhone(prefix)) && ud.endsWith(normalizePhone(suffix));
+  }
+  var cdNorm = normalizePhone(cd);
+  return ud.length >= 4 && cdNorm.length >= 4 && ud.endsWith(cdNorm.slice(-4));
+}
+function clearCustomerCache() {
+  uni.removeStorageSync('hyCustomerId');
+  uni.removeStorageSync('hyCustomerPhone');
+  uni.removeStorageSync('hyCustomerName');
+}
+function saveCustomerCache(customer) {
+  if (!customer || !customer.id) return;
+  uni.setStorageSync('hyCustomerId', customer.id);
+  if (customer.phone) uni.setStorageSync('hyCustomerPhone', customer.phone);
+  if (customer.name) uni.setStorageSync('hyCustomerName', customer.name);
+}
+function bindCustomerByPhone(vm) {
+  var table = uni.getStorageSync('nowTable') || 'yonghu';
+  return vm.$api.session(table).then(function (res) {
+    var phone = res.data && res.data.shoujihaoma || '';
+    if (!phone) return Promise.reject({
+      msg: '请先完善手机号'
+    });
+    return new Promise(function (resolve, reject) {
+      uni.request({
+        url: vm.$base.url + 'hyCustomer/bindByPhone',
+        method: 'GET',
+        data: {
+          phone: phone
+        },
+        header: {
+          Token: uni.getStorageSync('token')
+        },
+        success: function success(r) {
+          var body = r.data || {};
+          if (body.code === 0 && body.data && body.data.id) {
+            saveCustomerCache(body.data);
+            resolve(body.data);
+          } else {
+            reject(body);
+          }
+        },
+        fail: reject
+      });
+    });
+  });
+}
+
+/** 确保当前登录用户与缓存客户一致，不一致则按手机号重绑 */
+function ensureCustomerBound(vm) {
+  var cachedId = uni.getStorageSync('hyCustomerId');
+  var cachedPhone = uni.getStorageSync('hyCustomerPhone');
+  var table = uni.getStorageSync('nowTable') || 'yonghu';
+  return vm.$api.session(table).then(function (res) {
+    var sessionPhone = res.data && res.data.shoujihaoma || '';
+    if (!sessionPhone) return Promise.reject({
+      msg: '请先完善手机号'
+    });
+    if (cachedId && cachedPhone && phoneMatches(sessionPhone, cachedPhone)) {
+      return {
+        id: cachedId,
+        phone: cachedPhone,
+        name: uni.getStorageSync('hyCustomerName') || ''
+      };
+    }
+    if (cachedId) {
+      return vm.$api.list('hyCustomer', {
+        id: cachedId
+      }).then(function (r) {
+        var row = r.data && r.data[0] || null;
+        if (row && row.phone && phoneMatches(sessionPhone, row.phone)) {
+          saveCustomerCache(row);
+          return row;
+        }
+        clearCustomerCache();
+        return bindCustomerByPhone(vm);
+      });
+    }
+    return bindCustomerByPhone(vm);
+  });
+}
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./node_modules/@dcloudio/uni-mp-weixin/dist/index.js */ 2)["default"]))
+
+/***/ }),
+
 /***/ 3:
 /*!***********************************!*\
   !*** (webpack)/buildin/global.js ***!

@@ -1,6 +1,5 @@
 package com.controller;
 
-import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.annotation.IgnoreAuth;
@@ -23,6 +22,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -111,64 +115,93 @@ public class YonghuController {
     }
 
     /**
+     * 部署自检：确认新 JAR 已生效、Secret 已配置（不返回密钥本身）
+     */
+    @IgnoreAuth
+    @RequestMapping(value = "/wxlogin/diag")
+    public R wxloginDiag() {
+        boolean secretOk = wxSecret != null && !wxSecret.trim().isEmpty() && !"your_wx_secret".equals(wxSecret.trim());
+        boolean appidOk = wxAppid != null && !wxAppid.trim().isEmpty() && !"your_wx_appid".equals(wxAppid.trim());
+        return R.ok()
+                .put("build", "20260831-wxlogin-diag")
+                .put("appidConfigured", appidOk)
+                .put("secretConfigured", secretOk)
+                .put("appid", wxAppid);
+    }
+
+    /**
      * 微信小程序登录：前端 uni.login 取 code，后端用 code 换 openid，按 openid 找/建用户
      */
     @IgnoreAuth
     @RequestMapping(value = "/wxlogin")
     public R wxlogin(String code) {
-        if (code == null || code.trim().isEmpty()) {
-            return R.error("缺少微信登录凭证 code");
-        }
-        if (wxAppid == null || wxAppid.trim().isEmpty() || "your_wx_appid".equals(wxAppid)
-                || wxSecret == null || wxSecret.trim().isEmpty() || "your_wx_secret".equals(wxSecret)) {
-            return R.error("尚未配置微信小程序 AppID/AppSecret（application.yml: wx.appid / wx.secret）");
-        }
-        String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + wxAppid
-                + "&secret=" + wxSecret + "&js_code=" + code + "&grant_type=authorization_code";
-        String resp;
         try {
-            resp = HttpUtil.get(url);
-        } catch (Exception e) {
-            return R.error("调用微信接口失败：" + e.getMessage());
-        }
-        JSONObject json = JSON.parseObject(resp);
-        String openid = json == null ? null : json.getString("openid");
-        if (openid == null || openid.isEmpty()) {
-            String errmsg = json == null ? resp : json.getString("errmsg");
-            return R.error("微信登录失败：" + errmsg);
-        }
-        HyCustomerEntity customer = customerAccountService.findByOpenid(openid);
-        YonghuEntity user;
-        if (customer != null) {
-            customer = customerAccountService.ensureLoginReady(customer);
-            String audit = customerAccountService.resolveAuditForLogin(customer);
-            if (HyCustomerAccountServiceImpl.AUDIT_PENDING.equals(audit)) {
-                return R.error("账号审核中，请等待商家审核").put("sfsh", "否");
+            if (code == null || code.trim().isEmpty()) {
+                return R.error("缺少微信登录凭证 code");
             }
-            if (HyCustomerAccountServiceImpl.AUDIT_REJECTED.equals(audit)) {
-                String reply = customer.getAuditReply() == null ? "" : customer.getAuditReply();
-                return R.error("账号审核未通过：" + reply).put("sfsh", "驳回");
+            if (wxAppid == null || wxAppid.trim().isEmpty() || "your_wx_appid".equals(wxAppid)
+                    || wxSecret == null || wxSecret.trim().isEmpty() || "your_wx_secret".equals(wxSecret)) {
+                return R.error("尚未配置微信小程序 AppID/AppSecret（application.yml: wx.appid / wx.secret）");
             }
-            if (customer.getOpenid() == null || !openid.equals(customer.getOpenid())) {
-                customer.setOpenid(openid);
-                customerAccountService.bindOpenid(customer.getId(), openid);
+            String url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + wxAppid
+                    + "&secret=" + wxSecret + "&js_code=" + code + "&grant_type=authorization_code";
+            String resp;
+            try {
+                resp = httpGet(url);
+            } catch (Exception e) {
+                return R.error("调用微信接口失败：" + e.getMessage());
             }
-            user = customerAccountService.syncYonghuApproved(customer);
-        } else {
-            user = yonghuService.selectOne(new EntityWrapper<YonghuEntity>().eq("openid", openid));
+            JSONObject json = JSON.parseObject(resp);
+            String openid = json == null ? null : json.getString("openid");
+            if (openid == null || openid.isEmpty()) {
+                String errmsg = json == null ? resp : json.getString("errmsg");
+                Integer errcode = json == null ? null : json.getInteger("errcode");
+                return R.error("微信登录失败：" + (errmsg == null ? "未知错误" : errmsg))
+                        .put("errcode", errcode);
+            }
+            HyCustomerEntity customer = customerAccountService.findByOpenid(openid);
+            YonghuEntity user;
+            if (customer != null) {
+                customer = customerAccountService.ensureLoginReady(customer);
+                String audit = customerAccountService.resolveAuditForLogin(customer);
+                if (HyCustomerAccountServiceImpl.AUDIT_PENDING.equals(audit)) {
+                    return R.error("账号审核中，请等待商家审核").put("sfsh", "否").put("auditPending", true);
+                }
+                if (HyCustomerAccountServiceImpl.AUDIT_REJECTED.equals(audit)) {
+                    String reply = customer.getAuditReply() == null ? "" : customer.getAuditReply();
+                    return R.error("账号审核未通过：" + reply).put("sfsh", "驳回").put("auditRejected", true);
+                }
+                if (customer.getOpenid() == null || !openid.equals(customer.getOpenid())) {
+                    customer.setOpenid(openid);
+                    customerAccountService.bindOpenid(customer.getId(), openid);
+                }
+                user = customerAccountService.syncYonghuApproved(customer);
+            } else {
+                user = yonghuService.selectOne(new EntityWrapper<YonghuEntity>().eq("openid", openid));
+                if (user == null) {
+                    return R.error(1001, "未找到账号，请先提交注册申请").put("needApply", true).put("openid", openid);
+                }
+                R audit = auditGate(user);
+                if (audit != null) return audit;
+            }
             if (user == null) {
                 return R.error(1001, "未找到账号，请先提交注册申请").put("needApply", true).put("openid", openid);
             }
-            R audit = auditGate(user);
-            if (audit != null) return audit;
+            String token = tokenService.generateToken(user.getId(), user.getZhanghao(), "yonghu", "用户");
+            customerAccountService.enrichYonghuFromCustomer(user);
+            boolean needPreference = user.getPianhao() == null || user.getPianhao().isEmpty();
+            return R.ok().put("token", token).put("needPreference", needPreference);
+        } catch (Exception e) {
+            Throwable cause = e;
+            while (cause.getCause() != null) cause = cause.getCause();
+            String cmsg = cause.getMessage() == null ? e.getClass().getSimpleName() : cause.getMessage();
+            if (cmsg.contains("Unknown column") || cmsg.contains("audit_status")
+                    || cmsg.contains("yixiang_pinlei") || cmsg.contains("openid")) {
+                return R.error("数据库缺少客户字段，请执行 fix_wxlogin_db.sql 后重试");
+            }
+            if (cmsg.length() > 160) cmsg = cmsg.substring(0, 160);
+            return R.error("微信登录处理失败：" + cmsg);
         }
-        if (user == null) {
-            return R.error(1001, "未找到账号，请先提交注册申请").put("needApply", true).put("openid", openid);
-        }
-        String token = tokenService.generateToken(user.getId(), user.getZhanghao(), "yonghu", "用户");
-        customerAccountService.enrichYonghuFromCustomer(user);
-        boolean needPreference = user.getPianhao() == null || user.getPianhao().isEmpty();
-        return R.ok().put("token", token).put("needPreference", needPreference);
     }
 
     /**
@@ -213,13 +246,38 @@ public class YonghuController {
     }
 
     /** 审核状态拦截：未通过则返回错误 R，通过返回 null */
+    /** JDK 原生 GET：避免旧版 Hutool 依赖 javax.activation（JDK11+ 已移除）导致 NoClassDefFoundError */
+    private String httpGet(String urlStr) throws Exception {
+        HttpURLConnection conn = null;
+        try {
+            URL u = new URL(urlStr);
+            conn = (HttpURLConnection) u.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(8000);
+            conn.setRequestProperty("Accept", "application/json");
+            int status = conn.getResponseCode();
+            java.io.InputStream is = (status >= 200 && status < 400) ? conn.getInputStream() : conn.getErrorStream();
+            StringBuilder sb = new StringBuilder();
+            if (is != null) {
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = br.readLine()) != null) sb.append(line);
+                }
+            }
+            return sb.toString();
+        } finally {
+            if (conn != null) conn.disconnect();
+        }
+    }
+
     private R auditGate(YonghuEntity user) {
         if (user == null) return R.error("用户不存在");
         if ("是".equals(user.getSfsh())) return null;
         if ("驳回".equals(user.getSfsh())) {
-            return R.error("账号审核未通过：" + (user.getShhf() == null ? "" : user.getShhf())).put("sfsh", "驳回");
+            return R.error("账号审核未通过：" + (user.getShhf() == null ? "" : user.getShhf())).put("sfsh", "驳回").put("auditRejected", true);
         }
-        return R.error("账号审核中，请等待商家审核").put("sfsh", "否");
+        return R.error("账号审核中，请等待商家审核").put("sfsh", "否").put("auditPending", true);
     }
 
     /**
@@ -276,11 +334,11 @@ public class YonghuController {
             customer = customerAccountService.ensureLoginReady(customer);
             String audit = customerAccountService.resolveAuditForLogin(customer);
             if (HyCustomerAccountServiceImpl.AUDIT_PENDING.equals(audit)) {
-                return R.error("账号审核中，请等待商家审核").put("sfsh", "否");
+                return R.error("账号审核中，请等待商家审核").put("sfsh", "否").put("auditPending", true);
             }
             if (HyCustomerAccountServiceImpl.AUDIT_REJECTED.equals(audit)) {
                 String reply = customer.getAuditReply() == null ? "" : customer.getAuditReply();
-                return R.error("账号审核未通过：" + reply).put("sfsh", "驳回");
+                return R.error("账号审核未通过：" + reply).put("sfsh", "驳回").put("auditRejected", true);
             }
             YonghuEntity user = customerAccountService.syncYonghuApproved(customer);
             if (user == null) {

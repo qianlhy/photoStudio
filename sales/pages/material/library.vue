@@ -33,7 +33,7 @@
 						<view class="category-mask"></view>
 						<view class="category-copy">
 							<text class="category-name">{{ c.name }}</text>
-							<text class="category-count">{{ c.materialCount || materialCount(c.name) }}</text>
+							<text class="category-count">{{ subCount(c) }}</text>
 						</view>
 						<text v-if="i===0" class="hot">热门</text>
 						<view v-if="i===0" class="play"></view>
@@ -78,7 +78,7 @@
 									<view class="category-mask"></view>
 									<view class="category-copy">
 										<text class="category-name">{{ c.name }}</text>
-										<text class="category-count">{{ c.materialCount || materialCount(c.name) }}</text>
+										<text class="category-count">{{ subCount(c) }}</text>
 									</view>
 									<text v-if="i===0" class="hot">热门</text>
 									<view v-if="i===0" class="play"></view>
@@ -213,8 +213,10 @@ export default {
 			return (m && m.cover) || `upload/studio_cover_${(i % 4) + 1}.jpg`
 		},
 		groupCount(g) {
-			const sum = (g.children || []).reduce((n, c) => n + (Number(c.materialCount) || 0), 0)
-			return sum || this.groupMaterials(g).length
+			return this.groupMaterials(g).length
+		},
+		subCount(c) {
+			return this.materials.filter(m => m.industrySub === c.name).length
 		},
 		materialCount(name) {
 			return this.materials.filter(m => m.industrySub === name).length

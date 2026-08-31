@@ -1,0 +1,275 @@
+@charset "UTF-8";
+/* 合意传媒 · 销售经理端 全局主题变量（uni-app 自动注入各组件） */
+/* 主色·蓝 */
+/* 主色浅底 */
+/* 主文字：避免纯黑，长时间查看更柔和 */
+/* 次文字 */
+/* 弱文字 */
+/* 描边 */
+/* 页面底 */
+/* 卡片 */
+/* 警示红 */
+/* 橙 */
+/* 绿 */
+/* 设计基准：1280×800 横屏 Pad（16:10，与小米平板6 Pro 同比例） */
+/* 设计基准：800×1280 竖屏 Pad（小米平板 6 Pro 竖屏约 1800×2880） */
+/* 五类内容配色（厨过程/教知识/讲故事/说观点/硬广） */
+.mask.data-v-175e7e99 {
+  width: 100%;
+  height: 100vh;
+  background: rgba(31, 39, 51, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal.data-v-175e7e99 {
+  width: 1000rpx;
+  max-width: 94%;
+  max-height: 94vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 36rpx 40rpx 28rpx;
+  box-shadow: 0 30rpx 80rpx rgba(0, 0, 0, 0.25);
+}
+.m-head.data-v-175e7e99 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.m-title.data-v-175e7e99 {
+  font-size: 36rpx;
+  font-weight: 800;
+}
+.m-sub.data-v-175e7e99 {
+  font-size: 24rpx;
+  color: #8C98A9;
+  margin-top: 6rpx;
+  display: block;
+}
+.m-close.data-v-175e7e99 {
+  font-size: 44rpx;
+  color: #8C98A9;
+  line-height: 1;
+}
+.stepper.data-v-175e7e99 {
+  display: flex;
+  align-items: center;
+  margin: 28rpx 0;
+}
+.sp.data-v-175e7e99 {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.sp-n.data-v-175e7e99 {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: #E5E8EC;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+}
+.sp-n.on.data-v-175e7e99 {
+  background: #2F6BFF;
+}
+.sp-l.data-v-175e7e99 {
+  font-size: 24rpx;
+  color: #526071;
+}
+.sp-line.data-v-175e7e99 {
+  flex: 1;
+  height: 2rpx;
+  background: #E5E8EC;
+  margin: 0 20rpx;
+}
+.m-body.data-v-175e7e99 {
+  display: flex;
+  gap: 32rpx;
+}
+.form.data-v-175e7e99 {
+  flex: 1.4;
+}
+.side.data-v-175e7e99 {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+.f-label.data-v-175e7e99 {
+  font-size: 26rpx;
+  font-weight: 700;
+  display: block;
+  margin: 22rpx 0 14rpx;
+}
+.chips.data-v-175e7e99 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+}
+.chip.data-v-175e7e99 {
+  padding: 14rpx 24rpx;
+  border: 1rpx solid #E9EDF3;
+  border-radius: 14rpx;
+  font-size: 24rpx;
+  color: #526071;
+  display: flex;
+  align-items: center;
+}
+.chip.on.data-v-175e7e99 {
+  border-color: #2F6BFF;
+  color: #2F6BFF;
+  background: #EAF1FF;
+}
+.radio.data-v-175e7e99 {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  border: 2rpx solid #C7CDD8;
+  margin-right: 10rpx;
+}
+.radio.on.data-v-175e7e99 {
+  border-color: #2F6BFF;
+  background: #2F6BFF;
+}
+.intent.data-v-175e7e99 {
+  display: flex;
+  gap: 18rpx;
+}
+.it.data-v-175e7e99 {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx 0;
+  border: 1rpx solid #E9EDF3;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+}
+.it.on.data-v-175e7e99 {
+  border-color: #2F6BFF;
+  background: #EAF1FF;
+  color: #2F6BFF;
+  font-weight: 700;
+}
+.time-row.data-v-175e7e99 {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+.date-box.data-v-175e7e99 {
+  padding: 18rpx 26rpx;
+  border: 1rpx solid #E9EDF3;
+  border-radius: 14rpx;
+  font-size: 25rpx;
+}
+.quick.data-v-175e7e99 {
+  padding: 18rpx 24rpx;
+  border: 1rpx solid #E9EDF3;
+  border-radius: 14rpx;
+  font-size: 24rpx;
+  color: #526071;
+}
+.textarea.data-v-175e7e99 {
+  width: 100%;
+  height: 140rpx;
+  border: 1rpx solid #E9EDF3;
+  border-radius: 14rpx;
+  padding: 18rpx;
+  font-size: 25rpx;
+  margin-top: 4rpx;
+}
+.auto.data-v-175e7e99 {
+  background: #F0F7F3;
+  padding: 22rpx;
+}
+.auto-title.data-v-175e7e99 {
+  font-size: 26rpx;
+  font-weight: 700;
+}
+.auto-item.data-v-175e7e99 {
+  font-size: 24rpx;
+  color: #22B07D;
+  margin-top: 14rpx;
+}
+.summary.data-v-175e7e99 {
+  padding: 22rpx;
+  border: 1rpx solid #E9EDF3;
+}
+.sum-head.data-v-175e7e99 {
+  display: flex;
+  justify-content: space-between;
+}
+.sum-title.data-v-175e7e99 {
+  font-size: 26rpx;
+  font-weight: 700;
+}
+.sum-edit.data-v-175e7e99 {
+  font-size: 24rpx;
+  color: #2F6BFF;
+}
+.sum-text.data-v-175e7e99 {
+  font-size: 24rpx;
+  color: #526071;
+  line-height: 1.6;
+  margin-top: 14rpx;
+  display: block;
+}
+.warn.data-v-175e7e99 {
+  background: #FFF6E9;
+  color: #B8791F;
+  font-size: 23rpx;
+  padding: 18rpx;
+  border-radius: 14rpx;
+  line-height: 1.5;
+}
+.m-foot.data-v-175e7e99 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 28rpx;
+  padding-top: 22rpx;
+  border-top: 1rpx solid #E9EDF3;
+}
+.foot-info.data-v-175e7e99 {
+  font-size: 23rpx;
+  color: #8C98A9;
+}
+.foot-btns.data-v-175e7e99 {
+  display: flex;
+  gap: 18rpx;
+}
+.foot-btns .btn.data-v-175e7e99 {
+  height: 84rpx;
+  padding: 0 36rpx;
+  font-size: 27rpx;
+}
+@media (min-width: 600px) and (orientation: portrait) {
+.modal.data-v-175e7e99 {
+    width: 92vw;
+    max-width: none;
+    max-height: 88vh;
+}
+.m-body.data-v-175e7e99 {
+    flex-direction: column;
+}
+.form.data-v-175e7e99, .side.data-v-175e7e99 {
+    flex: none;
+    width: 100%;
+}
+.m-foot.data-v-175e7e99 {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16rpx;
+}
+.foot-info.data-v-175e7e99 {
+    text-align: center;
+}
+.foot-btns.data-v-175e7e99 {
+    flex-direction: column;
+}
+.foot-btns .btn.data-v-175e7e99 {
+    width: 100%;
+}
+}

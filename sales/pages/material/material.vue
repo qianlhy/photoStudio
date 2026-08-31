@@ -75,9 +75,6 @@ export default {
 	onShow() {
 		if (!this.$api.auth()) return
 		this.loadTree()
-		this.$api.page('hyMaterial', { page: 1, limit: 1 }).then(res => {
-			this.total = (res.data && res.data.total) || 0
-		})
 	},
 	onLoad() {
 		this._offOrientation = orientation.onOrientationChange(() => {
@@ -91,7 +88,16 @@ export default {
 	},
 	methods: {
 		loadTree() {
-			this.$api.list('hyIndustry', {}).then(res => {
+			Promise.all([
+				this.$api.list('hyIndustry', {}),
+				this.$api.page('hyMaterial', { page: 1, limit: 500, status: '上架' })
+			]).then(([res, materialRes]) => {
+				const materials = (materialRes.data && materialRes.data.list) || []
+				this.total = (materialRes.data && materialRes.data.total) || materials.length
+				const subCount = {}
+				materials.forEach(m => {
+					if (m.industrySub) subCount[m.industrySub] = (subCount[m.industrySub] || 0) + 1
+				})
 				const all = res.data || []
 				const bigs = all.filter(i => i.level === 1)
 				this.groups = bigs.map(b => {
@@ -99,7 +105,10 @@ export default {
 						id: b.id,
 						name: b.name,
 						color: this.groupColors[b.name] || '#2F6BFF',
-						children: all.filter(c => c.parentId === b.id).sort((a, b2) => (b2.materialCount || 0) - (a.materialCount || 0))
+						children: all.filter(c => c.parentId === b.id).map(c => ({
+							...c,
+							materialCount: subCount[c.name] || 0
+						})).sort((a, b2) => (b2.materialCount || 0) - (a.materialCount || 0))
 					}
 				})
 				this.$nextTick(() => setTimeout(() => this.computeLayout(), 60))
