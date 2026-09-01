@@ -73,12 +73,14 @@
 				<view v-if="shownActions.length===0" class="empty">暂无需要处理的事项</view>
 				</scroll-view>
 
-				<!-- 闭环步骤 -->
+				<!-- 闭环步骤：随待办数量推进，无事项时全灰 -->
 				<view class="loop card">
 					<view class="lp" v-for="(s,i) in loopSteps" :key="i">
-						<view class="lp-dot" :class="{on:i<=2, cur:i===2}">{{ i<2 ? '✓' : (i===2 ? '◉' : '') }}</view>
+						<view class="lp-dot" :class="{on: i < loopActive, cur: i === loopActive && loopActive < loopSteps.length}">
+							{{ i < loopActive ? '✓' : (i === loopActive && loopActive < loopSteps.length ? '◉' : '') }}
+						</view>
 						<text class="lp-l">{{ s }}</text>
-						<view v-if="i<loopSteps.length-1" class="lp-line" :class="{on:i<2}"></view>
+						<view v-if="i<loopSteps.length-1" class="lp-line" :class="{on: i < loopActive}"></view>
 					</view>
 				</view>
 			</view>
@@ -140,6 +142,13 @@ export default {
 			const comp = this.actions.filter(a => a.type === '客诉').length
 			const renew = this.actions.filter(a => a.type === '库存不足').length
 			return `${n}项待处理：${pay}笔待付款、${warn}项制作预警、${comp}起客诉、${renew}位客户适合续拍。`
+		},
+		/** 0=全灰；有待办时停在「达到条件通知销售」(index 2)；全部处理完可到最后 */
+		loopActive() {
+			if (!this.actions || this.actions.length === 0) return -1
+			const allDone = this.actions.every(a => a.status === '已完成')
+			if (allDone) return this.loopSteps.length
+			return 2
 		}
 	},
 	onShow() {

@@ -35,6 +35,7 @@ public class HyEmployeeController {
     @IgnoreAuth
     @PostMapping("/login")
     public R login(String username, String password, HttpServletRequest request) {
+        if (username != null) username = username.trim();
         HyEmployeeEntity emp = service.selectOne(new EntityWrapper<HyEmployeeEntity>().eq("username", username));
         if (emp == null || !PasswordUtil.matches(password, emp.getPassword())) {
             return R.error("账号或密码不正确");
@@ -91,6 +92,12 @@ public class HyEmployeeController {
 
     @PostMapping("/save")
     public R save(@RequestBody HyEmployeeEntity entity) {
+        if (entity.getUsername() != null) {
+            entity.setUsername(entity.getUsername().trim());
+        }
+        if (entity.getUsername() == null || entity.getUsername().isEmpty()) {
+            return R.error("账号不能为空");
+        }
         if (service.selectOne(new EntityWrapper<HyEmployeeEntity>().eq("username", entity.getUsername())) != null) {
             return R.error("账号已存在");
         }

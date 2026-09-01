@@ -66,9 +66,18 @@ export default {
     onSubmit() {
       this.$refs.ruleForm.validate(valid => {
         if (!valid) return;
-        this.$http({url: `hyEmployee/${this.ruleForm.id ? "update" : "save"}`, method: "post", data: this.ruleForm}).then(({data}) => {
-          if (data.code === 0) this.$message({message: "操作成功", type: "success", duration: 1200, onClose: () => this.back(true)});
-          else this.$message.error(data.msg);
+        const payload = {...this.ruleForm};
+        if (payload.username) payload.username = payload.username.trim();
+        if (!payload.id && (!payload.password || !String(payload.password).trim())) {
+          payload.password = "";
+        }
+        this.$http({url: `hyEmployee/${payload.id ? "update" : "save"}`, method: "post", data: payload}).then(({data}) => {
+          if (data.code === 0) {
+            const tip = payload.id ? "操作成功" : `已创建，登录账号：${payload.username}，初始密码：${payload.password || "123456"}`;
+            this.$message({message: tip, type: "success", duration: 3000, onClose: () => this.back(true)});
+          } else {
+            this.$message.error(data.msg);
+          }
         });
       });
     },

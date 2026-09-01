@@ -21,7 +21,7 @@
       <div class="login-card">
         <div class="login-head">
           <h3>欢迎登录</h3>
-          <p>请使用管理账号进入后台</p>
+          <p>管理员账号或员工账号均可登录（员工与 Pad 相同）</p>
         </div>
         <el-form class="lg-form" @submit.native.prevent>
           <el-input class="lg-input" prefix-icon="el-icon-user" placeholder="请输入用户名"
@@ -92,7 +92,7 @@ export default {
       this.$storage.set("loginTable", tableName);
       this.$router.push({path: '/register'})
     },
-    // 登陆
+    // 登陆：先 users 管理员表，失败再试 hyEmployee 员工表（与 Pad 同一套账号）
     login() {
       if (!this.rulesForm.username) {
         this.$message.error("请输入用户名");
@@ -102,31 +102,41 @@ export default {
         this.$message.error("请输入密码");
         return;
       }
-      if (!this.tableName) {
-        const admin = (this.menus || []).find(m => m.hasBackLogin === '是') || (this.menus || [])[0];
-        if (admin) {
-          this.rulesForm.role = admin.roleName;
-          this.tableName = admin.tableName;
-        }
-      }
-      if (!this.tableName) {
-        this.$message.error("登录配置异常");
-        return;
-      }
-      this.$http({
-        url: `${this.tableName}/login?username=${this.rulesForm.username}&password=${this.rulesForm.password}`,
+      const username = this.rulesForm.username.trim();
+      const password = this.rulesForm.password;
+      const tryLogin = (tableName) => this.$http({
+        url: `${tableName}/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
         method: "post"
-      }).then(({data}) => {
-        if (data && data.code === 0) {
-          this.$storage.set("Token", data.token);
-          this.$storage.set("role", this.rulesForm.role || "管理员");
-          this.$storage.set("sessionTable", this.tableName);
-          this.$storage.set("adminName", this.rulesForm.username);
-          this.$router.replace({path: "/index/"});
-        } else {
-          this.$message.error(data.msg);
-        }
       });
+      tryLogin("users").then(({data}) => {
+        if (data && data.code === 0) {
+          this.onLoginOk(data, "users", this.rulesForm.role || "管理员", username);
+          return;
+        }
+        return tryLogin("hyEmployee").then(({data: d2}) => {
+          if (d2 && d2.code === 0) {
+            this.onLoginOk(d2, "hyEmployee", d2.role || "员工", d2.name || username);
+          } else {
+            this.$message.error((d2 && d2.msg) || (data && data.msg) || "账号或密码不正确");
+          }
+        });
+      }).catch(() => {
+        tryLogin("hyEmployee").then(({data}) => {
+          if (data && data.code === 0) {
+            this.onLoginOk(data, "hyEmployee", data.role || "员工", data.name || username);
+          } else {
+            this.$message.error((data && data.msg) || "账号或密码不正确");
+          }
+        });
+      });
+    },
+    onLoginOk(data, sessionTable, role, displayName) {
+      this.$storage.set("Token", data.token);
+      this.$storage.set("role", role);
+      this.$storage.set("sessionTable", sessionTable);
+      this.$storage.set("adminName", displayName);
+      if (data.userId) this.$storage.set("userid", data.userId);
+      this.$router.replace({path: "/index/"});
     },
     getRandCode(len = 4) {
       this.randomString(len)

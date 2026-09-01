@@ -9,7 +9,7 @@
       </div>
     </div>
     <div class="index-aside-inner menulist">
-      <div v-for="item in menuList" :key="item.roleName" v-if="role==item.roleName" class="menulist-item">
+      <div v-for="item in menuList" :key="item.roleName" v-if="menuRole==item.roleName" class="menulist-item">
         <el-menu
             router
             :default-active="activeMenu"
@@ -29,7 +29,16 @@
         </el-menu>
       </div>
     </div>
-    <div class="aside-collapse"><i class="el-icon-s-fold"/></div>
+    <div class="aside-user">
+      <div class="aside-user-main">
+        <span class="aside-user-av">{{ userInitial }}</span>
+        <div class="aside-user-txt">
+          <span class="aside-user-name">{{ userName }}</span>
+          <span class="aside-user-role">{{ userRole }}</span>
+        </div>
+      </div>
+      <el-button type="text" class="aside-logout" @click="doLogout">退出登录</el-button>
+    </div>
   </el-aside>
 </template>
 
@@ -57,6 +66,20 @@ export default {
   computed: {
     activeMenu() {
       return this.$route.path
+    },
+    menuRole() {
+      const role = this.$storage.get('role')
+      if (this.menuList.some(m => m.roleName === role)) return role
+      return '管理员'
+    },
+    userName() {
+      return this.$storage.get('adminName') || '管理员'
+    },
+    userRole() {
+      return this.$storage.get('role') || '管理员'
+    },
+    userInitial() {
+      return String(this.userName).charAt(0)
     }
   },
   mounted() {
@@ -84,6 +107,14 @@ export default {
     }
     this.role = this.$storage.get('role')
   },
+  methods: {
+    doLogout() {
+      this.$confirm('确定要退出登录吗？', '提示', {type: 'warning'}).then(() => {
+        this.$storage.clear()
+        this.$router.replace({name: 'login'})
+      }).catch(() => {})
+    }
+  }
 }
 </script>
 
@@ -209,19 +240,69 @@ $aside-blue: #2F6BFF;
     vertical-align: middle;
   }
 
-  .aside-collapse {
+  .aside-user {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 46px;
+    padding: 12px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: $aside-bg-deep;
+  }
+
+  .aside-user-main {
     display: flex;
     align-items: center;
-    padding: 0 26px;
-    color: #6b7a92;
-    font-size: 18px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    background: $aside-bg-deep;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .aside-user-av {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f8bff, #2F6BFF);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .aside-user-txt {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .aside-user-name {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .aside-user-role {
+    color: #8a97ad;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  .aside-logout {
+    color: #9aa7bd !important;
+    padding: 0;
+    font-size: 12px;
+
+    &:hover { color: #fff !important; }
+  }
+
+  .index-aside-inner {
+    padding-bottom: 88px;
   }
 }
 </style>

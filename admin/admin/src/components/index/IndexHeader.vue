@@ -23,24 +23,24 @@
         <input v-model="keyword" placeholder="搜索订单、客户、素材、员工" @keyup.enter="onSearch"/>
       </div>
 
-      <div class="nav-bell">
-        <i class="el-icon-bell"/>
-        <span class="bell-dot"></span>
+      <div class="nav-user-block">
+        <el-dropdown trigger="click" @command="handleCommand">
+          <span class="user-info">
+            <span class="user-avatar">{{ avatarText }}</span>
+            <span class="user-meta">
+              <span class="user-name">{{ displayName }}</span>
+              <span class="user-role">{{ displayRole }}</span>
+            </span>
+            <i class="el-icon-arrow-down"/>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item command="center">个人信息</el-dropdown-item>
+            <el-dropdown-item command="password">修改密码</el-dropdown-item>
+            <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+        <el-button size="small" class="btn-logout" @click="onLogout">退出</el-button>
       </div>
-
-      <el-dropdown trigger="click" @command="handleCommand">
-        <span class="user-info">
-          <img v-if="user.avatar" class="user-avatar" :src="$base.url + user.avatar" alt="管理员头像"/>
-          <span v-else class="user-avatar">{{ avatarText }}</span>
-          <span class="user-name">{{ this.$storage.get('adminName') || this.$storage.get('role') || '管理员' }}</span>
-          <i class="el-icon-arrow-down"/>
-        </span>
-        <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item command="center">个人信息</el-dropdown-item>
-          <el-dropdown-item command="password">修改密码</el-dropdown-item>
-          <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
-        </el-dropdown-menu>
-      </el-dropdown>
     </div>
   </div>
 </template>
@@ -59,20 +59,29 @@ export default {
       if (this.$route && (this.$route.path === '/index/' || this.$route.path === '/index')) return '经营总览'
       return (this.$route && this.$route.name) || '经营总览'
     },
+    displayName() {
+      return (this.user && this.user.name) || this.$storage.get('adminName') || '管理员'
+    },
+    displayRole() {
+      return (this.user && this.user.role) || this.$storage.get('role') || '管理员'
+    },
     avatarText() {
-      let name = this.$storage.get('adminName') || this.$storage.get('role') || '管'
+      let name = this.displayName
       return name.toString().charAt(0)
     }
   },
   mounted() {
     let sessionTable = this.$storage.get("sessionTable")
+    if (!sessionTable) return
     this.$http({
       url: sessionTable + '/session',
       method: "get"
     }).then(({data}) => {
       if (data && data.code === 0) {
-        this.user = data.data;
-        this.$storage.set('userid', data.data.id);
+        this.user = data.data || {};
+        if (data.data && data.data.id) this.$storage.set('userid', data.data.id);
+        if (data.data && data.data.name) this.$storage.set('adminName', data.data.name);
+        if (data.data && data.data.role) this.$storage.set('role', data.data.role);
       }
     });
   },
@@ -135,7 +144,9 @@ export default {
   .navbar-right {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
+    flex-shrink: 0;
+    min-width: 0;
 
     .month-btn {
       display: flex;
@@ -157,7 +168,9 @@ export default {
     .nav-search {
       display: flex;
       align-items: center;
-      width: 320px;
+      flex: 1;
+      min-width: 120px;
+      max-width: 260px;
       height: 36px;
       padding: 0 14px;
       border-radius: 8px;
@@ -176,70 +189,76 @@ export default {
       }
     }
 
-    .nav-bell {
-      position: relative;
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
+    .nav-user-block {
       display: flex;
       align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: #4a5566;
-      font-size: 18px;
+      gap: 8px;
+      flex-shrink: 0;
+    }
 
-      &:hover { background: #f4f6fa; }
-
-      .bell-dot {
-        position: absolute;
-        top: 7px;
-        right: 8px;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #E8423F;
-        border: 1.5px solid #fff;
-      }
+    .btn-logout {
+      border-color: #dcdfe6;
+      color: #606266;
+      padding: 8px 12px;
     }
 
     .user-info {
       display: flex;
       align-items: center;
       cursor: pointer;
-      padding: 6px 10px;
+      padding: 4px 8px 4px 4px;
       border-radius: 999px;
       transition: background .2s;
+      border: 1px solid #ebeef5;
 
       &:hover {
         background: #f0f5ff;
+        border-color: #c6d8ff;
       }
 
       .user-avatar {
-        width: 34px;
-        height: 34px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         background: linear-gradient(135deg, #4f8bff, #2F6BFF);
         color: #fff;
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 600;
         display: flex;
         align-items: center;
         justify-content: center;
-        object-fit: cover;
-        border: 2px solid #fff;
-        box-shadow: 0 2px 8px rgba(31, 39, 51, .14);
-        margin-right: 10px;
+        flex-shrink: 0;
+      }
+
+      .user-meta {
+        display: flex;
+        flex-direction: column;
+        margin: 0 6px 0 8px;
+        line-height: 1.2;
+        max-width: 120px;
       }
 
       .user-name {
-        font-size: 14px;
+        font-size: 13px;
         color: #303133;
-        margin-right: 6px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .user-role {
+        font-size: 11px;
+        color: #909399;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .el-icon-arrow-down {
         color: #909399;
         font-size: 12px;
+        flex-shrink: 0;
       }
     }
   }
