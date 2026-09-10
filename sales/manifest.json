@@ -2,13 +2,14 @@
     "name" : "合意传媒-销售经理端",
     "appid" : "__UNI__309C821",
     "description" : "合意传媒 销售经理 pad 端（适配小米平板6 Pro 2880×1800横屏）",
-    "versionName" : "1.0.1",
-    "versionCode" : "101",
+    "versionName" : "1.0.3",
+    "versionCode" : "103",
     "transformPx" : false,
     "app-plus" : {
         "usingComponents" : true,
         "nvueCompiler" : "uni-app",
         "compilerVersion" : 3,
+        "runmode" : "liberate",
         "screenOrientation" : [
             "landscape-primary",
             "landscape-secondary",
@@ -24,7 +25,9 @@
             "delay" : 0
         },
         "modules" : {
-            "VideoPlayer" : {}
+            "VideoPlayer" : {},
+            "Gallery" : {},
+            "Camera" : {}
         },
         "distribute" : {
             "android" : {
@@ -35,11 +38,20 @@
                     "<uses-permission android:name=\"android.permission.CAMERA\"/>",
                     "<uses-permission android:name=\"android.permission.CALL_PHONE\"/>",
                     "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>",
-                    "<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\"/>"
+                    "<uses-permission android:name=\"android.permission.INTERNET\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\"/>",
+                    "<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_MEDIA_VIDEO\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_MEDIA_IMAGES\"/>"
                 ]
             },
             "ios" : {
-                "dSYMs" : false
+                "dSYMs" : false,
+                "privacyDescription" : {
+                    "NSPhotoLibraryUsageDescription" : "用于选择并上传素材视频/图片",
+                    "NSCameraUsageDescription" : "用于拍摄并上传素材",
+                    "NSPhotoLibraryAddUsageDescription" : "用于保存素材相关文件"
+                }
             },
             "sdkConfigs" : {}
         }

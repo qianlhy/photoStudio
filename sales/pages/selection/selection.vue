@@ -26,7 +26,7 @@
 			<!-- 视频区 -->
 			<view class="stage">
 				<view v-if="current" class="player">
-					<video v-if="current.video" :key="'v-' + current.id + '-' + idx" class="video"
+					<video v-if="current.video" :key="'v-' + current.id + '-' + idx + '-' + videoTick" class="video"
 						:src="videoSrc(current)" :poster="$media(current, 'cover')"
 						controls autoplay object-fit="contain" show-center-play-btn
 						@error="onVideoError"></video>
@@ -125,6 +125,8 @@ export default {
 			chips: [],
 			materials: [],
 			idx: 0,
+			videoTick: 0,
+			forceOnlineId: '',
 			liked: [],
 			likedItems: [],
 			disliked: [],
@@ -229,14 +231,27 @@ export default {
 	},
 	methods: {
 		videoSrc(m) {
-			return m ? this.$media(m, 'video') : ''
+			if (!m) return ''
+			// 本地失败后强制走在线，避免卡在坏缓存
+			if (this.forceOnlineId && String(this.forceOnlineId) === String(m.id)) {
+				const p = m.video || ''
+				if (!p) return ''
+				if (/^https?:\/\//.test(p)) return p
+				let path = String(p).replace(/^\//, '')
+				if (path && !path.startsWith('upload/')) path = 'upload/' + path
+				return this.$base.url + path
+			}
+			return this.$media(m, 'video')
 		},
 		onVideoError() {
 			const m = this.current
-			if (m) {
-				this.$materialCache.invalidate(m.id, 'video')
-			}
-			uni.showToast({ title: '视频加载失败，正在尝试在线播放', icon: 'none' })
+			if (!m) return
+			this.$materialCache.invalidate(m.id, 'video')
+			this.forceOnlineId = String(m.id)
+			this.videoTick++
+			uni.showToast({ title: '本地缓存不可用，已切在线播放', icon: 'none' })
+			// 后台重下这一条
+			this.$materialCache.prefetchOne(m, this.$base.url)
 		},
 		prefetchAround() {
 			if (!this.$materialCache.isAppPlus()) return
@@ -385,6 +400,7 @@ export default {
 		},
 		next() {
 			if (this.idx < this.materials.length) this.idx++
+			this.forceOnlineId = ''
 			this.prefetchAround()
 		},
 		firstTag(tags) {

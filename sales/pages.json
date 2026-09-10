@@ -26,6 +26,11 @@
 			"navigationStyle": "custom"
 		}
 	}, {
+		"path": "pages/material/upload",
+		"style": {
+			"navigationStyle": "custom"
+		}
+	}, {
 		"path": "pages/customer/customer",
 		"style": {
 			"navigationStyle": "custom"

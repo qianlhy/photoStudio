@@ -1,18 +1,18 @@
 <script>
 import materialCache from './utils/materialCache.js'
+import base from './api/base.js'
 
 export default {
 	onLaunch: function() {
-		// 拉取品牌配置，写入全局
 		const api = this.$api
 		api.config().then(res => {
 			if (res && res.data) {
 				uni.setStorageSync('brand', res.data)
 			}
 		}).catch(() => {})
-		// 已登录时后台同步素材到 Pad 本地
+		// 已登录：等 plus 就绪后静默同步（路径为 App 私有目录，无需客户提供）
 		if (uni.getStorageSync('token') && materialCache.isAppPlus()) {
-			materialCache.startSync(api, this.$base.url, { silent: true })
+			materialCache.startSync(api, (this.$base && this.$base.url) || base.url, { silent: true })
 		}
 	},
 	onShow: function() {},

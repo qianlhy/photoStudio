@@ -58,18 +58,38 @@ function localFilePath(id, field, remotePath) {
 	return `${CACHE_DIR}${itemKey(id, field)}${ext}`
 }
 
+/** App 打包后恒为 true；H5 为 false。避免 onLaunch 时 plus 未注入误判 */
 function isAppPlus() {
 	// #ifdef APP-PLUS
-	return typeof plus !== 'undefined'
+	return true
 	// #endif
 	// #ifndef APP-PLUS
-	return false
+	return typeof plus !== 'undefined' && !!plus.io
 	// #endif
+}
+
+function ensurePlusReady() {
+	return new Promise(resolve => {
+		if (!isAppPlus()) {
+			resolve(false)
+			return
+		}
+		if (typeof plus !== 'undefined' && plus.io) {
+			resolve(true)
+			return
+		}
+		const done = () => resolve(typeof plus !== 'undefined' && !!plus.io)
+		if (typeof document !== 'undefined' && document.addEventListener) {
+			document.addEventListener('plusready', done, { once: true })
+		}
+		// 兜底：部分机型事件已过
+		setTimeout(done, 2500)
+	})
 }
 
 function ensureCacheDir() {
 	return new Promise((resolve, reject) => {
-		if (!isAppPlus()) {
+		if (!isAppPlus() || typeof plus === 'undefined') {
 			resolve('')
 			return
 		}
@@ -81,17 +101,29 @@ function ensureCacheDir() {
 
 function fileExists(localPath) {
 	return new Promise(resolve => {
-		if (!isAppPlus() || !localPath) {
+		if (!isAppPlus() || !localPath || typeof plus === 'undefined') {
 			resolve(false)
 			return
 		}
-		plus.io.resolveLocalFileSystemURL(localPath, () => resolve(true), () => resolve(false))
+		plus.io.resolveLocalFileSystemURL(localPath, () => resolve(true), () => {
+			try {
+				const abs = plus.io.convertLocalFileSystemURL(localPath)
+				if (!abs) {
+					resolve(false)
+					return
+				}
+				const url = abs.indexOf('file://') === 0 ? abs : ('file://' + abs)
+				plus.io.resolveLocalFileSystemURL(url, () => resolve(true), () => resolve(false))
+			} catch (e) {
+				resolve(false)
+			}
+		})
 	})
 }
 
 function removeFile(localPath) {
 	return new Promise(resolve => {
-		if (!isAppPlus() || !localPath) {
+		if (!isAppPlus() || !localPath || typeof plus === 'undefined') {
 			resolve()
 			return
 		}
@@ -103,23 +135,36 @@ function removeFile(localPath) {
 
 function downloadToLocal(url, destPath) {
 	return new Promise((resolve, reject) => {
-		if (!isAppPlus()) {
+		if (!isAppPlus() || typeof plus === 'undefined') {
 			reject(new Error('not app'))
 			return
 		}
 		const task = plus.downloader.createDownload(url, { filename: destPath }, (d, status) => {
-			if (status === 200) resolve(destPath)
-			else reject(new Error('download failed: ' + status))
+			if (status === 200) {
+				const saved = (d && d.filename) || destPath
+				resolve(saved)
+			} else {
+				reject(new Error('download failed: ' + status))
+			}
 		})
 		task.start()
 	})
 }
 
+/** video/image 本地播放路径：优先 _doc 相对路径；必要时补 file:// */
 function toPlayableUrl(localPath) {
 	if (!localPath) return ''
-	if (!isAppPlus()) return localPath
+	if (!isAppPlus() || typeof plus === 'undefined') return localPath
+	// uni-app 原生 video 对 _doc/ 相对路径支持最好（需 runmode=liberate）
+	if (String(localPath).indexOf('_doc/') === 0 || String(localPath).indexOf('_documents/') === 0) {
+		return localPath
+	}
 	try {
-		return plus.io.convertLocalFileSystemURL(localPath)
+		let abs = plus.io.convertLocalFileSystemURL(localPath)
+		if (!abs) return localPath
+		if (abs.indexOf('file://') === 0) return abs
+		if (abs.charAt(0) === '/') return 'file://' + abs
+		return abs
 	} catch (e) {
 		return localPath
 	}
@@ -189,10 +234,14 @@ function invalidate(materialId, field) {
 	const entry = manifest.items[id]
 	if (!entry) return
 	if (!field || field === 'video') {
+		const old = entry.localVideo
 		entry.localVideo = ''
+		if (old) removeFile(old)
 	}
 	if (!field || field === 'cover') {
+		const old = entry.localCover
 		entry.localCover = ''
+		if (old) removeFile(old)
 	}
 	writeManifest(manifest)
 }
@@ -204,8 +253,8 @@ async function cacheOne(material, baseUrl, manifest, field) {
 	if (!remotePath) return
 
 	const entry = manifest.items[id] || {}
+	const localKey = field === 'cover' ? 'localCover' : 'localVideo'
 	if (!needsUpdate(entry, material, field)) {
-		const localKey = field === 'cover' ? 'localCover' : 'localVideo'
 		if (entry[localKey] && await fileExists(entry[localKey])) return
 	}
 
@@ -218,17 +267,20 @@ async function cacheOne(material, baseUrl, manifest, field) {
 		if (entry.localCover && field === 'cover' && entry.cover !== remotePath) {
 			await removeFile(entry.localCover)
 		}
-		await downloadToLocal(url, dest)
+		const saved = await downloadToLocal(url, dest)
+		if (!(await fileExists(saved))) {
+			throw new Error('downloaded file missing: ' + saved)
+		}
 		const next = manifest.items[id] || {}
 		next.id = material.id
 		next.video = material.video || next.video || ''
 		next.cover = material.cover || next.cover || ''
 		next.addtime = material.addtime ? String(material.addtime) : (next.addtime || '')
-		if (field === 'video') next.localVideo = dest
-		if (field === 'cover') next.localCover = dest
+		if (field === 'video') next.localVideo = saved
+		if (field === 'cover') next.localCover = saved
 		manifest.items[id] = next
 	} catch (e) {
-		console.warn('[materialCache] download fail', id, field, e)
+		console.warn('[materialCache] download fail', id, field, url, e)
 	}
 }
 
@@ -240,21 +292,24 @@ async function runQueue(materials, baseUrl, manifest, options) {
 	})
 	let index = 0
 	let done = 0
-	const total = jobs.length
 
 	async function worker() {
 		while (index < jobs.length) {
 			const job = jobs[index++]
 			await cacheOne(job.m, baseUrl, manifest, job.field)
 			done++
-			if (!options.silent && done % 5 === 0) {
+			// 进度落盘，避免中途杀进程全丢
+			if (done % 3 === 0) {
+				writeManifest(manifest)
+			} else if (!options.silent) {
 				notify()
 			}
 		}
 	}
 
+	if (!jobs.length) return
 	const workers = []
-	const n = Math.min(MAX_CONCURRENT, Math.max(1, jobs.length))
+	const n = Math.min(MAX_CONCURRENT, jobs.length)
 	for (let i = 0; i < n; i++) workers.push(worker())
 	await Promise.all(workers)
 }
@@ -272,6 +327,7 @@ async function cleanupRemoved(manifest, remoteIds) {
 }
 
 async function fetchAllMaterials(api) {
+	// 只缓存上架素材（与选片页一致）
 	const res = await api.list('hyMaterial', { status: '上架' })
 	let list = (res && res.data) || []
 	if (!Array.isArray(list)) list = []
@@ -306,7 +362,8 @@ function detectUpdates(materials) {
 }
 
 async function syncMaterials(api, baseUrl, options = {}) {
-	if (!isAppPlus()) {
+	const ready = await ensurePlusReady()
+	if (!ready) {
 		return getStatus()
 	}
 	await ensureCacheDir()
@@ -324,7 +381,7 @@ async function syncMaterials(api, baseUrl, options = {}) {
 	if (!options.silent) {
 		const st = getStatus()
 		uni.showToast({
-			title: `素材已同步 ${st.cachedVideo}/${st.remoteTotal}`,
+			title: `素材已缓存 ${st.cachedVideo}/${st.remoteTotal}`,
 			icon: 'none',
 			duration: 2500
 		})
@@ -334,6 +391,12 @@ async function syncMaterials(api, baseUrl, options = {}) {
 
 function startSync(api, baseUrl, options = {}) {
 	if (syncPromise) return syncPromise
+	if (!isAppPlus()) {
+		if (!options.silent) {
+			uni.showToast({ title: '请在 Pad App 中使用本地缓存', icon: 'none' })
+		}
+		return Promise.resolve(getStatus())
+	}
 	syncing = true
 	notify()
 	syncPromise = syncMaterials(api, baseUrl, options)
@@ -353,12 +416,14 @@ function startSync(api, baseUrl, options = {}) {
 }
 
 function prefetchList(materials, baseUrl, limit) {
-	if (!isAppPlus() || !Array.isArray(materials) || materials.length === 0) return
-	const slice = materials.slice(0, limit || 5)
-	const manifest = readManifest()
-	runQueue(slice, baseUrl || base.url, manifest, { silent: true }).then(() => {
-		manifest.lastSyncAt = Date.now()
-		writeManifest(manifest)
+	if (!isAppPlus() || !Array.isArray(materials) || materials.length === 0) return Promise.resolve()
+	return ensurePlusReady().then(ready => {
+		if (!ready) return
+		const slice = materials.slice(0, limit || 5)
+		const manifest = readManifest()
+		return runQueue(slice, baseUrl || base.url, manifest, { silent: true }).then(() => {
+			writeManifest(manifest)
+		})
 	}).catch(() => {})
 }
 
@@ -380,5 +445,6 @@ export default {
 	invalidate,
 	detectUpdates,
 	onStatusChange,
-	isAppPlus
+	isAppPlus,
+	ensurePlusReady
 }

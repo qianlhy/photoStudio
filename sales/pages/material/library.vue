@@ -4,7 +4,10 @@
 			<text class="s-ico"></text>
 			<input v-model="keyword" class="s-input" placeholder="搜索行业、业态或关键词" @confirm="search" />
 		</view>
-		<view slot="actions" class="total">全部 {{ total }} 条 ›</view>
+		<view slot="actions" class="lib-actions">
+			<view class="upload-btn" @click="goUpload">上传素材</view>
+			<view class="total">全部 {{ total }} 条 ›</view>
+		</view>
 
 		<view class="library">
 			<view class="industry-row">
@@ -184,6 +187,9 @@ export default {
 		})
 	},
 	methods: {
+		goUpload() {
+			uni.navigateTo({ url: '/pages/material/upload' })
+		},
 		chooseGroup(g) {
 			if (!g) return
 			this.currentGroup = g
@@ -261,6 +267,10 @@ export default {
 .searchbar { width:560rpx; height:64rpx; background:#F4F6FA; border-radius:999rpx; display:flex; align-items:center; padding:0 24rpx; }
 .s-ico { font-size:28rpx; margin-right:12rpx; }
 .s-input { flex:1; font-size:25rpx; }
+.lib-actions { display:flex; align-items:center; gap:16rpx; }
+.upload-btn {
+	font-size:24rpx; color:#fff; background:#2F6BFF; padding:10rpx 20rpx; border-radius:999rpx; font-weight:600;
+}
 .total { font-size:24rpx; color:$ink-2; }
 .library { flex:1; min-height:0; display:flex; flex-direction:column; gap:18rpx; }
 .industry-row { height:300rpx; display:flex; gap:18rpx; flex-shrink:0; }

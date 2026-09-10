@@ -90,7 +90,13 @@
 					<view class="sc-title-row">
 						<view class="sc-title">新内容已上线</view>
 						<text v-if="cacheStatus.syncing" class="cache-tag syncing">同步中…</text>
-						<text v-else class="cache-tag" @click="syncMaterials">本地 {{ cacheStatus.cachedVideo }}/{{ cacheStatus.remoteTotal || '—' }}</text>
+						<text v-else class="cache-tag">本地 {{ cacheStatus.cachedVideo }}/{{ cacheStatus.remoteTotal || '—' }}</text>
+					</view>
+					<view class="cache-actions">
+						<view class="btn btn-primary cache-btn" :class="{disabled: cacheStatus.syncing}" @click="syncMaterials">
+							{{ cacheStatus.syncing ? '正在缓存…' : '缓存 / 更新素材' }}
+						</view>
+						<text class="cache-tip">点此把上架视频下到 Pad，选片可离线秒开</text>
 					</view>
 					<view class="new-grid">
 						<view v-for="m in newMaterials" :key="m.id" class="ng-item" @click="goMaterial">
@@ -153,10 +159,12 @@ export default {
 			this.cacheStatus = this.$materialCache.getStatus()
 		},
 		syncMaterials() {
+			if (this.cacheStatus.syncing) return
 			if (!this.$materialCache.isAppPlus()) {
-				uni.showToast({ title: '请在 Pad App 中使用本地缓存', icon: 'none' })
+				uni.showToast({ title: '请在 Pad 打包 App 中使用本地缓存', icon: 'none' })
 				return
 			}
+			uni.showToast({ title: '开始缓存上架素材…', icon: 'none' })
 			this.$materialCache.startSync(this.$api, this.$base.url, { silent: false })
 		},
 		loadData() {
@@ -560,6 +568,25 @@ export default {
 .cache-tag.syncing {
 	color: $muted;
 	background: #F1F3F6;
+}
+.cache-actions {
+	margin-bottom: 20rpx;
+}
+.cache-btn {
+	width: 100%;
+	height: 72rpx;
+	font-size: 26rpx;
+	border-radius: 14rpx;
+}
+.cache-btn.disabled {
+	opacity: .55;
+}
+.cache-tip {
+	display: block;
+	margin-top: 10rpx;
+	font-size: 20rpx;
+	color: $muted;
+	line-height: 1.4;
 }
 .overview {
 	display: flex;
