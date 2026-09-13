@@ -48,3 +48,6 @@ pnpm-debug.log*
 *.sln
 *.sw?
 diy-bracelet-backend-code/diy-common/target/classes/com/diy/constant/JwtClaimsConstant.class
+
+# 竖屏测量临时文件（勿入正式包）
+sales/_design_tmp/

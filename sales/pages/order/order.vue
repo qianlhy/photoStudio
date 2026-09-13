@@ -71,35 +71,65 @@
 
 				<view class="card content-card">
 					<text class="cc-title">本次内容</text>
-					<view class="recipe-row">
-						<view class="radar">
-							<svg class="radar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-								<polygon :points="radar.outerStr" fill="#FFFFFF" stroke="#D9E0EA" stroke-width="0.9"></polygon>
-								<polygon :points="radar.midStr" fill="none" stroke="#E9ECF1" stroke-width="0.6"></polygon>
-								<line v-for="(p,i) in radar.outer" :key="'ax'+i" x1="50" y1="50" :x2="p[0]" :y2="p[1]" stroke="#EDF0F4" stroke-width="0.5"></line>
-								<polygon :points="radar.dataStr" fill="rgba(47,107,255,0.16)" stroke="#2F6BFF" stroke-width="1.2"></polygon>
-								<circle v-for="(p,i) in radar.data" :key="'pt'+i" :cx="p[0]" :cy="p[1]" r="1.6" fill="#2F6BFF"></circle>
-							</svg>
+					<view class="cc-panels">
+						<!-- 竖屏稿：参与人员（横屏隐藏；数据用订单拍摄/剪辑字段） -->
+						<view class="cc-panel cc-staff">
+							<text class="ccp-title">参与人员</text>
+							<view v-if="selected.shooterName" class="staff-row">
+								<view class="staff-av av-shoot">{{ (selected.shooterName || '').charAt(0) }}</view>
+								<text class="staff-txt">拍摄 {{ selected.shooterName }}</text>
+							</view>
+							<view v-if="selected.editorName" class="staff-row">
+								<view class="staff-av av-edit">{{ (selected.editorName || '').charAt(0) }}</view>
+								<text class="staff-txt">剪辑 {{ selected.editorName }}</text>
+							</view>
+							<view v-if="!selected.shooterName && !selected.editorName" class="staff-empty">暂未分配拍摄/剪辑</view>
 						</view>
-						<view class="recipe-list">
-							<view v-for="(a,i) in radar.axes" :key="i" class="rl-item">
-								<text class="rl-dot" :style="{background: radarColors[i]}"></text>
-								<text class="rl-name">{{ a }}</text>
-								<text class="rl-num">{{ radar.counts[i] }}</text>
+
+						<view class="cc-panel cc-formula">
+							<text class="ccp-title">五大内容公式</text>
+							<view class="recipe-row">
+								<view class="radar">
+									<svg class="radar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+										<polygon :points="radar.outerStr" fill="#FFFFFF" stroke="#D9E0EA" stroke-width="0.9"></polygon>
+										<polygon :points="radar.midStr" fill="none" stroke="#E9ECF1" stroke-width="0.6"></polygon>
+										<line v-for="(p,i) in radar.outer" :key="'ax'+i" x1="50" y1="50" :x2="p[0]" :y2="p[1]" stroke="#EDF0F4" stroke-width="0.5"></line>
+										<polygon :points="radar.dataStr" fill="rgba(47,107,255,0.16)" stroke="#2F6BFF" stroke-width="1.2"></polygon>
+										<circle v-for="(p,i) in radar.data" :key="'pt'+i" :cx="p[0]" :cy="p[1]" r="1.6" fill="#2F6BFF"></circle>
+									</svg>
+								</view>
+								<view class="recipe-list">
+									<view v-for="(a,i) in radar.axes" :key="i" class="rl-item">
+										<text class="rl-dot" :style="{background: radarColors[i]}"></text>
+										<text class="rl-name">{{ a }}</text>
+										<text class="rl-num">{{ radar.counts[i] }}</text>
+									</view>
+								</view>
 							</view>
 						</view>
-					</view>
-					<view class="item-grid">
-						<view v-for="(it,i) in items" :key="it.id" class="it-cell">
-							<image class="it-img" :src="$img(it.cover)" mode="aspectFill"></image>
-							<view class="it-no">{{ i+1 }}</view>
-							<view class="it-check" :class="{done:it.status==1}">{{ it.status==1 ? '✓' : '' }}</view>
-							<text class="it-name">{{ it.title }}</text>
+
+						<view class="cc-panel cc-items">
+							<text class="ccp-title">本次订单内容 ({{ selected.completedCount || 0 }}/{{ selected.videoCount || 0 }})</text>
+							<view class="item-grid">
+								<view v-for="(it,i) in items" :key="it.id" class="it-cell">
+									<image class="it-img" :src="$img(it.cover)" mode="aspectFill"></image>
+									<view class="it-no it-no-land">{{ i + 1 }}</view>
+									<view class="it-no it-no-port">{{ padNo(i + 1) }}</view>
+									<view class="it-check" :class="{done:it.status==1}">{{ it.status==1 ? '✓' : '' }}</view>
+									<text class="it-name">{{ it.title }}</text>
+								</view>
+							</view>
 						</view>
 					</view>
 					<view class="cc-foot">
 						<text class="cc-hint">正常制作阶段仅查看进度，不安排拍摄、不上传成品、不确认交付</text>
-						<view class="btn btn-ghost" @click="viewList">查看本次拍摄清单 ›</view>
+						<view class="cc-actions">
+							<view class="btn btn-ghost cc-btn-list" @click="viewList">查看本次拍摄清单</view>
+							<view class="btn btn-primary cc-btn-contact" @click="contactManager">
+								<view class="cc-btn-ico" aria-hidden="true"></view>
+								<text>联系负责人</text>
+							</view>
+						</view>
 					</view>
 				</view>
 			</view>
@@ -291,6 +321,14 @@ export default {
 		viewList() {
 			const n = (this.items || []).length
 			uni.showToast({ title: n ? `本次共 ${n} 条内容清单` : '暂无内容清单', icon: 'none' })
+		},
+		padNo(n) {
+			const v = Number(n) || 0
+			return v < 10 ? '0' + v : String(v)
+		},
+		contactManager() {
+			const name = (this.selected && this.selected.managerName) || '负责人'
+			uni.showToast({ title: '联系' + name, icon: 'none' })
 		}
 	}
 }
@@ -349,6 +387,14 @@ export default {
 .d-card { flex-shrink:0; }
 .content-card { padding:24rpx; flex:1; min-height:0; display:flex; flex-direction:column; }
 .cc-title { font-size:28rpx; font-weight:600; }
+/* 横屏默认：保持原「本次内容」观感，隐藏竖屏稿专属块 */
+.cc-staff,
+.ccp-title,
+.cc-btn-contact { display: none; }
+.cc-panels { display: contents; }
+.cc-panel { display: contents; }
+.cc-formula,
+.cc-items { display: contents; }
 .recipe-row { display:flex; align-items:center; gap:26rpx; margin:18rpx 0; }
 .radar { width:200rpx; height:200rpx; flex-shrink:0; }
 .radar-svg { width:100%; height:100%; display:block; }
@@ -361,18 +407,20 @@ export default {
 .it-cell { width: calc((100% - 70rpx) / 6); position:relative; display:flex; flex-direction:column; }
 .it-img { width:100%; height:120rpx; border-radius:12rpx; background:#eee; box-shadow:0 3rpx 10rpx rgba(31,39,51,.05); }
 .it-no { position:absolute; left:8rpx; bottom:42rpx; color:#fff; font-size:22rpx; font-weight:700; text-shadow:0 0 6rpx rgba(0,0,0,.6); }
+.it-no-port { display: none; }
 .it-check { position:absolute; top:8rpx; right:8rpx; width:32rpx; height:32rpx; border-radius:50%; background:rgba(255,255,255,.85); border:2rpx solid #D7DCE3; display:flex; align-items:center; justify-content:center; font-size:22rpx; color:#fff; }
 .it-check.done { background:#22B07D; border-color:#22B07D; }
 .it-name { font-size:20rpx; color:$ink-2; margin-top:8rpx; text-align:center; }
 .cc-foot { display:flex; flex-direction:column; gap:18rpx; margin-top:auto; padding-top:24rpx; }
 .cc-hint { font-size:22rpx; color:$muted; line-height:1.5; }
-.cc-foot .btn { height:84rpx; font-size:26rpx; }
+.cc-actions { display:flex; flex-direction:column; gap:18rpx; }
+.cc-btn-list { height:84rpx; font-size:26rpx; }
 
 .empty-center { display:flex; align-items:center; justify-content:center; color:$muted; min-height:400rpx; }
 .empty { color:$muted; font-size:26rpx; text-align:center; padding:40rpx 0; }
 
 /* 1-4 标注稿：订单列表 663、详情 609，卡片高约 210 */
-@media #{$pad-mq-landscape} {
+@include pad-landscape {
 	.searchbar {
 		width: 27.7vw;
 		height: 5.2vh;
@@ -563,27 +611,477 @@ export default {
 	}
 }
 
-@media #{$pad-mq-portrait} {
+@include pad-portrait {
+	.searchbar {
+		width: $p-search-07;
+		max-width: 100%;
+		height: p-px(44);
+		min-height: p-px(44);
+		background: #fff;
+		border: 1px solid $line;
+		box-sizing: border-box;
+	}
+	.s-input {
+		font-size: p-px(14);
+	}
+	/* 稿式：白底分段 Tab + 底部指示条（不用实心色块，避免字贴边） */
+	.tabs {
+		display: flex;
+		flex-wrap: nowrap;
+		align-items: stretch;
+		gap: 0;
+		height: auto;
+		min-height: p-px(52);
+		margin-bottom: 0;
+		padding: p-px(4) p-px(8);
+		background: #fff;
+		border: 1px solid $line;
+		border-radius: p-px(16);
+		box-shadow: 0 2px 12px rgba(32, 41, 56, .04);
+		box-sizing: border-box;
+		overflow: hidden;
+	}
+	.tab {
+		position: relative;
+		flex: 1;
+		min-width: 0;
+		text-align: center;
+		white-space: nowrap;
+		font-size: p-px(15);
+		line-height: 1.3;
+		padding: p-px(14) p-px(16);
+		color: $ink-2;
+		background: transparent !important;
+		border: none !important;
+		border-radius: 0;
+		box-shadow: none !important;
+		box-sizing: border-box;
+	}
+	.tab.on {
+		color: $brand !important;
+		font-weight: 600;
+		background: transparent !important;
+		border: none !important;
+		box-shadow: none !important;
+	}
+	.tab.on::after {
+		content: "";
+		position: absolute;
+		left: 22%;
+		right: 22%;
+		bottom: p-px(6);
+		height: 3px;
+		border-radius: 2px;
+		background: $brand;
+	}
 	.om {
 		flex-direction: column;
-		overflow-y: auto;
+		height: auto;
+		overflow: visible;
+		gap: p-px(14);
 	}
-	.col-list, .col-detail {
+	.col-list,
+	.col-detail {
 		flex: none;
 		width: 100%;
-	}
-	.col-detail {
-		margin-top: 2vh;
-	}
-	.d-card {
+		margin: 0;
 		height: auto;
+		min-height: 0;
+	}
+	/* 稿：展开详情在上，订单列表在下 */
+	.col-detail {
+		order: 1;
+	}
+	.col-list {
+		order: 2;
+	}
+	.cl-title {
+		font-size: p-px(16);
+		font-weight: 700;
+		/* 与 Tab 区间出约两行 */
+		margin-top: p-px(28);
+		margin-bottom: p-px(12);
+	}
+	.cl-scroll {
+		height: auto !important;
+		max-height: none;
+	}
+	.o-card {
+		border-radius: $p-radius;
+		padding: p-px(14) p-px(18);
+		margin-bottom: p-px(12);
+		min-height: p-px(88);
+		background: #fff;
+		border: 1px solid $line;
+		box-sizing: border-box;
+	}
+	.o-card.on {
+		border-color: $brand;
+		box-shadow: 0 0 0 2px rgba(47,107,255,.14);
+	}
+	.o-name {
+		font-size: p-px(16);
+	}
+	.o-pkg,
+	.o-cnt,
+	.ow-name,
+	.o-prog-text {
+		font-size: p-px(12);
+	}
+	.o-days {
+		font-size: p-px(13);
+		flex: 0 0 $p-order-days;
+		width: $p-order-days;
+		max-width: $p-order-days;
+		text-align: right;
+		box-sizing: border-box;
+	}
+	.o-owner {
+		flex: 0 0 $p-order-mgr;
+		width: $p-order-mgr;
+		max-width: $p-order-mgr;
+		box-sizing: border-box;
+		overflow: hidden;
+	}
+	.d-num {
+		font-size: p-px(22);
+		color: $warn;
+		font-weight: 700;
+	}
+	.empty-center {
+		display: none;
+	}
+	/*
+	 * 图一 = 图三合成：一张展开卡
+	 * 上头像/套餐/负责人/天数，下五角雷达+内容图
+	 */
+	.col-detail {
+		order: 1;
+		margin-top: p-px(12);
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+		background: #fff;
+		border: 1px solid rgba(47, 107, 255, .22);
+		border-radius: $p-radius;
+		overflow: hidden;
+		box-shadow: 0 4px 16px rgba(32, 41, 56, .04);
+		box-sizing: border-box;
+	}
+	.col-detail .d-card {
+		order: 1;
+		height: auto !important;
+		margin: 0;
+		padding: p-px(16) p-px(18) p-px(12);
+		border: none !important;
+		border-radius: 0;
+		box-shadow: none !important;
+		background: transparent;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-rows: auto auto;
+		column-gap: p-px(12);
+		row-gap: p-px(12);
+		align-items: center;
+	}
+	.col-detail .content-card {
+		order: 2;
+		height: auto !important;
+		margin: 0;
+		padding: p-px(12) p-px(14) p-px(16);
+		border: none !important;
+		border-radius: 0;
+		box-shadow: none !important;
+		background: transparent;
+		border-top: 1px solid #F0F2F5;
+	}
+	/* 竖屏展开卡不需要「本次订单」标题行 */
+	.d-head {
+		display: none !important;
+	}
+	.d-cust {
+		grid-column: 1;
+		grid-row: 1;
+		margin: 0;
+		align-items: center;
+		min-width: 0;
+	}
+	.dc-img {
+		width: p-px(56);
+		height: p-px(56);
+		border-radius: 50%;
+		flex-shrink: 0;
+	}
+	.dc-info {
+		margin-left: p-px(12);
+		min-width: 0;
+	}
+	.dc-name {
+		font-size: p-px(16);
+		font-weight: 700;
+		line-height: 1.3;
+	}
+	.dc-meta {
+		margin-top: p-px(4);
+		justify-content: flex-start;
+		flex-wrap: wrap;
+		gap: p-px(6) p-px(10);
+		font-size: p-px(12);
+	}
+	/* 天数靠右，对齐图一 */
+	.deliver {
+		display: contents;
+	}
+	.dl-title {
+		grid-column: 2;
+		grid-row: 1;
+		align-self: center;
+		justify-self: end;
+		margin: 0;
+		padding: 0;
+		text-align: right;
+		font-size: p-px(11);
+		font-weight: 500;
+		color: $danger;
+		line-height: 1.25;
+		width: $p-order-days;
+		max-width: $p-order-days;
+		box-sizing: border-box;
+	}
+	.dl-title .dl-num,
+	.dl-num {
+		display: block;
+		color: $danger;
+		font-size: p-px(28);
+		font-weight: 800;
+		line-height: 1.1;
+		margin-top: p-px(2);
+	}
+	.dl-sub {
+		grid-column: 1 / -1;
+		grid-row: 2;
+		margin: 0;
+		font-size: p-px(13);
+		color: $ink-2;
+	}
+	.o-bar.big {
+		grid-column: 1 / -1;
+		grid-row: 3;
+		margin-top: 0;
+		height: p-px(8);
+	}
+	/* 竖屏稿：参与人员 | 五大公式 | 本次订单内容 —— 同一行横排 */
+	.cc-title {
+		display: none !important;
+	}
+	.cc-panels {
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+		gap: p-px(12);
+		min-height: p-px(220);
+	}
+	.cc-panel {
+		display: flex;
+		flex-direction: column;
+		background: #F8FAFC;
+		border: 1px solid $line;
+		border-radius: p-px(14);
+		padding: p-px(12) p-px(14);
+		box-sizing: border-box;
+		min-width: 0;
+	}
+	.cc-staff {
+		display: flex !important;
+		flex: 0 0 $p-order-staff;
+		width: $p-order-staff;
+	}
+	.cc-formula {
+		flex: 0 0 $p-order-formula;
+		width: $p-order-formula;
+	}
+	.cc-items {
+		flex: 1 1 $p-order-items;
+		min-width: 0;
+	}
+	.ccp-title {
+		display: block !important;
+		font-size: p-px(14);
+		font-weight: 700;
+		color: $ink;
+		margin-bottom: p-px(10);
+		flex-shrink: 0;
+	}
+	.staff-row {
+		display: flex;
+		align-items: center;
+		gap: p-px(8);
+		margin-bottom: p-px(10);
+	}
+	.staff-row:last-child {
+		margin-bottom: 0;
+	}
+	.staff-av {
+		width: p-px(32);
+		height: p-px(32);
+		border-radius: 50%;
+		color: #fff;
+		font-size: p-px(13);
+		font-weight: 700;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+	.av-shoot { background: #22B07D; }
+	.av-edit { background: $brand; }
+	.staff-txt {
+		font-size: p-px(13);
+		color: $ink;
+		line-height: 1.3;
+	}
+	.staff-empty {
+		font-size: p-px(12);
+		color: $muted;
+	}
+	.recipe-row {
+		display: flex;
+		flex-direction: row;
+		flex-wrap: nowrap;
+		align-items: center;
+		gap: p-px(10);
+		margin: 0;
+		flex: 1;
+		min-height: 0;
+	}
+	.radar {
+		width: p-px(88);
+		height: p-px(88);
+		max-width: p-px(88);
+		max-height: p-px(88);
+		margin: 0;
+		flex-shrink: 0;
+	}
+	.recipe-list {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		gap: p-px(4);
+	}
+	.rl-item {
+		width: 100%;
+	}
+	.rl-name,
+	.rl-num {
+		font-size: p-px(12);
+	}
+	.item-grid {
+		display: flex;
+		flex-wrap: wrap;
+		gap: p-px(8.5);
+		flex: 1;
+		align-content: flex-start;
 	}
 	.it-cell {
-		width: calc((100% - 28rpx) / 3);
+		width: calc((100% - #{p-px(17)}) / 3);
+		box-sizing: border-box;
 	}
-	.tabs {
-		flex-wrap: wrap;
-		height: auto;
+	/* pxcp：缩略图 230×175 位图 → 115×88 dp；列间距 ≈8.5 */
+	.it-img {
+		width: 100%;
+		height: p-px(88);
+		border-radius: p-px(8);
+	}
+	.it-name {
+		font-size: p-px(11);
+		margin-top: p-px(4);
+	}
+	/* 稿：序号左上角 01…，隐藏勾选圈 */
+	.it-no-land {
+		display: none !important;
+	}
+	.it-no-port {
+		display: block !important;
+	}
+	.it-no {
+		left: p-px(6);
+		top: p-px(6);
+		bottom: auto;
+		font-size: p-px(12);
+		font-weight: 700;
+		text-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+	}
+	.it-check {
+		display: none !important;
+	}
+	.cc-hint {
+		display: none;
+	}
+	/* pxcp 07：按钮右对齐在「公式+订单内容」下方
+	   清单宽 405→203dp，联系宽 ≈393→197dp，高 91→46dp，间距 26→13dp */
+	.cc-foot {
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 0;
+		padding-top: p-px(16);
+		margin-top: p-px(4);
+	}
+	.cc-actions {
+		display: flex;
+		flex-direction: row;
+		justify-content: flex-end;
+		align-items: center;
+		gap: $p-btn-gap;
+		width: auto;
+	}
+	.cc-btn-list,
+	.cc-btn-contact {
+		flex: 0 0 auto;
+		box-sizing: border-box;
+		height: $p-ctrl-h;
+		min-height: $p-ctrl-h;
+		border-radius: 999px;
+		font-size: p-px(14);
+		margin: 0;
+		padding: 0;
+		line-height: $p-ctrl-h;
+	}
+	.cc-btn-list {
+		width: $p-btn-list-w;
+		min-width: $p-btn-list-w;
+		color: $brand;
+		border: 1px solid $brand;
+		background: #fff;
+	}
+	.cc-btn-contact {
+		display: flex !important;
+		align-items: center;
+		justify-content: center;
+		gap: p-px(6);
+		width: $p-btn-contact-w;
+		min-width: $p-btn-contact-w;
+	}
+	.cc-btn-ico {
+		width: p-px(16);
+		height: p-px(14);
+		border: 1.5px solid #fff;
+		border-radius: p-px(4) p-px(4) p-px(4) p-px(2);
+		box-sizing: border-box;
+		position: relative;
+		flex-shrink: 0;
+	}
+	.cc-btn-ico::after {
+		content: '';
+		position: absolute;
+		left: p-px(3);
+		bottom: p-px(-4);
+		width: 0;
+		height: 0;
+		border-style: solid;
+		border-width: p-px(4) p-px(4) 0 0;
+		border-color: #fff transparent transparent transparent;
 	}
 }
 </style>

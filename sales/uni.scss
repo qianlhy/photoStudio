@@ -18,11 +18,99 @@ $pad-design-h: 800;
 $pad-landscape-min-w: 900px;
 $pad-mq-landscape: "(min-width: #{$pad-landscape-min-w}) and (orientation: landscape)";
 
-/* 设计基准：800×1280 竖屏 Pad（小米平板 6 Pro 竖屏约 1800×2880） */
+/* 设计基准：1800×2880 竖屏 Pad（PxCook 合意传媒竖屏.pxcp）
+ * pxcp：Android / xhdpi / dp·sp / retinaScale=1 / artboard 1800×2880
+ * 红线存在 marks[]（画布像素）；CSS 用 dp = 位图像素 ÷ 2（相对 900 逻辑宽）
+ * 跳过稿：08 销售行动中心（02 选片竖屏对齐 selection 页）
+ * 浏览器测试：设备 900×1440、DPR=2；竖屏用 p-px()，禁止 vw
+ */
+$pad-portrait-design-w: 900;
+$pad-portrait-design-h: 1440;
+$pad-portrait-design-bitmap-w: 1800;
+$pad-portrait-design-bitmap-h: 2880;
 $pad-portrait-min-w: 600px;
 $pad-mq-portrait: "(min-width: #{$pad-portrait-min-w}) and (orientation: portrait)";
 
-/* 五类内容配色（厨过程/教知识/讲故事/说观点/硬广） */
+@function p-px($n) {
+	/* $n = 设计 dp（pxcp dist÷2） */
+	@return $n * 1px;
+}
+@function p-w($n) {
+	@return percentage($n / $pad-portrait-design-w);
+}
+
+/* 竖屏通用（来自 2026-09-12 竖屏.pxcp marks，dist÷2） */
+$p-pad-x: p-px(30);          /* 稿边距约 55–59px → 28–30dp；内容宽≈835 */
+$p-gap: p-px(16);
+$p-radius: p-px(16);
+$p-ctrl-h: p-px(46);         /* 通用主控高（07 底钮高 91→46） */
+$p-nav-h: p-px(96);          /* 01 V dist=192 */
+$p-nav-gap: p-px(145);       /* 01 H dist=290；底栏项 max-width */
+$p-metric-h: p-px(226);      /* 05 V ≈451–455 */
+$p-metric-gap: p-px(17);     /* 05 两卡间距 ≈34px */
+$p-progress-fr: 580;         /* 05 H dist=1159 → 579.5 */
+$p-life-fr: 245;             /* 05 H dist=490 */
+$p-cover: p-px(243);         /* 05 H dist=486 */
+$p-hero-btn: p-px(284);      /* 01 H dist=567 */
+$p-hero-h: p-px(167);        /* 01 V dist=333 */
+$p-hero-actions: p-px(322);  /* 01 H dist=643 */
+$p-ov-cell: p-px(243);       /* 01 H dist=486 */
+$p-ov-gap: p-px(24);         /* 01 H dist=47 → 23.5 */
+$p-split-l: 411;             /* 01 H dist=822 */
+$p-split-r: 409;             /* 01 H dist=818 */
+$p-split-gap: p-px(19);      /* 915-877 ≈38px */
+$p-split-h: p-px(339);       /* 01 V dist=678 */
+$p-mat-card: p-px(150);      /* 01 H dist=299 */
+$p-bento-hero: p-px(326);    /* 04 H dist=652 */
+$p-bento-h: p-px(337);       /* 04 V dist=674 */
+$p-bento-preview: p-px(258); /* 04 H dist=516 */
+$p-search-04: p-px(349);     /* 04 H dist=698 */
+$p-search-05: p-px(341);     /* 05 H dist=682 */
+$p-search-07: p-px(356);     /* 07 H dist=712 */
+$p-cust-strip-h: p-px(115);  /* 05 V dist=230 */
+$p-act-card-w: p-px(224);    /* 05 H dist=447 → 223.5 */
+$p-order-staff: p-px(160);   /* 07 H dist=319 → 159.5 */
+$p-order-formula: p-px(226); /* 07 H dist=451 → 225.5 */
+$p-order-items: p-px(379);   /* 07 H dist=758 */
+$p-order-mgr: p-px(153);     /* 07 H dist=306 负责人块 */
+$p-order-days: p-px(88);     /* 07 H dist=175 天数块 */
+$p-btn-list-w: p-px(203);    /* 07 H dist=405 */
+$p-btn-contact-w: p-px(197); /* 07 实测 ≈393 */
+$p-btn-gap: p-px(13);        /* 07 钮间距 ≈26 */
+$p-follow-btn-l: p-px(345);  /* 06 H dist=690 */
+$p-follow-btn-r: p-px(332);  /* 06 H dist=664 */
+$p-follow-field-h: p-px(84); /* 06 字段 V ≈79–92 取中 */
+/* 02 顾客现场选片_v3（选片竖屏） */
+$p-sel-player-h: p-px(840);  /* V dist=1679 → 839.5 */
+$p-sel-player-r: p-px(16);
+$p-sel-btn-w: p-px(311);     /* H dist=622 / 630 */
+$p-sel-btn-h: p-px(60);      /* 实测 ≈120px */
+$p-sel-btn-gap: p-px(38);    /* 钮间距 ≈77px */
+$p-sel-thumb-w: p-px(93);
+$p-sel-thumb-h: p-px(150);   /* V dist=306 → 153 */
+$p-sel-strip-gap: p-px(14);
+
+/*
+ * 横/竖屏样式 mixin
+ * - 横屏：与改前一致，仅靠 orientation:landscape 媒体查询（不依赖 html 选择器，避免 App 真机失效）
+ * - 竖屏：orientation:portrait；H5「竖屏预览」另加 html.force-portrait（选择器更高，可盖过横屏）
+ * - force-portrait / 预览按钮为 H5 临时工具，上线前可删
+ */
+@mixin pad-landscape {
+	@media #{$pad-mq-landscape} {
+		@content;
+	}
+}
+@mixin pad-portrait {
+	@media #{$pad-mq-portrait} {
+		@content;
+	}
+	html.force-portrait {
+		@content;
+	}
+}
+
+/* 五类内容配色（晒过程/教知识/讲故事/说观点/硬广） */
 $c-process: #7C5CFF;
 $c-knowledge: #2F6BFF;
 $c-story: #B9C0CC;

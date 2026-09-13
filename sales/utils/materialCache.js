@@ -216,15 +216,20 @@ function getPlayableVideo(materialId) {
 
 function getCoverUrl(material, baseUrl) {
 	if (!material) return ''
-	const local = getLocalPath(material.id, 'cover')
-	if (local) return toPlayableUrl(local)
+	// H5 / 非 App：不要读本地缓存路径（manifest 可能残留无效路径）
+	if (isAppPlus()) {
+		const local = getLocalPath(material.id, 'cover')
+		if (local) return toPlayableUrl(local)
+	}
 	return fullUrl(material.cover, baseUrl)
 }
 
 function getVideoUrl(material, baseUrl) {
 	if (!material) return ''
-	const local = getPlayableVideo(material.id)
-	if (local) return local
+	if (isAppPlus()) {
+		const local = getPlayableVideo(material.id)
+		if (local) return local
+	}
 	return fullUrl(material.video, baseUrl)
 }
 

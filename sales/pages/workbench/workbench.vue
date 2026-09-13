@@ -1,10 +1,16 @@
 <template>
 	<sales-shell active="workbench" align="center" :title="greeting" :subtitle="subtitle">
 		<view class="wb">
+			<!-- 竖屏问候（对齐设计：品牌下行大标题） -->
+			<view class="p-hello">
+				<text class="p-hello-title">{{ greeting }} 👋</text>
+				<text class="p-hello-sub">新的一天，继续加油，保持热爱，奔赴山海</text>
+			</view>
+
 			<!-- 左主列 -->
 			<view class="col-main">
 				<!-- Hero -->
-				<view class="hero">
+				<view class="hero p-ord-hero">
 					<view class="hero-text">
 						<view class="hero-title">准备好开始今天的创作了吗？</view>
 						<view class="hero-sub">为顾客找到真正适合他的内容方案</view>
@@ -16,68 +22,90 @@
 					<view class="hero-glow"></view>
 				</view>
 
-				<!-- 今日接待 -->
-				<view class="block-title">今日接待</view>
-				<view v-if="receptions.length===0" class="empty grow">今日暂无接待安排</view>
-				<view v-else class="reception">
-					<view v-for="(r,idx) in receptions" :key="r.id" class="rc-col">
-						<!-- 顶部时间线 -->
-						<view class="rc-timeline">
-							<view class="rc-dot" :class="{active: idx===0}"></view>
-							<view v-if="idx < receptions.length-1" class="rc-track"></view>
-						</view>
-						<view class="rc-card" @click="openCustomer(r)">
-							<view class="rc-time" :style="{color: statusColor(idx)}">{{ formatHm(r.taskTime) }}</view>
-							<view class="rc-body">
-								<image class="rc-img" :src="$img(r.cover)" mode="aspectFill"></image>
-								<view class="rc-info">
-									<text class="rc-name">{{ r.customerName }}</text>
-									<text class="rc-status" :style="{color: statusColor(idx)}">{{ r.action }}</text>
+				<!-- 竖屏：接待 + 继续选片并排 -->
+				<view class="p-split">
+					<view class="p-split-left">
+						<view class="block-title">今日接待</view>
+						<view v-if="receptions.length===0" class="empty grow">今日暂无接待安排</view>
+						<view v-else class="reception">
+							<view v-for="(r,idx) in receptions" :key="r.id" class="rc-col">
+								<view class="rc-timeline">
+									<view class="rc-dot" :class="{active: idx===0}"></view>
+									<view v-if="idx < receptions.length-1" class="rc-track"></view>
 								</view>
-								<text class="rc-arrow">›</text>
+								<view class="rc-card" @click="openCustomer(r)">
+									<view class="rc-time" :style="{color: statusColor(idx)}">{{ formatHm(r.taskTime) }}</view>
+									<view class="rc-body">
+										<image class="rc-img" :src="$img(r.cover)" mode="aspectFill"></image>
+										<view class="rc-info">
+											<text class="rc-name">{{ r.customerName }}</text>
+											<text class="rc-status" :style="{color: statusColor(idx)}">{{ r.action }}</text>
+										</view>
+										<text class="rc-arrow">›</text>
+									</view>
+								</view>
 							</view>
 						</view>
 					</view>
-				</view>
 
-				<!-- 继续上次选片 -->
-				<view v-if="lastSession" class="continue card">
-					<text class="ct-label">继续上次选片</text>
-					<image class="ct-img" :src="$img(lastSession.cover)" mode="aspectFill"></image>
-					<view class="ct-info">
-						<text class="ct-name">{{ lastSession.customerName }}</text>
+					<view v-if="lastSession" class="continue card p-ord-cont">
+						<text class="ct-label">继续上次选片</text>
+						<image class="ct-img" :src="$img(lastSession.cover)" mode="aspectFill"></image>
+						<view class="ct-info">
+							<text class="ct-name">{{ lastSession.customerName }}</text>
+						</view>
+						<view class="ct-count">已选 <text class="hot">{{ lastSession.selectedCount||0 }}</text> / 目标 {{ lastSession.targetCount||0 }}</view>
+						<view class="ct-bar"><view class="ct-bar-in" :style="{width: continuePct+'%'}"></view></view>
+						<view class="btn btn-danger ct-btn" @click="continueSelection">继续选片 ›</view>
 					</view>
-					<view class="ct-count">已选 <text class="hot">{{ lastSession.selectedCount||0 }}</text> / 目标 {{ lastSession.targetCount||0 }}</view>
-					<view class="btn btn-danger ct-btn" @click="continueSelection">继续选片 ›</view>
 				</view>
 			</view>
 
 			<!-- 右列 -->
 			<view class="col-side">
 				<!-- 今日概览 -->
-				<view class="card side-card">
+				<view class="card side-card p-ord-ov">
 					<view class="sc-title">今日概览</view>
 					<view class="overview">
 						<view class="ov-item o1">
-							<text class="ov-num">{{ overview.reception }}</text>
-							<text class="ov-label">待接待</text>
+							<view class="ov-ico" aria-hidden="true"></view>
+							<view class="ov-meta">
+								<text class="ov-num">{{ overview.reception }}</text>
+								<text class="ov-label">待接待</text>
+							</view>
 						</view>
 						<view class="ov-item o2">
-							<text class="ov-num">{{ overview.follow }}</text>
-							<text class="ov-label">待跟进</text>
+							<view class="ov-ico" aria-hidden="true"></view>
+							<view class="ov-meta">
+								<text class="ov-num">{{ overview.follow }}</text>
+								<text class="ov-label">待跟进</text>
+							</view>
 						</view>
 						<view class="ov-item o3">
-							<text class="ov-num">{{ overview.unpaid }}</text>
-							<text class="ov-label">待付款</text>
+							<view class="ov-ico" aria-hidden="true"></view>
+							<view class="ov-meta">
+								<text class="ov-num">{{ overview.unpaid }}</text>
+								<text class="ov-label">待付款</text>
+							</view>
 						</view>
 					</view>
 				</view>
 
+				<!-- 竖屏下一步横幅（取首条待办） -->
+				<view v-if="todos[0]" class="next-banner p-only" @click="openTodo(todos[0])">
+					<view class="nb-ico">◎</view>
+					<view class="nb-body">
+						<text class="nb-title">下一步：{{ todos[0].action }}</text>
+						<text class="nb-sub">{{ formatHm(todos[0].taskTime) || '待安排' }}</text>
+					</view>
+					<view class="nb-btn">继续跟进 ›</view>
+				</view>
+
 				<!-- 待办事项 -->
-				<view class="card side-card grow">
+				<view class="card side-card grow p-ord-todo">
 					<view class="sc-title">待办事项</view>
 					<view v-if="todos.length===0" class="empty sm">暂无待办</view>
-					<view v-for="(t,i) in todos" :key="t.id" class="todo">
+					<view v-for="(t,i) in todos" :key="t.id" class="todo" @click="openTodo(t)">
 						<view class="todo-dot" :style="{background: dotColor(i)}"></view>
 						<text class="todo-text">{{ t.action }}</text>
 						<text class="todo-time">{{ formatHm(t.taskTime) }}</text>
@@ -86,7 +114,7 @@
 				</view>
 
 				<!-- 新内容已上线 -->
-				<view class="card side-card">
+				<view class="card side-card p-ord-new">
 					<view class="sc-title-row">
 						<view class="sc-title">新内容已上线</view>
 						<text v-if="cacheStatus.syncing" class="cache-tag syncing">同步中…</text>
@@ -138,6 +166,13 @@ export default {
 		},
 		subtitle() {
 			return `今天有 ${this.overview.reception} 位客户等待接待`
+		},
+		continuePct() {
+			if (!this.lastSession) return 0
+			const t = Number(this.lastSession.targetCount) || 0
+			const s = Number(this.lastSession.selectedCount) || 0
+			if (t <= 0) return 0
+			return Math.min(100, Math.round((s / t) * 100))
 		}
 	},
 	onShow() {
@@ -283,6 +318,14 @@ export default {
 		},
 		continueSelection() {
 			uni.navigateTo({ url: `/pages/selection/selection?sessionId=${this.lastSession.id}&customerId=${this.lastSession.customerId}` })
+		},
+		openTodo(t) {
+			if (!t) return
+			if (t.customerId) {
+				uni.navigateTo({ url: `/pages/customer/customer?id=${t.customerId}` })
+				return
+			}
+			uni.navigateTo({ url: '/pages/customer/customer' })
 		},
 		goMaterial() {
 			uni.reLaunch({ url: '/pages/material/library' })
@@ -492,6 +535,21 @@ export default {
 	font-size: 34rpx;
 }
 
+/* 横屏：p-split 拆开，保持原主列流式布局 */
+.p-split,
+.p-split-left {
+	display: contents;
+}
+.p-only {
+	display: none;
+}
+.p-hello {
+	display: none;
+}
+.ct-bar {
+	display: none;
+}
+
 /* 继续选片 */
 .continue {
 	display: flex;
@@ -610,6 +668,14 @@ export default {
 .ov-item.o2 .ov-num { color: #2F6BFF; }
 .ov-item.o3 { background: #F3FBF7; border-color: #BFE9D5; }
 .ov-item.o3 .ov-num { color: #22B07D; }
+.ov-ico {
+	display: none;
+}
+.ov-meta {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
 .ov-num {
 	font-size: 52rpx;
 	font-weight: 800;
@@ -712,7 +778,7 @@ export default {
 }
 
 /* 1280×800 横屏 Pad：按 PxCook 标注比例 */
-@media #{$pad-mq-landscape} {
+@include pad-landscape {
 	.wb {
 		gap: .65vw;
 	}
@@ -927,41 +993,447 @@ export default {
 	}
 }
 
-@media #{$pad-mq-portrait} {
+/*
+ * Pad 竖屏：对齐 1800×2880 工作台稿
+ * 顺序：概览 → Hero → 下一步 → 接待|继续选片 → 新内容
+ */
+@include pad-portrait {
 	.wb {
+		display: flex;
 		flex-direction: column;
-		overflow-y: auto;
-	}
-	.col-main, .col-side {
-		flex: none;
-		width: 100%;
-	}
-	.col-side {
-		gap: 2vh;
-	}
-	.hero {
+		gap: $p-gap;
 		height: auto;
-		min-height: 22vh;
-		padding: 3vh 5vw;
+		min-height: 100%;
+		overflow: visible;
+		/* 竖屏尺寸相对本列宽度，避免 vw 吃到整屏 */
+		width: 100%;
+		box-sizing: border-box;
+	}
+	.col-main,
+	.col-side {
+		display: contents;
+	}
+	.p-ord-ov { order: 1; }
+	.p-ord-hero { order: 2; }
+	.next-banner { order: 3; }
+	.p-split { order: 4; }
+	.p-ord-new { order: 5; }
+	.p-ord-todo { display: none; }
+
+	.p-hello {
+		display: flex;
+		flex-direction: column;
+		order: 0;
+		gap: p-px(8);
+		padding: p-px(4) 0 p-px(16);
+	}
+	.p-hello-title {
+		font-size: p-px(28);
+		font-weight: 700;
+		color: $ink;
+		line-height: 1.25;
+		letter-spacing: 0.5px;
+	}
+	.p-hello-sub {
+		font-size: p-px(13);
+		color: $muted;
+		line-height: 1.45;
+	}
+
+	.p-only {
+		display: flex;
+	}
+	.next-banner {
+		align-items: center;
+		gap: p-px(16);
+		padding: p-px(14) p-px(20);
+		min-height: p-px(72);
+		background: #F0FBF5;
+		border: 1px solid rgba(34, 176, 125, .18);
+		border-radius: $p-radius;
+		box-sizing: border-box;
+	}
+	.nb-ico {
+		width: p-px(40);
+		height: p-px(40);
+		border-radius: 50%;
+		background: rgba(34, 176, 125, .14);
+		color: $ok;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: p-px(16);
+		flex-shrink: 0;
+	}
+	.nb-body {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: p-px(2);
+	}
+	.nb-title {
+		font-size: p-px(15);
+		font-weight: 600;
+		color: $ink;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.nb-sub {
+		font-size: p-px(12);
+		color: $muted;
+	}
+	.nb-btn {
+		flex-shrink: 0;
+		padding: p-px(8) p-px(16);
+		border-radius: 999px;
+		background: $ok;
+		color: #fff;
+		font-size: p-px(13);
+		font-weight: 600;
+	}
+
+	.side-card {
+		padding: p-px(16) p-px(20);
+		border-radius: $p-radius;
+		height: auto !important;
+		max-height: none !important;
+		min-height: 0;
+	}
+	.sc-title {
+		font-size: p-px(16);
+		margin-bottom: p-px(12);
+	}
+	.overview {
+		gap: $p-ov-gap;
+		justify-content: flex-start;
+	}
+	.ov-item {
+		flex: 0 1 $p-ov-cell;
+		width: $p-ov-cell;
+		max-width: $p-ov-cell;
+		min-width: 0;
+		flex-direction: row;
+		align-items: center;
+		justify-content: flex-start;
+		gap: p-px(12);
+		padding: p-px(16) p-px(14);
+		margin: 0;
+		border-radius: p-px(14);
+		border: 1px solid $line;
+		background: #fff !important;
+		box-sizing: border-box;
+	}
+	.ov-meta {
+		align-items: flex-start;
+		min-width: 0;
+	}
+	.ov-num {
+		font-size: p-px(26);
+		font-weight: 800;
+		line-height: 1.1;
+	}
+	.ov-label {
+		font-size: p-px(12);
+		margin-top: p-px(2);
+		color: $muted;
+	}
+	.ov-ico {
+		display: block;
+		position: relative;
+		width: p-px(40);
+		height: p-px(40);
+		border-radius: 50%;
+		flex-shrink: 0;
+	}
+	.ov-ico::before,
+	.ov-ico::after {
+		content: "";
+		position: absolute;
+		box-sizing: border-box;
+	}
+	/* 待接待：人物 */
+	.ov-item.o1 .ov-ico { background: #E8F8F0; }
+	.ov-item.o1 .ov-ico::before {
+		left: 14px; top: 9px; width: 12px; height: 12px;
+		border: 2px solid #22B07D; border-radius: 50%;
+	}
+	.ov-item.o1 .ov-ico::after {
+		left: 10px; bottom: 8px; width: 20px; height: 12px;
+		border: 2px solid #22B07D; border-radius: 10px 10px 4px 4px;
+	}
+	.ov-item.o1 .ov-num { color: $ink; }
+	/* 待跟进：剪贴板 */
+	.ov-item.o2 .ov-ico { background: #EAF1FF; }
+	.ov-item.o2 .ov-ico::before {
+		left: 12px; top: 10px; width: 16px; height: 20px;
+		border: 2px solid $brand; border-radius: 3px;
+	}
+	.ov-item.o2 .ov-ico::after {
+		left: 15px; top: 7px; width: 10px; height: 5px;
+		border: 2px solid $brand; border-radius: 2px; background: #EAF1FF;
+	}
+	.ov-item.o2 .ov-num { color: $ink; }
+	/* 待付款：钱包 */
+	.ov-item.o3 .ov-ico { background: #FFF0E8; }
+	.ov-item.o3 .ov-ico::before {
+		left: 10px; top: 12px; width: 20px; height: 16px;
+		border: 2px solid #FF8A3D; border-radius: 4px;
+	}
+	.ov-item.o3 .ov-ico::after {
+		left: 22px; top: 16px; width: 6px; height: 6px;
+		border-radius: 50%; background: #FF8A3D;
+	}
+	.ov-item.o3 .ov-num { color: $ink; }
+
+	.hero {
+		order: 2;
+		flex: none;
+		/* 01 V dist=333 → 167dp */
+		height: $p-hero-h;
+		min-height: $p-hero-h;
+		padding: p-px(28) p-px(32);
+		border-radius: $p-radius;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+	}
+	.hero-text {
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+	.hero-title {
+		width: 100%;
+		text-align: center;
+		font-size: p-px(22);
+		font-weight: 700;
+		line-height: 1.35;
+		letter-spacing: 0;
+	}
+	/* 竖屏稿此卡只有主标题，副标题横屏保留 */
+	.hero-sub {
+		display: none;
+	}
+	.hero-actions {
+		margin-top: p-px(22);
+		width: $p-hero-actions;
+		max-width: 100%;
+		/* 01 H dist=643 → 322dp 操作区 */
+		justify-content: center;
+		align-items: center;
+		gap: p-px(16);
+		flex-wrap: nowrap;
+	}
+	.hero-start {
+		flex: none;
+		/* 01 H dist=567 → 284dp */
+		width: $p-hero-btn;
+		max-width: 100%;
+		height: p-px(48);
+		min-height: p-px(48);
+		padding: 0 p-px(24);
+		font-size: p-px(16);
+		font-weight: 600;
+		border-radius: 999px;
+		white-space: nowrap;
+		box-shadow: 0 8px 18px rgba(47, 107, 255, .22);
+	}
+	/* 设计是「图标+文字」链接，不是第二颗白按钮，避免被挤换行 */
+	.hero-scan {
+		flex: none;
+		width: auto;
+		height: p-px(48);
+		min-height: p-px(48);
+		padding: 0 p-px(4);
+		font-size: p-px(15);
+		border-radius: 0;
+		background: transparent !important;
+		border: none !important;
+		box-shadow: none !important;
+		color: $ink !important;
+		white-space: nowrap;
+		font-weight: 500;
+	}
+
+	.p-split {
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+		/* 01：左 822 / 右 818，间距约 38px；区高 V678→339 */
+		gap: $p-split-gap;
+		min-height: $p-split-h;
+	}
+	.p-split-left {
+		display: flex;
+		flex-direction: column;
+		flex: $p-split-l;
+		min-width: 0;
+		background: #fff;
+		border: 1px solid $line;
+		border-radius: $p-radius;
+		padding: p-px(14) p-px(16) p-px(12);
+		box-sizing: border-box;
+	}
+	.p-split-left .block-title {
+		margin: 0 0 p-px(12);
+		font-size: p-px(15);
+	}
+	.p-split-left .empty {
+		padding: p-px(16) 0;
+		font-size: p-px(13);
 	}
 	.reception {
+		flex: none;
 		flex-direction: column;
+		gap: p-px(10);
 	}
 	.rc-col {
 		width: 100%;
+		flex-direction: row;
+		align-items: center;
+		gap: p-px(10);
 	}
+	.rc-timeline {
+		flex-direction: column;
+		width: p-px(12);
+		height: auto;
+		margin: 0;
+		padding: 0;
+		align-items: center;
+	}
+	.rc-track {
+		width: 2px;
+		flex: 1;
+		min-height: p-px(12);
+		margin: p-px(4) 0 0;
+	}
+	.rc-card {
+		flex: 1;
+		padding: p-px(10) p-px(12);
+		flex-direction: row;
+		align-items: center;
+		gap: p-px(12);
+		min-height: 0;
+	}
+	.rc-time {
+		font-size: p-px(14);
+		margin: 0;
+		width: p-px(52);
+		flex-shrink: 0;
+	}
+	.rc-body {
+		flex: 1;
+		min-width: 0;
+	}
+	.rc-img {
+		width: p-px(40);
+		height: p-px(40);
+		min-width: p-px(40);
+		min-height: p-px(40);
+		border-radius: 50%;
+	}
+	.rc-name {
+		font-size: p-px(13);
+	}
+	.rc-status {
+		font-size: p-px(12);
+	}
+
 	.continue {
+		flex: $p-split-r;
+		min-width: 0;
+		margin: 0;
 		height: auto;
 		flex-direction: column;
-		align-items: flex-start;
-		gap: 1.5vh;
-		padding: 2vh 3vw;
+		align-items: stretch;
+		gap: p-px(10);
+		padding: p-px(14) p-px(16);
+		border-radius: $p-radius;
+		box-sizing: border-box;
 	}
-	.col-side .side-card:nth-child(1),
-	.col-side .side-card:nth-child(2),
-	.col-side .side-card:nth-child(3) {
-		height: auto;
-		min-height: 0;
+	.ct-label {
+		margin: 0;
+		font-size: p-px(15);
+	}
+	.ct-img {
+		width: 100%;
+		height: p-px(120);
+		border-radius: p-px(12);
+		margin: 0;
+	}
+	.ct-info {
+		margin: 0;
+	}
+	.ct-name {
+		font-size: p-px(14);
+		font-weight: 600;
+	}
+	.ct-count {
+		margin: 0;
+		font-size: p-px(13);
+	}
+	.ct-bar {
+		display: block;
+		width: 100%;
+		height: p-px(8);
+		border-radius: 999px;
+		background: #EEF1F5;
+		overflow: hidden;
+	}
+	.ct-bar-in {
+		height: 100%;
+		border-radius: 999px;
+		background: linear-gradient(90deg, $brand, #6B8CFF);
+	}
+	.ct-btn {
+		width: 100%;
+		height: p-px(44);
+		min-height: p-px(44);
+		font-size: p-px(14);
+		border-radius: 999px;
+		margin-top: p-px(4);
+	}
+
+	.p-ord-new .cache-actions {
+		margin-bottom: p-px(12);
+	}
+	.cache-btn {
+		height: p-px(44);
+		min-height: p-px(44);
+		font-size: p-px(14);
+		border-radius: p-px(12);
+	}
+	.cache-tip {
+		font-size: p-px(12);
+	}
+	.new-grid {
+		display: flex;
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		gap: p-px(14);
+	}
+	.ng-item {
+		flex: none;
+		width: $p-mat-card;
+	}
+	.ng-img {
+		height: p-px(140);
+		border-radius: p-px(12);
+	}
+	.ng-name {
+		font-size: p-px(13);
+		margin-top: p-px(6);
+	}
+	.ng-cnt {
+		font-size: p-px(12);
+	}
+	.more {
+		font-size: p-px(13);
+		margin-top: p-px(10);
+		padding: p-px(8) 0;
 	}
 }
 </style>

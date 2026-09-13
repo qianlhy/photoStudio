@@ -21,11 +21,12 @@
 			<view class="m-body">
 				<!-- 左表单 -->
 				<view class="form">
-					<text class="f-label">本次联系结果</text>
-					<view class="chips">
-						<view v-for="o in contactResults" :key="o" class="chip" :class="{on:form.contactResult===o}"
-							@click="form.contactResult=o">
-							<text class="radio" :class="{on:form.contactResult===o}"></text>{{ o }}
+					<!-- 竖屏：互动类型（设计稿枚举） -->
+					<view class="port-only-block">
+						<text class="f-label">互动类型</text>
+						<view class="chips chips-row4">
+							<view v-for="o in interactTypes" :key="o" class="chip chip-eq" :class="{on:form.interactType===o}"
+								@click="form.interactType=o">{{ o }}</view>
 						</view>
 					</view>
 
@@ -34,6 +35,25 @@
 						<view class="it" :class="{on:form.intention==='高'}" @click="form.intention='高'">🔥 高</view>
 						<view class="it" :class="{on:form.intention==='中'}" @click="form.intention='中'">🙂 中</view>
 						<view class="it" :class="{on:form.intention==='低'}" @click="form.intention='低'">🌱 低</view>
+					</view>
+
+					<text class="f-label">本次联系结果</text>
+					<view class="chips">
+						<view v-for="o in contactResults" :key="o" class="chip" :class="{on:form.contactResult===o}"
+							@click="form.contactResult=o">
+							<text class="radio" :class="{on:form.contactResult===o}"></text>{{ o }}
+						</view>
+					</view>
+
+					<!-- 竖屏：客户异议多选（设计稿枚举） -->
+					<view class="port-only-block">
+						<text class="f-label">客户异议（多选）</text>
+						<view class="chips chips-row5">
+							<view v-for="o in objectionOptions" :key="o" class="chip chip-check" :class="{on:form.objections.indexOf(o)>=0}"
+								@click="toggleObjection(o)">
+								<text class="chk">{{ form.objections.indexOf(o)>=0 ? '✓' : '' }}</text>{{ o }}
+							</view>
+						</view>
 					</view>
 
 					<text class="f-label">下一步动作</text>
@@ -95,9 +115,13 @@ export default {
 			recorderName: '',
 			contactResults: ['已联系', '未接通', '客户考虑中', '已发送方案', '已确认续拍'],
 			nextActions: ['发送续拍方案', '预约到店选片', '确认拍摄日期', '等待付款', '暂缓跟进'],
+			interactTypes: ['面谈', '电话', '微信', '到店回访'],
+			objectionOptions: ['价格', '时间', '效果', '决策人', '其他'],
 			form: {
+				interactType: '面谈',
 				contactResult: '已联系',
 				intention: '高',
+				objections: [],
 				nextAction: '发送续拍方案',
 				nextTime: '',
 				nextTimeText: '',
@@ -115,8 +139,13 @@ export default {
 		},
 		summary() {
 			const d = new Date()
-			let s = `${d.getMonth() + 1}月${d.getDate()}日，${this.recorderName}${this.form.contactResult}${this.customerName}。`
+			let s = `${d.getMonth() + 1}月${d.getDate()}日，${this.recorderName}`
+			if (this.form.interactType) s += `通过${this.form.interactType}`
+			s += `${this.form.contactResult}${this.customerName}。`
 			s += `客户意向${this.form.intention}。`
+			if (this.form.objections && this.form.objections.length) {
+				s += `异议：${this.form.objections.join('、')}。`
+			}
 			if (this.form.nextAction) s += `下一步：${this.form.nextAction}，计划${this.form.nextTimeText}再次跟进。`
 			if (this.form.remark) s += `备注：${this.form.remark}`
 			return s
@@ -129,6 +158,11 @@ export default {
 		this.quick(2)
 	},
 	methods: {
+		toggleObjection(o) {
+			const i = this.form.objections.indexOf(o)
+			if (i >= 0) this.form.objections.splice(i, 1)
+			else this.form.objections.push(o)
+		},
 		quick(days) {
 			const d = new Date()
 			d.setDate(d.getDate() + days)
@@ -236,32 +270,187 @@ export default {
 .foot-btns { display:flex; gap:18rpx; }
 .foot-btns .btn { height:84rpx; padding:0 36rpx; font-size:27rpx; }
 
-@media #{$pad-mq-portrait} {
+/* 竖屏专属字段：横屏隐藏 */
+.port-only-block {
+	display: none;
+}
+
+@include pad-portrait {
+	.port-only-block {
+		display: block;
+	}
+	.chips-row4 {
+		display: flex;
+		flex-wrap: nowrap;
+		gap: p-px(10);
+	}
+	.chips-row4 .chip-eq {
+		flex: 1;
+		justify-content: center;
+		min-width: 0;
+		padding: p-px(12) p-px(6);
+		font-size: p-px(13);
+		border-radius: 999px;
+		box-sizing: border-box;
+		min-height: $p-follow-field-h;
+	}
+	.chips-row5 {
+		display: flex;
+		flex-wrap: wrap;
+		gap: p-px(10);
+	}
+	.chips-row5 .chip-check {
+		flex: 0 0 auto;
+		padding: p-px(10) p-px(14);
+		font-size: p-px(13);
+		border-radius: 999px;
+		min-height: $p-follow-field-h;
+		box-sizing: border-box;
+	}
+	.chip-check .chk {
+		display: inline-block;
+		width: p-px(14);
+		margin-right: p-px(4);
+		font-size: p-px(12);
+		line-height: 1;
+		text-align: center;
+	}
+	.chip-check.on {
+		border-color: $ok;
+		color: $ok;
+		background: #F0F7F3;
+	}
+
+	.mask {
+		/* 垂直居中，避免贴底偏下 */
+		align-items: center;
+		justify-content: center;
+		padding: p-px(24) $p-pad-x;
+		box-sizing: border-box;
+	}
 	.modal {
-		width: 92vw;
+		width: 100%;
 		max-width: none;
-		max-height: 88vh;
+		max-height: 86vh;
+		border-radius: p-px(20);
+		/* 06 内容区宽约 833dp，边距用 $p-pad-x */
+		padding: p-px(16) $p-pad-x p-px(20);
+		box-sizing: border-box;
+	}
+	.m-head {
+		margin-bottom: p-px(10);
+	}
+	.m-title {
+		font-size: p-px(20);
+	}
+	.m-sub {
+		font-size: p-px(13);
+	}
+	.stepper {
+		margin: p-px(14) 0 p-px(12);
+	}
+	.sp-l {
+		font-size: p-px(12);
 	}
 	.m-body {
 		flex-direction: column;
+		gap: p-px(14);
+		max-height: 68vh;
+		overflow-y: auto;
 	}
-	.form, .side {
+	.form,
+	.side {
 		flex: none;
 		width: 100%;
+	}
+	.f-label {
+		font-size: p-px(14);
+		margin: p-px(14) 0 p-px(8);
+	}
+	.chips {
+		gap: p-px(10);
+	}
+	.chip {
+		padding: p-px(10) p-px(16);
+		font-size: p-px(13);
+		border-radius: 999px;
+	}
+	.intent {
+		gap: p-px(12);
+	}
+	.it {
+		/* 06 意图块约 170–181dp；竖屏三等分 */
+		flex: 1;
+		padding: p-px(14) 0;
+		font-size: p-px(15);
+		border-radius: p-px(12);
+		min-height: $p-follow-field-h;
+		box-sizing: border-box;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.time-row {
+		flex-wrap: wrap;
+		gap: p-px(10);
+	}
+	.date-box,
+	.quick {
+		padding: p-px(10) p-px(14);
+		font-size: p-px(13);
+		border-radius: p-px(12);
+		min-height: $p-follow-field-h;
+		box-sizing: border-box;
+	}
+	.textarea {
+		/* 06 文本区相关高约 81–92，备注区加高 */
+		height: p-px(120);
+		min-height: $p-follow-field-h;
+		font-size: p-px(14);
+		border-radius: p-px(12);
+		box-sizing: border-box;
+	}
+	.auto,
+	.summary {
+		padding: p-px(14) p-px(16);
+		border-radius: p-px(12);
 	}
 	.m-foot {
 		flex-direction: column;
 		align-items: stretch;
-		gap: 16rpx;
+		gap: p-px(12);
+		margin-top: p-px(14);
+		padding-top: p-px(12);
 	}
 	.foot-info {
 		text-align: center;
+		font-size: p-px(12);
 	}
 	.foot-btns {
-		flex-direction: column;
+		flex-direction: row;
+		justify-content: center;
+		gap: p-px(12);
 	}
 	.foot-btns .btn {
-		width: 100%;
+		flex: 0 1 auto;
+		height: $p-ctrl-h;
+		min-height: $p-ctrl-h;
+		font-size: p-px(14);
+		border-radius: 999px;
+		box-sizing: border-box;
+		padding: 0 p-px(12);
+		min-width: 0;
+	}
+	.foot-btns .btn-ghost {
+		/* 06 H 690 → 345；窄屏可按比例收缩 */
+		flex: 345 1 0;
+		width: $p-follow-btn-l;
+		max-width: $p-follow-btn-l;
+	}
+	.foot-btns .btn-danger {
+		flex: 332 1 0;
+		width: $p-follow-btn-r;
+		max-width: $p-follow-btn-r;
 	}
 }
 </style>

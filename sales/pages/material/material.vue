@@ -289,7 +289,7 @@ export default {
 .dt-add { height:80rpx; font-size:26rpx; margin-top:14rpx; }
 
 /* 1-5a 标注稿：气泡画布约 1027 宽，详情栏保持窄列 */
-@media #{$pad-mq-landscape} {
+@include pad-landscape {
 	.searchbar {
 		width: 25vw;
 		height: 5.2vh;
@@ -367,7 +367,7 @@ export default {
 	}
 }
 
-@media #{$pad-mq-portrait} {
+@include pad-portrait {
 	.planet {
 		flex-direction: column;
 	}

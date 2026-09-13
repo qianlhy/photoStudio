@@ -16,11 +16,14 @@
 				<view class="tip">演示账号：ajie / 123456（销售经理）· admin / 123456（管理员）</view>
 			</view>
 		</view>
+		<dev-portrait-toggle />
 	</view>
 </template>
 
 <script>
+import devPortraitToggle from '@/components/dev-portrait-toggle/dev-portrait-toggle.vue'
 export default {
+	components: { devPortraitToggle },
 	data() {
 		return {
 			brandName: '合意传媒',
@@ -181,7 +184,7 @@ export default {
 }
 
 /* 小米平板 6 Pro 横屏登录页 */
-@media #{$pad-mq-landscape} {
+@include pad-landscape {
 	.login-card {
 		width: 520px;
 		max-width: 36vw;
@@ -215,14 +218,106 @@ export default {
 	}
 }
 
-@media #{$pad-mq-portrait} {
+@include pad-portrait {
+	.login {
+		padding: p-px(32) $p-pad-x;
+		box-sizing: border-box;
+		background: linear-gradient(165deg, #EAF1FF 0%, #F5F7FA 46%, #EEF1F5 100%);
+		align-items: center;
+		justify-content: center;
+	}
 	.login-card {
-		width: 88vw;
-		max-width: 640rpx;
-		padding: 48rpx 56rpx 40rpx;
+		width: p-px(520);
+		max-width: 86%;
+		padding: p-px(48) p-px(40) p-px(40);
+		border-radius: p-px(24);
+		box-shadow: 0 18px 44px rgba(32, 41, 56, .10);
+		border: 1px solid rgba(233, 237, 243, .95);
+		text-align: center;
+		box-sizing: border-box;
+	}
+	.logo {
+		position: relative;
+		display: inline-block;
+		font-size: p-px(30);
+		font-weight: 700;
+		letter-spacing: 2px;
+		color: $ink;
+		line-height: 1.2;
+		padding-top: p-px(56);
+	}
+	.logo::before {
+		content: "合";
+		position: absolute;
+		left: 50%;
+		top: 0;
+		transform: translateX(-50%);
+		width: p-px(44);
+		height: p-px(44);
+		border-radius: 50%;
+		background: $brand;
+		color: #fff;
+		font-size: p-px(18);
+		font-weight: 700;
+		letter-spacing: 0;
+		line-height: p-px(44);
+		text-align: center;
+		box-shadow: 0 8px 18px rgba(47, 107, 255, .28);
+	}
+	.slogan {
+		font-size: p-px(14);
+		color: $muted;
+		margin-top: p-px(10);
+		margin-bottom: p-px(36);
+		letter-spacing: 1px;
+	}
+	.form {
+		text-align: left;
 	}
 	.field {
-		margin-bottom: 24rpx;
+		height: p-px(52);
+		margin-bottom: p-px(16);
+		padding: 0 p-px(16);
+		border-radius: p-px(14);
+		border: 1px solid $line;
+		background: #F8FAFC;
+		box-sizing: border-box;
+	}
+	.field .ico {
+		width: p-px(18);
+		height: p-px(18);
+		margin-right: p-px(12);
+	}
+	.input {
+		font-size: p-px(16);
+		height: p-px(52);
+		line-height: p-px(52);
+	}
+	.btn-login {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		height: p-px(52);
+		min-height: p-px(52);
+		line-height: 1;
+		margin-top: p-px(12);
+		padding: 0;
+		border-radius: 999px;
+		font-size: p-px(17);
+		font-weight: 700;
+		letter-spacing: 6px;
+		text-indent: 6px; /* 抵消字距，视觉居中 */
+		text-align: center;
+		box-sizing: border-box;
+		box-shadow: 0 10px 22px rgba(47, 107, 255, .26);
+	}
+	.tip {
+		margin-top: p-px(20);
+		font-size: p-px(12);
+		line-height: 1.65;
+		color: $muted;
+		text-align: center;
 	}
 }
 </style>

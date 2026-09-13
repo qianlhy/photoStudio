@@ -18,7 +18,7 @@
 			<!-- 左：今天最该联系 -->
 			<view class="col-list">
 				<view class="cl-title">今天最该联系</view>
-				<scroll-view scroll-y class="cl-scroll">
+				<scroll-view scroll-y class="cl-scroll land-cscroll">
 					<view v-for="c in shownCustomers" :key="c.id" class="cl-card" :class="{on:selected&&selected.id===c.id}"
 						@click="select(c)">
 						<image class="cl-img" :src="customerAvatar(c.avatar)" mode="aspectFill"></image>
@@ -38,55 +38,83 @@
 						</view>
 					</view>
 				</scroll-view>
+				<scroll-view scroll-x class="cl-scroll port-cscroll" :show-scrollbar="false">
+					<view class="port-crow">
+						<view v-for="c in shownCustomers" :key="'p'+c.id" class="cl-card" :class="{on:selected&&selected.id===c.id}"
+							@click="select(c)">
+							<image class="cl-img" :src="customerAvatar(c.avatar)" mode="aspectFill"></image>
+							<view class="cl-body">
+								<view class="cl-row">
+									<text class="cl-name">{{ c.name }}</text>
+								</view>
+								<view class="cl-tag" :class="tagClass(c)">{{ mainTag(c) }}</view>
+								<view class="cl-foot">
+									<text class="cl-status" :style="{color: statusColor(c)}">● {{ statusText(c) }}</text>
+								</view>
+							</view>
+						</view>
+					</view>
+				</scroll-view>
 			</view>
 
 			<!-- 中：客户画像/生命周期 -->
 			<view class="col-center" v-if="selected">
 				<view class="profile card">
-					<image class="pf-cover" :src="customerAvatar(selected.avatar)" mode="aspectFill"></image>
-					<view class="pf-head">
-						<image class="pf-avatar" :src="customerAvatar(selected.avatar)" mode="aspectFill"></image>
-						<view class="pf-name-block">
-							<text class="pf-name">{{ selected.name }}</text>
-							<view class="pf-tags">
-								<text v-if="selected.biztype" class="chip-mini blue">{{ selected.biztype }}</text>
-								<text v-for="(tg,i) in tagList(selected)" :key="i" class="chip-mini">{{ tg }}</text>
+					<view class="pf-main">
+						<image class="pf-cover" :src="customerAvatar(selected.avatar)" mode="aspectFill"></image>
+						<view class="pf-side">
+							<view class="pf-head">
+								<image class="pf-avatar" :src="customerAvatar(selected.avatar)" mode="aspectFill"></image>
+								<view class="pf-name-block">
+									<text class="pf-name">{{ selected.name }}</text>
+									<view class="pf-tags">
+										<text v-if="selected.biztype" class="chip-mini blue">{{ selected.biztype }}</text>
+										<text v-for="(tg,i) in tagList(selected)" :key="i" class="chip-mini">{{ tg }}</text>
+										<text v-if="!selected.biztype && tagList(selected).length===0" class="chip-mini">{{ mainTag(selected) }}</text>
+									</view>
+								</view>
+								<view class="btn btn-primary pf-follow" @click="goFollow">开始跟进</view>
 							</view>
-						</view>
-						<view class="btn btn-primary pf-follow" @click="goFollow">开始跟进</view>
-					</view>
-					<view class="pf-pref">
-						<text class="pf-pref-label">内容偏好</text>
-						<view class="pf-pref-chips">
-							<text v-for="(p,i) in prefList(selected)" :key="i" class="chip-mini">{{ p }}</text>
+							<view class="pf-pref">
+								<text class="pf-pref-label">内容偏好</text>
+								<view class="pf-pref-chips">
+									<text v-for="(p,i) in prefList(selected)" :key="i" class="chip-mini">{{ p }}</text>
+									<text v-if="prefList(selected).length===0" class="chip-mini muted">暂未填写</text>
+								</view>
+							</view>
 						</view>
 					</view>
 				</view>
 
 				<!-- 项目完成度 -->
 				<view class="card progress-card">
-					<view class="pc-head">
-						<text class="pc-title">项目完成度</text>
-						<text class="pc-pct">{{ completePct }}%</text>
-					</view>
-					<view class="steps">
-						<block v-for="(st, i) in progressSteps" :key="st.key">
-							<view v-if="i > 0" class="step-line" :class="{done: progressSteps[i - 1].done}"></view>
-							<view class="step" :class="{done: st.done}">
-								<view class="st-dot" :class="{grey: !st.done}">{{ st.done ? '✓' : '' }}</view>
-								<text class="st-l">{{ st.label }} {{ st.count }}</text>
-							</view>
-						</block>
+					<text class="pc-title">项目完成进度</text>
+					<view class="pc-body">
+						<view class="pc-metric">
+							<text class="pc-pct">{{ completePct }}%</text>
+							<text class="pc-metric-sub">整体进度</text>
+						</view>
+						<view class="steps">
+							<block v-for="(st, i) in progressSteps" :key="st.key">
+								<view v-if="i > 0" class="step-line" :class="{done: progressSteps[i - 1].done}"></view>
+								<view class="step" :class="{done: st.done}">
+									<text class="st-l">{{ st.label }}</text>
+									<view class="st-dot" :class="{grey: !st.done}">{{ st.done ? '✓' : '' }}</view>
+									<text class="st-n">{{ st.count }}</text>
+								</view>
+							</block>
+						</view>
 					</view>
 				</view>
 
-				<!-- 内容生命值 -->
+				<!-- 内容剩余 -->
 				<view class="card life-card">
+					<text class="life-title">内容剩余</text>
 					<view class="life-top">
 						<view class="life-left">
 							<view class="ring" :style="ringStyle">
 								<view class="ring-hole">
-									<text class="ring-num">剩 <text class="big">{{ selected.remainCount||0 }}</text></text>
+									<text class="ring-num">剩 <text class="big">{{ selected.remainCount||0 }}</text> 条</text>
 									<text class="ring-sub">预计可发布 {{ selected.publishDays||0 }} 天</text>
 								</view>
 							</view>
@@ -97,6 +125,13 @@
 							<text v-if="(selected.publishDays||0)<=8" class="life-warn">⚠ 即将断更</text>
 							<view class="btn btn-danger life-btn" @click="recommendRenew">推荐续拍方案</view>
 						</view>
+					</view>
+					<view class="life-foot">
+						<view class="life-foot-text">
+							<text class="life-foot-label">预计发布完日期</text>
+							<text class="life-foot-date">{{ selected.publishDeadline || '—' }}</text>
+						</view>
+						<text class="life-cal">◷</text>
 					</view>
 					<view class="life-week">
 						<view v-for="(d,i) in weekDays" :key="i" class="lw">
@@ -181,15 +216,24 @@ export default {
 			return list
 		},
 		completePct() {
-			if (!this.selected || !this.selected.selectedCount) return 0
-			return Math.round(((this.selected.deliveredCount || 0) / this.selected.selectedCount) * 100)
+			if (!this.selected) return 0
+			const s = this.selected
+			const parts = [
+				s.selectedCount || 0,
+				s.shotCount || 0,
+				s.deliveredCount || 0,
+				s.publishedCount || 0
+			]
+			const max = Math.max(s.selectedCount || 0, 1)
+			const score = parts.reduce((sum, n) => sum + Math.min(1, n / max), 0)
+			return Math.round((score / 4) * 100)
 		},
 		progressSteps() {
 			if (!this.selected) return []
 			const s = this.selected
 			return [
-				{ key: 'selected', label: '已选', count: s.selectedCount || 0 },
-				{ key: 'shot', label: '已拍', count: s.shotCount || 0 },
+				{ key: 'selected', label: '已选片', count: s.selectedCount || 0 },
+				{ key: 'shot', label: '已拍摄', count: s.shotCount || 0 },
 				{ key: 'delivered', label: '已交付', count: s.deliveredCount || 0 },
 				{ key: 'published', label: '已发布', count: s.publishedCount || 0 }
 			].map(m => ({ ...m, done: m.count > 0 }))
@@ -413,6 +457,7 @@ export default {
 
 .cl-title, .sc-title { font-size: 28rpx; font-weight: 600; margin-bottom: 16rpx; flex-shrink: 0; }
 .cl-scroll { flex: 1; min-height: 0; }
+.port-cscroll { display: none; }
 .cl-card {
 	display: flex;
 	align-items: center;
@@ -439,34 +484,42 @@ export default {
 
 /* 画像 */
 .profile { overflow: hidden; }
+.pf-main { display: contents; }
+.pf-side { display: contents; }
 .pf-cover { width: 100%; height: 180rpx; }
 .pf-head { display:flex; align-items:center; padding: 0 24rpx; margin-top:-40rpx; }
 .pf-avatar { width: 96rpx; height: 96rpx; border-radius: 50%; border: 4rpx solid #fff; background:#eee; box-shadow:0 4rpx 12rpx rgba(31,39,51,.12); }
-.pf-name-block { flex:1; margin-left: 18rpx; }
+.pf-name-block { flex:1; margin-left: 18rpx; min-width: 0; }
 .pf-name { font-size: 32rpx; font-weight: 700; }
-.pf-tags { margin-top: 8rpx; }
-.chip-mini { display:inline-block; padding:4rpx 14rpx; background:#F1F3F6; color:$ink-2; border-radius:999rpx; font-size:20rpx; margin-right:10rpx; }
+.pf-tags { margin-top: 8rpx; display:flex; flex-wrap:wrap; gap: 8rpx; }
+.chip-mini { display:inline-block; padding:4rpx 14rpx; background:#F1F3F6; color:$ink-2; border-radius:999rpx; font-size:20rpx; margin-right:0; }
 .chip-mini.blue { background:#EAF1FF; color:#2F6BFF; }
-.pf-follow { height: 64rpx; padding: 0 30rpx; font-size: 26rpx; }
+.chip-mini.muted { color: $muted; background: #F5F7FA; }
+.pf-follow { height: 64rpx; padding: 0 30rpx; font-size: 26rpx; flex-shrink: 0; }
 .pf-pref { padding: 20rpx 24rpx 24rpx; }
-.pf-pref-label { font-size: 24rpx; color: $muted; }
-.pf-pref-chips { margin-top: 12rpx; }
+.pf-pref-label { font-size: 24rpx; color: $muted; display:block; }
+.pf-pref-chips { margin-top: 12rpx; display:flex; flex-wrap:wrap; gap: 8rpx; }
 
 /* 完成度 */
 .progress-card { padding: 24rpx; }
-.pc-head { display:flex; justify-content:space-between; align-items:center; margin-bottom: 24rpx; }
-.pc-title { font-size: 27rpx; font-weight: 600; }
-.pc-pct { font-size: 40rpx; font-weight: 800; color: #22B07D; }
-.steps { display:flex; align-items:center; }
-.step { display:flex; flex-direction:column; align-items:center; }
-.st-dot { width:40rpx; height:40rpx; border-radius:50%; background:#22B07D; color:#fff; display:flex; align-items:center; justify-content:center; font-size:24rpx; }
+.pc-title { font-size: 27rpx; font-weight: 600; display:block; margin-bottom: 16rpx; }
+.pc-body { display:flex; flex-direction:row; align-items:center; gap: 20rpx; }
+.pc-metric { display:flex; flex-direction:column; flex-shrink:0; min-width: 120rpx; }
+.pc-metric-sub { font-size: 22rpx; color:$muted; margin-top: 4rpx; }
+.pc-pct { font-size: 52rpx; font-weight: 800; color: #22B07D; line-height: 1.1; }
+.steps { display:flex; align-items:flex-start; flex:1; min-width:0; }
+.step { display:flex; flex-direction:column; align-items:center; position:relative; flex: none; }
+.st-dot { width:40rpx; height:40rpx; border-radius:50%; background:#22B07D; color:#fff; display:flex; align-items:center; justify-content:center; font-size:24rpx; order:1; }
 .st-dot.grey { background:#D7DCE3; }
-.st-l { font-size: 21rpx; color:$ink-2; margin-top:8rpx; }
-.step-line { flex:1; height:4rpx; background:#E5E8EC; margin:0 4rpx 30rpx; }
+.st-l { font-size: 20rpx; color:$ink-2; margin-top:8rpx; order:2; white-space:nowrap; }
+.st-n { font-size: 20rpx; color:$muted; order:3; margin-top:2rpx; }
+.st-n::after { content: '条'; }
+.step-line { flex:1; height:4rpx; background:#E5E8EC; margin:0 4rpx; align-self:flex-start; margin-top: 18rpx; }
 .step-line.done { background:#22B07D; }
 
-/* 生命值 */
+/* 生命值 / 内容剩余 */
 .life-card { padding: 24rpx; display:flex; flex-direction:column; }
+.life-title { display:none; font-size: 27rpx; font-weight: 600; margin-bottom: 16rpx; }
 .life-top { display:flex; align-items:center; gap: 28rpx; }
 .ring { width: 180rpx; height: 180rpx; border-radius: 50%; display:flex; align-items:center; justify-content:center; }
 .ring-hole { width: 130rpx; height: 130rpx; border-radius:50%; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; }
@@ -478,6 +531,10 @@ export default {
 .life-date { font-size: 48rpx; font-weight: 800; color: #FF5A5F; margin:4rpx 0; }
 .life-warn { font-size: 22rpx; color:#FF5A5F; margin-bottom:12rpx; }
 .life-btn { height: 72rpx; font-size: 26rpx; }
+.life-foot { display:none; }
+.life-foot-label { display:block; font-size: 22rpx; color:$muted; }
+.life-foot-date { display:block; font-size: 32rpx; font-weight: 700; color:$ink; margin-top: 6rpx; }
+.life-cal { font-size: 28rpx; color:$muted; }
 .life-week { display:flex; justify-content:space-between; margin-top:24rpx; padding-top:20rpx; border-top:1rpx solid #F0F2F5; }
 .lw { display:flex; flex-direction:column; align-items:center; flex:1; }
 .lw-l { font-size:19rpx; color:$muted; }
@@ -530,7 +587,7 @@ export default {
 .empty-center { display:flex; align-items:center; justify-content:center; color:$muted; min-height:400rpx; }
 
 /* 1-3 标注稿：左/中/右约 337 / 591 / 353 */
-@media #{$pad-mq-landscape} {
+@include pad-landscape {
 	.searchbar {
 		width: 25vw;
 		height: 5.2vh;
@@ -654,22 +711,32 @@ export default {
 		padding: 1.4vh 1.2vw;
 		flex: none;
 	}
-	.pc-head {
-		margin-bottom: 1.2vh;
-	}
 	.pc-title {
 		font-size: clamp(14px, 1.1vw, 18px);
+		margin-bottom: 1vh;
+	}
+	.pc-body {
+		gap: 1vw;
+	}
+	.pc-metric {
+		min-width: 4.5vw;
 	}
 	.pc-pct {
 		font-size: clamp(24px, 2vw, 32px);
+	}
+	.pc-metric-sub {
+		font-size: clamp(10px, .75vw, 12px);
 	}
 	.st-dot {
 		width: 26px;
 		height: 26px;
 		font-size: 14px;
 	}
-	.st-l {
-		font-size: clamp(10px, .75vw, 12px);
+	.st-l, .st-n {
+		font-size: clamp(10px, .72vw, 12px);
+	}
+	.step-line {
+		margin-top: 12px;
 	}
 	.life-card {
 		flex: 1;
@@ -764,28 +831,468 @@ export default {
 	}
 }
 
-@media #{$pad-mq-portrait} {
-	.cm {
-		flex-direction: column;
-		overflow-y: auto;
+@include pad-portrait {
+	/* 仅重排横屏已有元素，不增删业务节点 */
+	.searchbar {
+		width: $p-search-05;
+		max-width: 100%;
+		height: p-px(44);
+		min-height: p-px(44);
 	}
-	.col-list, .col-center, .col-side {
-		flex: none;
-		width: 100%;
-	}
-	.col-center, .col-side {
-		margin-top: 2vh;
+	.new-btn {
+		height: p-px(44);
+		min-height: p-px(44);
+		padding: 0 p-px(16);
+		font-size: p-px(13);
 	}
 	.tabs {
-		flex-wrap: wrap;
+		flex-wrap: nowrap;
+		overflow-x: auto;
 		height: auto;
+		min-height: p-px(40);
+		padding: p-px(4) 0 p-px(12);
+		gap: p-px(10);
+		margin-bottom: p-px(8);
 	}
-	.profile, .progress-card, .life-card {
-		height: auto;
+	.tab {
+		flex: none;
+		white-space: nowrap;
+		padding: p-px(8) p-px(16);
+		font-size: p-px(13);
+		border-radius: 999px;
 	}
-	.act-card, .tl-card.grow, .sug-card {
+	.cm {
+		flex-direction: column;
 		height: auto;
+		min-height: 0;
+		overflow: visible;
+		gap: p-px(14);
+	}
+	.col-list,
+	.col-center,
+	.col-side {
+		flex: none;
+		width: 100%;
+		margin: 0;
+		height: auto;
+		min-height: 0;
 		max-height: none;
+		overflow: visible;
+	}
+	.col-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+	}
+	/* 竖屏稿用横向客户条，不再显示「今天最该联系」列表标题 */
+	.cl-title {
+		display: none;
+	}
+	.land-cscroll {
+		display: none !important;
+	}
+	/* uni-app 横向 scroll-view 必须给明确高度，否则整条会塌成 0 */
+	.port-cscroll {
+		display: block !important;
+		width: 100%;
+		height: $p-cust-strip-h !important;
+		min-height: $p-cust-strip-h;
+		white-space: nowrap;
+		flex: none !important;
+	}
+	.port-crow {
+		display: inline-flex;
+		align-items: stretch;
+		gap: p-px(12);
+		padding: p-px(4) 0 p-px(10);
+		height: 100%;
+		box-sizing: border-box;
+	}
+	.port-cscroll .cl-card {
+		position: relative;
+		display: flex;
+		align-items: center;
+		width: p-px(248);
+		height: p-px(96);
+		max-width: none;
+		flex-shrink: 0;
+		margin: 0;
+		border-radius: $p-radius;
+		padding: p-px(12) p-px(14);
+		padding-right: p-px(28);
+		box-sizing: border-box;
+		overflow: hidden;
+		background: #fff;
+		border: 1px solid $line;
+	}
+	.port-cscroll .cl-card.on {
+		border-color: $ok;
+		background: #FBFFFE;
+		box-shadow: 0 0 0 2px rgba(34, 176, 125, .18);
+	}
+	.port-cscroll .cl-card.on::after {
+		content: "✓";
+		position: absolute;
+		top: p-px(8);
+		right: p-px(8);
+		width: p-px(20);
+		height: p-px(20);
+		border-radius: 50%;
+		background: $ok;
+		color: #fff;
+		font-size: p-px(12);
+		line-height: p-px(20);
+		text-align: center;
+		z-index: 1;
+	}
+	.port-cscroll .cl-img {
+		width: p-px(56);
+		height: p-px(56);
+		min-width: p-px(56);
+		min-height: p-px(56);
+		border-radius: p-px(12);
+	}
+	.port-cscroll .cl-body {
+		margin-left: p-px(10);
+		min-width: 0;
+		flex: 1;
+		overflow: hidden;
+	}
+	.port-cscroll .cl-remain {
+		display: none;
+	}
+	.port-cscroll .cl-name {
+		display: block;
+		font-size: p-px(14);
+		font-weight: 700;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		padding-right: p-px(4);
+	}
+	.port-cscroll .cl-tag {
+		margin-top: p-px(4);
+		font-size: p-px(11);
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.port-cscroll .cl-foot {
+		margin-top: p-px(4);
+		overflow: hidden;
+	}
+	.port-cscroll .cl-status {
+		display: block;
+		font-size: p-px(11);
+		line-height: 1.3;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.empty-center {
+		display: none;
+	}
+
+	/* —— 画像：同一套 pf-*，竖屏改成左图右文，偏好通栏 —— */
+	.profile,
+	.progress-card,
+	.life-card,
+	.act-card,
+	.tl-card.grow,
+	.sug-card {
+		height: auto !important;
+		max-height: none !important;
+		min-height: 0;
+		border-radius: $p-radius;
+		flex-shrink: 0;
+	}
+	.profile {
+		padding: 0;
+		overflow: hidden;
+		background: #fff;
+		border: 1px solid $line;
+	}
+	/* 竖屏稿：左方图 | 右（姓名/标签/跟进 + 内容偏好） */
+	.pf-main {
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+		gap: p-px(16);
+		padding: p-px(16);
+		box-sizing: border-box;
+	}
+	.pf-cover {
+		width: $p-cover;
+		max-width: 38%;
+		height: auto;
+		aspect-ratio: 1 / 1;
+		border-radius: p-px(14);
+		flex-shrink: 0;
+		background: #EEF1F5;
+		margin: 0;
+		align-self: flex-start;
+	}
+	.pf-side {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-width: 0;
+		justify-content: flex-start;
+		gap: p-px(14);
+	}
+	.pf-head {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+		flex-wrap: nowrap;
+		gap: p-px(12);
+		margin: 0;
+		padding: 0;
+		min-width: 0;
+	}
+	.pf-avatar {
+		display: none;
+	}
+	.pf-name-block {
+		margin: 0;
+		flex: 1;
+		min-width: 0;
+	}
+	.pf-name {
+		font-size: p-px(20);
+		font-weight: 700;
+		line-height: 1.3;
+	}
+	.pf-tags {
+		margin-top: p-px(10);
+		gap: p-px(8);
+	}
+	.chip-mini {
+		padding: p-px(5) p-px(12);
+		font-size: p-px(12);
+	}
+	.pf-follow {
+		flex: none;
+		align-self: flex-start;
+		width: auto;
+		height: p-px(36);
+		min-height: p-px(36);
+		padding: 0 p-px(16);
+		border-radius: 999px;
+		font-size: p-px(13);
+		margin: 0;
+	}
+	.pf-pref {
+		margin: p-px(40) 0 0;
+		padding: 0;
+		border: none;
+	}
+	.pf-pref-label {
+		font-size: p-px(13);
+		color: $ink;
+		font-weight: 600;
+	}
+	.pf-pref-chips {
+		margin-top: p-px(8);
+		gap: p-px(8);
+		min-height: p-px(28);
+	}
+
+	/* —— 进度 + 剩余：横屏两张卡，竖屏并排 —— */
+	.col-center {
+		display: grid;
+		grid-template-columns: #{$p-progress-fr}fr #{$p-life-fr}fr;
+		gap: $p-metric-gap;
+		align-items: stretch;
+	}
+	.col-center .profile {
+		grid-column: 1 / -1;
+	}
+	.col-center.empty-center {
+		display: none;
+	}
+	.progress-card,
+	.life-card {
+		padding: p-px(16);
+		width: auto;
+		min-width: 0;
+		min-height: $p-metric-h;
+		box-sizing: border-box;
+		background: #fff;
+		border: 1px solid $line;
+	}
+	.pc-title {
+		font-size: p-px(15);
+		margin-bottom: p-px(12);
+	}
+	.pc-body {
+		flex-direction: row;
+		align-items: center;
+		gap: p-px(10);
+	}
+	.pc-metric {
+		min-width: p-px(64);
+		flex-shrink: 0;
+	}
+	.pc-pct {
+		font-size: p-px(28);
+		color: $ink;
+		font-weight: 800;
+		line-height: 1;
+	}
+	.pc-metric-sub {
+		font-size: p-px(11);
+		margin-top: p-px(4);
+	}
+	.steps {
+		flex: 1;
+		min-width: 0;
+		align-items: flex-start;
+	}
+	.step {
+		flex: 1;
+		min-width: 0;
+	}
+	.st-l {
+		order: 0;
+		margin: 0 0 p-px(6);
+		font-size: p-px(10);
+		color: $ink-2;
+	}
+	.st-dot {
+		order: 1;
+		width: p-px(20);
+		height: p-px(20);
+		font-size: p-px(11);
+	}
+	.st-n {
+		order: 2;
+		margin-top: p-px(4);
+		font-size: p-px(11);
+		color: $ink;
+		font-weight: 600;
+	}
+	.step-line {
+		margin-top: p-px(26);
+		height: 2px;
+	}
+	.life-title {
+		display: block;
+		font-size: p-px(15);
+		font-weight: 600;
+		margin-bottom: p-px(10);
+	}
+	.life-top {
+		flex-direction: column;
+		align-items: center;
+		gap: 0;
+	}
+	.life-left {
+		width: 100%;
+		display: flex;
+		justify-content: center;
+	}
+	.ring {
+		width: p-px(120);
+		height: p-px(120);
+	}
+	.ring-hole {
+		width: p-px(88);
+		height: p-px(88);
+	}
+	.ring-num {
+		font-size: p-px(13);
+	}
+	.ring-num .big {
+		font-size: p-px(28);
+	}
+	.ring-sub {
+		font-size: p-px(11);
+	}
+	/* 竖屏稿右侧续拍区收进底栏日期；按钮/周历横屏保留 */
+	.life-right {
+		display: none;
+	}
+	.life-week {
+		display: none;
+	}
+	.life-foot {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		margin-top: p-px(14);
+		padding-top: p-px(12);
+		border-top: 1px solid #F0F2F5;
+	}
+	.life-foot-label {
+		font-size: p-px(12);
+	}
+	.life-foot-date {
+		font-size: p-px(18);
+	}
+	.life-cal {
+		font-size: p-px(18);
+		padding-bottom: p-px(2);
+	}
+
+	/* —— 右栏：下一步 / 时间线 / 建议，整段下沉堆叠 —— */
+	.col-side {
+		display: flex;
+		flex-direction: column;
+		gap: p-px(14);
+		justify-content: flex-start;
+	}
+	.pc-title,
+	.life-label,
+	.sc-title {
+		font-size: p-px(15);
+	}
+	.act-card {
+		padding: p-px(16) p-px(20);
+		background: #F0FBF5;
+		border: 1px solid rgba(34, 176, 125, .16);
+		min-height: p-px(118);
+		min-width: $p-act-card-w;
+		box-sizing: border-box;
+	}
+	.act-main {
+		font-size: p-px(16);
+	}
+	.act-sub {
+		font-size: p-px(13);
+	}
+	.act-btns {
+		flex-wrap: wrap;
+		gap: p-px(12);
+	}
+	.act-btn {
+		flex: 1;
+		min-width: p-px(160);
+		height: p-px(44);
+		min-height: p-px(44);
+		font-size: p-px(14);
+		border-radius: 999px;
+	}
+	.tl-card {
+		padding: p-px(16) p-px(20);
+		background: #fff;
+		border: 1px solid $line;
+	}
+	.tl-item {
+		padding: p-px(10) 0;
+	}
+	.sug-card {
+		min-height: p-px(120);
+		min-width: $p-act-card-w;
+		padding: p-px(16) p-px(20);
+		box-sizing: border-box;
+		background: #FFF8EE;
+		border: 1px solid rgba(255, 138, 61, .16);
+	}
+	.sug-text {
+		font-size: p-px(13);
+		line-height: 1.55;
 	}
 }
 </style>

@@ -174,7 +174,10 @@
             <div v-if="refreshHintNames.length" class="up-hint">
               <div class="up-hint-title">服务器对账：成功 {{ upDoneCount }}，未完成 {{ refreshHintNames.length }}。点「继续上传」将尝试从上次文件夹自动找回；找不到再手选：</div>
               <div class="up-hint-list">
-                <div v-for="(n,i) in refreshHintNames" :key="'h'+i" class="up-hint-item">{{ n }}</div>
+                <div v-for="(n,i) in refreshHintNames" :key="'h'+i" class="up-hint-item" :title="n">
+                  <span class="up-hint-idx">{{ i + 1 }}.</span>
+                  <span class="up-hint-name">{{ n }}</span>
+                </div>
               </div>
             </div>
 
@@ -582,55 +585,67 @@ export default {
         if (h && h.name) this.up.folderName = h.name;
       }).catch(() => {});
     },
+    /**
+     * 点「选择视频/文件夹」且未点「继续上传」时：
+     * 若队列里还有未完成/需重选，提示清空上批成功+失败记录再开新传。
+     */
+    async confirmClearQueueForNewBatch() {
+      const leftover = this.up.queue.filter(i => i.status !== "success");
+      if (!leftover.length) return true;
+      const okCount = this.up.queue.filter(i => i.status === "success").length;
+      try {
+        await this.$confirm(
+          `当前还有上次上传记录（成功 ${okCount}，未完成/需重选 ${leftover.length}）。\n` +
+          `选择新文件将清空这些记录并开始新一批上传。\n` +
+          `若要补传上次失败的文件，请先点「继续上传剩余文件」。\n\n是否清空并重新上传？`,
+          "清空上次记录？",
+          {
+            confirmButtonText: "清空并重新上传",
+            cancelButtonText: "取消",
+            type: "warning",
+            distinguishCancelAndClose: true
+          }
+        );
+      } catch (e) {
+        return false;
+      }
+      this.up.queue = [];
+      this.refreshHintNames = [];
+      this.up.folderName = "";
+      this.clearBatchRecord();
+      return true;
+    },
     /** 多选单个/多个 mp4（文件句柄可续传） */
     async pickFilesWithResume() {
       if (!this.filePickerOk) {
         this.$message.warning("当前浏览器不支持，请用 Chrome/Edge");
         return;
       }
+      if (!(await this.confirmClearQueueForNewBatch())) return;
       try {
         const {handles, files} = await pickMediaFileHandles();
         if (!files.length) return;
+        // 新一批：不合并上批需重选，避免卡在旧失败项上
+        this.up.queue = [];
+        this.refreshHintNames = [];
+        this.up.startedAt = Date.now();
+        this.up.batchId = "b_" + this.up.startedAt;
+        await clearFileHandles();
         await mergeFileHandles(handles);
         this.up.folderName = `已选 ${files.length} 个文件`;
 
-        const startNew = this.up.queue.length === 0 || this.up.queue.every(i => i.status === "success");
-        if (startNew) {
-          this.up.queue = [];
-          this.up.startedAt = Date.now();
-          this.up.batchId = "b_" + this.up.startedAt;
-          this.refreshHintNames = [];
-        }
-
-        let added = 0;
         files.forEach(raw => {
-          const name = raw.name;
-          const size = raw.size || 0;
-          const need = this.up.queue.find(i => i.status === "need_reselect" && i.name === name && !i.file);
-          if (need) {
-            need.file = raw;
-            need.size = size;
-            need.status = "pending";
-            need.msg = "";
-            added++;
-            return;
-          }
-          const dup = this.up.queue.find(i => i.name === name && i.size === size &&
-            (i.status === "pending" || i.status === "uploading" || i.status === "success"));
-          if (dup) return;
           this.up.queue.push({
             id: "u_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
-            name,
-            size,
+            name: raw.name,
+            size: raw.size || 0,
             file: raw,
             status: "pending",
             msg: ""
           });
-          added++;
         });
-        this.refreshHintNames = this.up.queue.filter(i => i.status === "need_reselect").map(i => i.name);
         this.saveBatchRecord();
-        this.$message.success(`已加入 ${added} 个文件，开始上传`);
+        this.$message.success(`已加入 ${files.length} 个文件，开始上传`);
         this.continueUpload();
       } catch (e) {
         if (e && e.name === "AbortError") return;
@@ -642,6 +657,7 @@ export default {
         this.$message.warning("当前浏览器不支持选文件夹，请用 Chrome/Edge，或上方选择视频文件");
         return;
       }
+      if (!(await this.confirmClearQueueForNewBatch())) return;
       try {
         const dir = await window.showDirectoryPicker({mode: "read"});
         await saveDirHandle(dir);
@@ -651,11 +667,11 @@ export default {
           this.$message.warning("该文件夹下没有视频/图片");
           return;
         }
-        // 文件夹模式也尽量记下文件句柄（若枚举得到的是同源 File，续传主要靠目录）
         this.up.queue = [];
         this.up.startedAt = Date.now();
         this.up.batchId = "b_" + this.up.startedAt;
         this.refreshHintNames = [];
+        await clearFileHandles();
         files.forEach(raw => {
           this.up.queue.push({
             id: "u_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
@@ -847,11 +863,28 @@ export default {
         const miss = this.refreshHintNames.length;
         if (miss) {
           this.$nextTick(() => {
+            const esc = s => String(s == null ? "" : s)
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;");
+            const listHtml = this.refreshHintNames.map((n, i) =>
+              `<li><span class="up-rc-idx">${i + 1}.</span><span class="up-rc-name" title="${esc(n)}">${esc(n)}</span></li>`
+            ).join("");
             this.$alert(
-              `上一批共 ${this.up.queue.length} 个文件。\n服务器已确认成功 ${done} 个，未完成 ${miss} 个。\n直接点「继续上传剩余文件」可自动找回（需用「选择视频文件」选过的）；找不到再手选：\n\n` +
-              this.refreshHintNames.join("\n"),
+              `<div class="up-rc-body">
+                <p>上一批共 <b>${this.up.queue.length}</b> 个文件。服务器已确认成功 <b>${done}</b> 个，未完成 <b>${miss}</b> 个。</p>
+                <p>直接点「继续上传剩余文件」可自动找回（需用「选择视频文件」选过的）；找不到再手选：</p>
+                <ol class="up-rc-list">${listHtml}</ol>
+              </div>`,
               "上传对账结果",
-              {confirmButtonText: "知道了", type: "warning"}
+              {
+                confirmButtonText: "知道了",
+                type: "warning",
+                dangerouslyUseHTMLString: true,
+                customClass: "up-reconcile-msgbox",
+                distinguishCancelAndClose: true
+              }
             );
           });
         } else if (done > 0) {
@@ -1110,8 +1143,28 @@ export default {
   padding: 10px 12px; margin: 10px 0; font-size: 12px; color: #B8791F;
 }
 .up-hint-title { font-weight: 600; margin-bottom: 6px; line-height: 1.5; }
-.up-hint-list { max-height: 120px; overflow-y: auto; }
-.up-hint-item { padding: 2px 0; word-break: break-all; }
+.up-hint-list {
+  margin: 0;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.up-hint-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 0;
+  line-height: 1.4;
+  border-bottom: 1px dashed rgba(184, 121, 31, .25);
+  word-break: break-all;
+}
+.up-hint-item:last-child { border-bottom: none; }
+.up-hint-idx {
+  flex-shrink: 0;
+  min-width: 1.4em;
+  font-weight: 700;
+  color: #E6A23C;
+}
+.up-hint-name { flex: 1; min-width: 0; }
 .up-empty { font-size: 12px; color: #a8b0bd; padding: 8px 0; }
 .up-queue { max-height: 220px; overflow-y: auto; border: 1px solid #EEF1F5; border-radius: 8px; }
 .up-q-item {
@@ -1126,5 +1179,59 @@ export default {
 .edit-meta-title {
   font-size: 13px; color: #1F2733; line-height: 1.4;
   word-break: break-all; max-height: 40px; overflow: hidden;
+}
+</style>
+
+<style>
+/* MessageBox 挂到 body，需非 scoped */
+.up-reconcile-msgbox {
+  width: 560px;
+  max-width: 92vw;
+}
+.up-reconcile-msgbox .el-message-box__status {
+  top: 22px;
+  transform: none;
+}
+.up-reconcile-msgbox .el-message-box__message {
+  padding-left: 8px;
+}
+.up-reconcile-msgbox .up-rc-body p {
+  margin: 0 0 8px;
+  line-height: 1.55;
+  color: #606266;
+}
+.up-reconcile-msgbox .up-rc-list {
+  margin: 4px 0 0;
+  padding: 8px 10px 8px 12px;
+  max-height: 260px;
+  overflow-y: auto;
+  list-style: none;
+  background: #FFF8F0;
+  border: 1px solid #FFE0B2;
+  border-radius: 8px;
+}
+.up-reconcile-msgbox .up-rc-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 0;
+  line-height: 1.45;
+  border-bottom: 1px dashed #F5D9A8;
+  word-break: break-all;
+  color: #8A5A12;
+  font-size: 13px;
+}
+.up-reconcile-msgbox .up-rc-list li:last-child {
+  border-bottom: none;
+}
+.up-reconcile-msgbox .up-rc-idx {
+  flex-shrink: 0;
+  min-width: 1.6em;
+  font-weight: 700;
+  color: #E6A23C;
+}
+.up-reconcile-msgbox .up-rc-name {
+  flex: 1;
+  min-width: 0;
 }
 </style>

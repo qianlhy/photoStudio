@@ -1,5 +1,5 @@
 <template>
-	<view class="sel">
+	<view class="sel" :class="{ 'is-portrait': isPortraitLayout }">
 		<!-- 顶栏 -->
 		<view class="topbar">
 			<view class="brand" hover-class="brand-hover" @tap.stop="goBack">
@@ -9,9 +9,13 @@
 			<view class="center">
 				<text class="cust">{{ customerName }}</text>
 			</view>
-			<view class="right">
+			<view class="right land-only">
 				<text class="counter">已选 <text class="hot">{{ liked.length }}</text> / 目标 {{ targetCount }}</text>
 				<image class="avatar" :src="avatar" mode="aspectFill"></image>
+			</view>
+			<view class="right port-only">
+				<text class="counter">已选 <text class="hot">{{ liked.length }}</text> / 目标 {{ targetCount }}</text>
+				<view class="submit-btn" @click="finish">提交</view>
 			</view>
 		</view>
 
@@ -28,7 +32,7 @@
 				<view v-if="current" class="player">
 					<video v-if="current.video" :key="'v-' + current.id + '-' + idx + '-' + videoTick" class="video"
 						:src="videoSrc(current)" :poster="$media(current, 'cover')"
-						controls autoplay object-fit="contain" show-center-play-btn
+						controls autoplay :object-fit="videoObjectFit" show-center-play-btn
 						@error="onVideoError"></video>
 					<image v-else class="video poster" :src="$media(current, 'cover')" mode="aspectFill"></image>
 					<view class="overlay">
@@ -40,8 +44,8 @@
 					<text>本轮素材已看完，可结束选片生成方案</text>
 				</view>
 
-				<!-- 操作 -->
-				<view class="actions">
+				<!-- 横屏：圆钮操作 -->
+				<view class="actions land-actions">
 					<view class="act dislike" @click="dislike">
 						<text class="act-ic">✕</text>
 						<text class="act-tx">不喜欢</text>
@@ -56,10 +60,23 @@
 						<text class="act-tx">暂时跳过</text>
 					</view>
 				</view>
+
+				<!-- 竖屏：双胶囊 + 次要跳过 -->
+				<view class="actions port-actions">
+					<view class="act-pill dislike" @click="dislike">
+						<text class="act-pill-ic">✕</text>
+						<text class="act-pill-tx">不喜欢</text>
+					</view>
+					<view class="act-pill like" @click="like">
+						<text class="act-pill-ic">♥</text>
+						<text class="act-pill-tx">喜欢</text>
+					</view>
+				</view>
+				<text class="skip-link port-only" @click="skip">暂时跳过 · 左右滑动也可选择</text>
 			</view>
 
-			<!-- 右栏 -->
-			<view class="side">
+			<!-- 横屏右栏 -->
+			<view class="side land-only">
 				<view class="card sc1">
 					<text class="sc-label">本次选择</text>
 					<view class="sc-big">已选 <text class="num">{{ liked.length }}</text> 条</view>
@@ -105,11 +122,27 @@
 
 				<view class="btn btn-danger finish" @click="finish">✦ 结束选片并生成方案</view>
 			</view>
+
+			<!-- 竖屏：已选素材条 -->
+			<view class="selected-strip port-only">
+				<view class="strip-head">
+					<text class="strip-title">已选素材 <text class="strip-n">({{ liked.length }})</text></text>
+				</view>
+				<scroll-view scroll-x class="strip-row" :show-scrollbar="false">
+					<view v-for="(m, i) in likedItems" :key="m.id" class="strip-item">
+						<image class="strip-img" :src="$media(m, 'cover')" mode="aspectFill"></image>
+						<text class="strip-idx">{{ i + 1 }}</text>
+						<text class="strip-dur">{{ durText(m.duration) }}</text>
+					</view>
+					<view v-if="likedItems.length===0" class="strip-empty">还没有喜欢的素材</view>
+				</scroll-view>
+			</view>
 		</view>
 	</view>
 </template>
 
 <script>
+import orientation from '@/utils/orientation.js'
 export default {
 	data() {
 		return {
@@ -132,6 +165,7 @@ export default {
 			disliked: [],
 			_dirty: false,
 			_saving: false,
+			layoutOrientation: 'landscape',
 			counts: { process: 0, knowledge: 0, story: 0, opinion: 0, ad: 0 },
 			groups: [
 				{ key: 'process', label: '厨过程', color: '#7C5CFF' },
@@ -143,6 +177,17 @@ export default {
 		}
 	},
 	computed: {
+		isPortraitLayout() {
+			try {
+				if (typeof document !== 'undefined' && document.documentElement.classList.contains('force-portrait')) {
+					return true
+				}
+			} catch (e) {}
+			return this.layoutOrientation === 'portrait'
+		},
+		videoObjectFit() {
+			return this.isPortraitLayout ? 'cover' : 'contain'
+		},
 		current() {
 			return this.materials[this.idx] || null
 		},
@@ -214,6 +259,23 @@ export default {
 			uni.setStorageSync('hyActiveCustomerId', this.customerId)
 			if (this.customerName) uni.setStorageSync('hyActiveCustomerName', this.customerName)
 		}
+		this.layoutOrientation = orientation.getOrientation()
+		this._offOrientation = orientation.onOrientationChange(o => {
+			this.layoutOrientation = o
+		})
+		// #ifdef H5
+		this._syncForcePortrait = () => {
+			try {
+				this.$forceUpdate()
+			} catch (e) {}
+		}
+		try {
+			if (typeof MutationObserver !== 'undefined' && document.documentElement) {
+				this._forcePortraitObs = new MutationObserver(this._syncForcePortrait)
+				this._forcePortraitObs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+			}
+		} catch (e) {}
+		// #endif
 		if (this.sessionId) {
 			this.loadSession()
 		} else if (this.customerId) {
@@ -224,6 +286,13 @@ export default {
 	},
 	onUnload() {
 		if (this._dirty) this.saveProgress()
+		if (this._offOrientation) this._offOrientation()
+		// #ifdef H5
+		if (this._forcePortraitObs) {
+			this._forcePortraitObs.disconnect()
+			this._forcePortraitObs = null
+		}
+		// #endif
 	},
 	onBackPress() {
 		this.goBack()
@@ -234,23 +303,34 @@ export default {
 			if (!m) return ''
 			// 本地失败后强制走在线，避免卡在坏缓存
 			if (this.forceOnlineId && String(this.forceOnlineId) === String(m.id)) {
-				const p = m.video || ''
-				if (!p) return ''
-				if (/^https?:\/\//.test(p)) return p
-				let path = String(p).replace(/^\//, '')
-				if (path && !path.startsWith('upload/')) path = 'upload/' + path
-				return this.$base.url + path
+				return this.onlineVideoUrl(m)
 			}
 			return this.$media(m, 'video')
 		},
+		onlineVideoUrl(m) {
+			const p = (m && m.video) || ''
+			if (!p) return ''
+			if (/^https?:\/\//.test(p)) return p
+			let path = String(p).replace(/^\//, '')
+			if (path && !path.startsWith('upload/')) path = 'upload/' + path
+			return this.$base.url + path
+		},
 		onVideoError() {
 			const m = this.current
-			if (!m) return
+			if (!m || !m.id) return
+			const id = String(m.id)
+			// 已处理过该条：禁止再次 remount（否则会 toast + 从头循环；暂停也可能误触 error）
+			if (this.forceOnlineId && this.forceOnlineId === id) return
+
+			const hadLocal = this.$materialCache.isAppPlus() && !!this.$materialCache.getPlayableVideo(m.id)
+			this.forceOnlineId = id
+			if (!hadLocal) {
+				// 本来就是在线地址：只标记，不重挂载，避免闪屏重播
+				return
+			}
 			this.$materialCache.invalidate(m.id, 'video')
-			this.forceOnlineId = String(m.id)
 			this.videoTick++
 			uni.showToast({ title: '本地缓存不可用，已切在线播放', icon: 'none' })
-			// 后台重下这一条
 			this.$materialCache.prefetchOne(m, this.$base.url)
 		},
 		prefetchAround() {
@@ -719,6 +799,142 @@ export default {
 	color: $muted;
 }
 
+/* 横/竖专用块：默认横屏可见 */
+.port-only {
+	display: none !important;
+}
+.port-actions {
+	display: none !important;
+}
+.land-only {
+	display: flex;
+}
+.land-actions {
+	display: flex;
+}
+.side.land-only {
+	flex-direction: column;
+}
+.right.port-only,
+.right.land-only {
+	display: flex;
+	align-items: center;
+	gap: 20rpx;
+}
+
+.submit-btn {
+	padding: 10rpx 28rpx;
+	background: $danger;
+	color: #fff;
+	font-size: 26rpx;
+	font-weight: 700;
+	border-radius: 999rpx;
+	line-height: 1.2;
+}
+.submit-btn:active {
+	opacity: .88;
+}
+
+.act-pill {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12rpx;
+	height: $p-sel-btn-h;
+	min-width: $p-sel-btn-w;
+	border-radius: 999rpx;
+	font-size: 28rpx;
+	font-weight: 700;
+}
+.act-pill.dislike {
+	background: #fff;
+	border: 1rpx solid $line;
+	color: $ink-2;
+}
+.act-pill.like {
+	background: $brand;
+	color: #fff;
+	border: none;
+	box-shadow: 0 10rpx 24rpx rgba(47,107,255,.28);
+}
+.act-pill:active {
+	opacity: .9;
+	transform: scale(.98);
+}
+.skip-link {
+	display: block;
+	text-align: center;
+	font-size: 22rpx;
+	color: $muted;
+	padding: 8rpx 0 4rpx;
+}
+
+.selected-strip {
+	width: 100%;
+	flex-shrink: 0;
+}
+.strip-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12rpx;
+}
+.strip-title {
+	font-size: 26rpx;
+	font-weight: 700;
+	color: $ink;
+}
+.strip-n {
+	color: $brand;
+	font-weight: 700;
+}
+.strip-row {
+	white-space: nowrap;
+	width: 100%;
+}
+.strip-item {
+	display: inline-block;
+	position: relative;
+	width: $p-sel-thumb-w;
+	height: $p-sel-thumb-h;
+	margin-right: $p-sel-strip-gap;
+	border-radius: $p-radius;
+	overflow: hidden;
+	vertical-align: top;
+	background: #111;
+}
+.strip-img {
+	width: 100%;
+	height: 100%;
+}
+.strip-idx {
+	position: absolute;
+	left: 8rpx;
+	bottom: 8rpx;
+	width: 36rpx;
+	height: 36rpx;
+	border-radius: 50%;
+	background: rgba(0,0,0,.7);
+	color: #fff;
+	font-size: 18rpx;
+	line-height: 36rpx;
+	text-align: center;
+}
+.strip-dur {
+	position: absolute;
+	right: 8rpx;
+	bottom: 8rpx;
+	color: #fff;
+	font-size: 18rpx;
+	text-shadow: 0 1rpx 4rpx rgba(0,0,0,.55);
+}
+.strip-empty {
+	display: inline-block;
+	padding: 40rpx 24rpx;
+	color: $muted;
+	font-size: 24rpx;
+}
+
 /* 右栏 */
 .side {
 	flex: 1;
@@ -868,7 +1084,7 @@ export default {
 }
 
 /* 1-2 标注稿：主舞台 1027、右栏 374、栏间距 16 */
-@media #{$pad-mq-landscape} {
+@include pad-landscape {
 	.topbar {
 		height: 8vh;
 		padding: 0 4.2vw;
@@ -1027,43 +1243,178 @@ export default {
 	}
 }
 
-@media #{$pad-mq-portrait} {
+@include pad-portrait {
+	.port-only {
+		display: flex !important;
+	}
+	.right.port-only {
+		display: flex !important;
+		align-items: center;
+		gap: p-px(12);
+	}
+	.skip-link.port-only {
+		display: block !important;
+	}
+	.selected-strip.port-only {
+		display: block !important;
+	}
+	.land-only {
+		display: none !important;
+	}
+	.land-actions {
+		display: none !important;
+	}
+	.port-actions {
+		display: flex !important;
+		align-items: center;
+		justify-content: center;
+		gap: $p-sel-btn-gap;
+		padding: p-px(16) 0 p-px(4);
+		height: auto;
+		flex-wrap: nowrap;
+	}
+
+	.topbar {
+		height: auto;
+		min-height: p-px(48);
+		padding: p-px(10) $p-pad-x;
+	}
+	.chips {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		padding: p-px(8) $p-pad-x p-px(4);
+		gap: p-px(10);
+	}
+	.chip {
+		flex-shrink: 0;
+		padding: p-px(8) p-px(16);
+		font-size: p-px(13);
+	}
+	.counter {
+		font-size: p-px(13);
+	}
+	.submit-btn {
+		padding: p-px(8) p-px(18);
+		font-size: p-px(14);
+	}
+
 	.main {
 		flex-direction: column;
 		overflow-y: auto;
-		padding-bottom: 2vh;
+		padding: p-px(8) $p-pad-x p-px(16);
+		gap: p-px(10);
 	}
-	.stage, .side {
+	.stage {
 		flex: none;
 		width: 100%;
 		min-width: 0;
 	}
 	.player {
-		min-height: 48vh;
-	}
-	.chips {
-		flex-wrap: nowrap;
-		overflow-x: auto;
-	}
-	.side {
-		overflow-y: visible;
-	}
-	.side .card {
-		min-height: auto;
-	}
-	.sc1, .sc2, .sc3 {
-		height: auto !important;
-	}
-	.actions {
-		flex-wrap: wrap;
-		height: auto;
-		padding: 2vh 0;
-		gap: 3vw;
-	}
-	.hint {
+		flex: none;
 		width: 100%;
-		text-align: center;
-		order: 10;
+		height: $p-sel-player-h;
+		max-height: 58vh;
+		min-height: p-px(420);
+		border-radius: $p-sel-player-r;
+	}
+	.video {
+		object-fit: cover;
+	}
+	.overlay {
+		left: p-px(16);
+		bottom: p-px(56);
+	}
+	.ov-title {
+		font-size: p-px(18);
+	}
+	.ov-tag {
+		font-size: p-px(11);
+		margin-top: p-px(6);
+	}
+	.act-pill {
+		flex: 1;
+		max-width: $p-sel-btn-w;
+		height: $p-sel-btn-h;
+		font-size: p-px(15);
+	}
+	.skip-link {
+		font-size: p-px(12);
+		padding: p-px(4) 0 p-px(8);
+	}
+	.selected-strip {
+		margin-top: p-px(4);
+		padding-bottom: p-px(8);
+	}
+	.strip-title {
+		font-size: p-px(14);
+	}
+	.strip-item {
+		width: $p-sel-thumb-w;
+		height: $p-sel-thumb-h;
+		margin-right: $p-sel-strip-gap;
+		border-radius: $p-radius;
+	}
+	.strip-idx {
+		width: p-px(18);
+		height: p-px(18);
+		line-height: p-px(18);
+		font-size: p-px(10);
+		left: p-px(6);
+		bottom: p-px(6);
+	}
+	.strip-dur {
+		font-size: p-px(10);
+		right: p-px(6);
+		bottom: p-px(6);
+	}
+}
+
+/* 强制竖屏预览（H5）时同样启用竖屏块 */
+.sel.is-portrait {
+	.port-only {
+		display: flex !important;
+	}
+	.right.port-only {
+		display: flex !important;
+	}
+	.skip-link.port-only {
+		display: block !important;
+	}
+	.selected-strip.port-only {
+		display: block !important;
+	}
+	.land-only,
+	.land-actions {
+		display: none !important;
+	}
+	.port-actions {
+		display: flex !important;
+		align-items: center;
+		justify-content: center;
+		gap: $p-sel-btn-gap;
+		padding: p-px(16) 0 p-px(4);
+		height: auto;
+	}
+	.player {
+		flex: none;
+		width: 100%;
+		height: $p-sel-player-h;
+		max-height: 58vh;
+		min-height: p-px(420);
+		border-radius: $p-sel-player-r;
+	}
+	.video {
+		object-fit: cover;
+	}
+	.main {
+		flex-direction: column;
+		overflow-y: auto;
+		padding: p-px(8) $p-pad-x p-px(16);
+		gap: p-px(10);
+	}
+	.stage {
+		flex: none;
+		width: 100%;
 	}
 }
 </style>

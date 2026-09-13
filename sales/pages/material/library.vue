@@ -9,7 +9,7 @@
 			<view class="total">全部 {{ total }} 条 ›</view>
 		</view>
 
-		<view class="library">
+		<view class="library land-lib">
 			<view class="industry-row">
 				<view v-for="(g,i) in topGroups" :key="g.id" class="industry-card"
 					:class="['g'+i,{on:currentGroup&&currentGroup.id===g.id}]" @click="chooseGroup(g)">
@@ -101,6 +101,65 @@
 				</view>
 			</view>
 		</view>
+
+		<!-- 竖屏 Bento 布局（仅 portrait 显示） -->
+		<view class="library port-lib">
+			<view class="port-sec">
+				<view class="port-dot"></view>
+				<text class="port-sec-title">素材分类</text>
+			</view>
+			<view v-for="(g, gi) in groups" :key="'b'+g.id" class="bento-row">
+				<view class="bento-hero" @click="chooseGroup(g)">
+					<image class="bento-hero-bg" :src="$img(groupCover(g, gi))" mode="aspectFill"></image>
+					<view class="bento-hero-mask"></view>
+					<view class="bento-hero-copy">
+						<text class="bento-hero-name">{{ g.name }}</text>
+						<text class="bento-hero-cnt">{{ groupCount(g) }} 个素材</text>
+					</view>
+					<view class="bento-hero-go">›</view>
+				</view>
+				<view class="bento-subs">
+					<view
+						v-for="(c, ci) in (g.children || []).slice(0, 6)"
+						:key="c.id"
+						class="bento-sub"
+						:class="{on: currentCategory && currentCategory.id === c.id}"
+						@click="pickBentoCategory(g, c)"
+					>
+						<image class="bento-sub-bg" :src="$img(categoryCover(c, ci))" mode="aspectFill"></image>
+						<view class="bento-sub-mask"></view>
+						<view class="bento-sub-copy">
+							<text class="bento-sub-name">{{ c.name }}</text>
+							<text class="bento-sub-cnt">{{ subCount(c) }}</text>
+						</view>
+						<view v-if="currentCategory && currentCategory.id === c.id" class="bento-check">✓</view>
+					</view>
+				</view>
+			</view>
+
+			<view class="port-preview card" v-if="currentCategory">
+				<view class="pp-head">
+					<view class="pp-title-block">
+						<text class="pp-title">{{ currentCategory.name }}</text>
+						<text class="pp-cnt">{{ subCount(currentCategory) }} 条</text>
+					</view>
+					<view class="pp-actions">
+						<view class="btn btn-ghost pp-all" @click="enterCategory(currentCategory)">查看全部</view>
+						<view class="btn btn-primary pp-join" @click="enterCategory(currentCategory)">加入本次接待</view>
+					</view>
+				</view>
+				<scroll-view scroll-x class="pp-scroll">
+					<view class="pp-row">
+						<view v-for="m in previewMaterials" :key="m.id" class="pp-item" @click="enterCategory(currentCategory)">
+							<image class="pp-img" :src="$media(m, 'cover')" mode="aspectFill"></image>
+							<view class="pp-play"></view>
+							<text class="pp-dur">{{ dur(m.duration) }}</text>
+						</view>
+						<view v-if="previewMaterials.length===0" class="pp-empty">暂无素材预览</view>
+					</view>
+				</scroll-view>
+			</view>
+		</view>
 	</sales-shell>
 </template>
 
@@ -153,6 +212,11 @@ export default {
 		},
 		recent() {
 			return this.materials.slice(0, 3)
+		},
+		previewMaterials() {
+			if (!this.currentCategory) return []
+			const name = this.currentCategory.name
+			return this.materials.filter(m => m.industrySub === name).slice(0, 8)
 		}
 	},
 	onLoad(opt) {
@@ -258,6 +322,11 @@ export default {
 		pickMoreCategory(c) {
 			this.closeMore()
 			this.enterCategory(c)
+		},
+		/* 仅竖屏 Bento 点击：只切选中态，不跳转；横屏 .port-lib 为 display:none，不会触发 */
+		pickBentoCategory(g, c) {
+			if (g) this.currentGroup = g
+			this.currentCategory = c || null
 		}
 	}
 }
@@ -273,6 +342,8 @@ export default {
 }
 .total { font-size:24rpx; color:$ink-2; }
 .library { flex:1; min-height:0; display:flex; flex-direction:column; gap:18rpx; }
+.port-lib { display:none; }
+.land-lib { display:flex; flex:1; min-height:0; flex-direction:column; gap:18rpx; }
 .industry-row { height:300rpx; display:flex; gap:18rpx; flex-shrink:0; }
 .industry-card { position:relative; overflow:hidden; border-radius:18rpx; border:1rpx solid $line; box-shadow:0 4rpx 14rpx rgba(31,39,51,.035); }
 .industry-card.on { border-color:rgba(47,107,255,.5); box-shadow:0 0 0 3rpx rgba(47,107,255,.08),0 6rpx 18rpx rgba(31,39,51,.055); }
@@ -355,7 +426,7 @@ export default {
 	min-height:320rpx;
 }
 
-@media #{$pad-mq-landscape} {
+@include pad-landscape {
 	.searchbar { width:25vw; height:5.2vh; padding:0 1.2vw; }
 	.s-input,.total { font-size:clamp(12px,.95vw,15px); }
 	.library { gap:1.1vh; }
@@ -395,69 +466,262 @@ export default {
 	.more-block + .more-block { margin-top:1vh; }
 }
 
-@media #{$pad-mq-portrait} {
-	.industry-row {
-		height: auto;
-		flex-wrap: nowrap;
-		overflow-x: auto;
+@include pad-portrait {
+	.searchbar {
+		width: $p-search-04;
+		max-width: 100%;
+		height: p-px(44);
+		min-height: p-px(44);
+		padding: 0 p-px(14);
 	}
-	.industry-card {
-		flex: none !important;
-		width: 72vw;
-		height: 18vh;
+	.s-input { font-size: p-px(13); }
+	.lib-actions { gap: p-px(10); }
+	.upload-btn {
+		font-size: p-px(13);
+		padding: p-px(6) p-px(14);
 	}
-	.category-area {
+	.total { font-size: p-px(12); }
+
+	.land-lib { display: none !important; }
+	.port-lib {
+		display: flex;
+		flex: 1;
+		min-height: 0;
+		flex-direction: column;
+		gap: p-px(16);
+		overflow-y: auto;
+		padding-bottom: p-px(10);
+	}
+	.port-sec {
+		display: flex;
+		align-items: center;
+		gap: p-px(10);
+	}
+	.port-dot {
+		width: p-px(8);
+		height: p-px(8);
+		border-radius: 50%;
+		background: $brand;
+	}
+	.port-sec-title {
+		font-size: p-px(18);
+		font-weight: 700;
+		color: $ink;
+	}
+	.bento-row {
+		display: flex;
+		gap: p-px(12);
+		min-height: $p-bento-h;
+	}
+	.bento-hero {
+		position: relative;
+		/* 04 H dist=652 → 326dp */
+		flex: 0 0 $p-bento-hero;
+		border-radius: $p-radius;
+		overflow: hidden;
+		border: 1px solid $line;
+	}
+	.bento-hero-bg {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+	}
+	.bento-hero-mask {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(180deg, rgba(16,24,36,.08), rgba(16,24,36,.55));
+	}
+	.bento-hero-copy {
+		position: absolute;
+		left: p-px(16);
+		bottom: p-px(16);
+		z-index: 2;
+		display: flex;
+		flex-direction: column;
+		gap: p-px(4);
+	}
+	.bento-hero-name {
+		font-size: p-px(24);
+		font-weight: 700;
+		color: #fff;
+	}
+	.bento-hero-cnt {
+		font-size: p-px(12);
+		color: rgba(255,255,255,.88);
+	}
+	.bento-hero-go {
+		position: absolute;
+		right: p-px(14);
+		bottom: p-px(14);
+		z-index: 2;
+		width: p-px(36);
+		height: p-px(36);
+		min-width: p-px(36);
+		min-height: p-px(36);
+		border-radius: 50%;
+		background: $brand;
+		color: #fff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: p-px(18);
+	}
+	.bento-subs {
+		flex: 1;
+		min-width: 0;
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		grid-auto-rows: minmax(p-px(88), 1fr);
+		gap: p-px(10);
+	}
+	.bento-sub {
+		position: relative;
+		border-radius: p-px(12);
+		overflow: hidden;
+		border: 1px solid $line;
+		background: #EEF1F5;
+	}
+	.bento-sub.on {
+		border-color: $brand;
+		box-shadow: 0 0 0 2px rgba(47,107,255,.18);
+	}
+	.bento-sub-bg {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+	}
+	.bento-sub-mask {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.08) 60%);
+	}
+	.bento-sub-copy {
+		position: absolute;
+		left: p-px(10);
+		top: p-px(10);
+		z-index: 2;
+		display: flex;
 		flex-direction: column;
 	}
-	.category-grid {
-		flex: none;
+	.bento-sub-name {
+		font-size: p-px(14);
+		font-weight: 700;
+		color: $ink;
+	}
+	.bento-sub-cnt {
+		font-size: p-px(11);
+		color: $ink-2;
+		margin-top: p-px(2);
+	}
+	.bento-check {
+		position: absolute;
+		right: p-px(8);
+		top: p-px(6);
+		z-index: 3;
+		width: p-px(22);
+		height: p-px(22);
+		border-radius: 50%;
+		background: $brand;
+		color: #fff;
+		font-size: p-px(12);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.port-preview {
+		padding: p-px(14) p-px(16);
+		border-radius: $p-radius;
+		flex-shrink: 0;
+		/* 04 H dist=516 → 258dp 预览带参考宽（横滑内容） */
+		min-height: p-px(160);
+	}
+	.pp-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: p-px(12);
+		margin-bottom: p-px(12);
+	}
+	.pp-title-block {
+		display: flex;
+		align-items: baseline;
+		gap: p-px(10);
+		min-width: 0;
+	}
+	.pp-title {
+		font-size: p-px(18);
+		font-weight: 700;
+	}
+	.pp-cnt {
+		font-size: p-px(12);
+		color: $muted;
+	}
+	.pp-actions {
+		display: flex;
+		gap: p-px(10);
+		flex-shrink: 0;
+	}
+	.pp-all, .pp-join {
+		height: p-px(36);
+		min-height: p-px(36);
+		padding: 0 p-px(14);
+		font-size: p-px(13);
+		border-radius: 999px;
+	}
+	.pp-scroll {
 		width: 100%;
-		grid-template-columns: repeat(2, 1fr);
-		grid-template-rows: auto;
-		gap: 2vw;
+		white-space: nowrap;
 	}
-	.category-card.c0,
-	.category-card.c1,
-	.category-card.c2,
-	.category-card.c3,
-	.category-card.c4,
-	.category-card.c5,
-	.category-card.c6 {
-		grid-column: span 1;
-		grid-row: span 1;
-		min-height: 14vh;
+	.pp-row {
+		display: inline-flex;
+		gap: p-px(12);
+		padding-bottom: p-px(4);
 	}
-	.featured {
-		flex: none;
-		width: 100%;
-		margin-top: 2vh;
+	.pp-item {
+		position: relative;
+		/* 04 预览：带宽 258dp 内约 1.5 卡可见；单卡 ≈160 保留，高度贴近 108.5(V217) */
+		width: p-px(160);
+		height: p-px(109);
+		border-radius: p-px(12);
+		overflow: hidden;
+		background: #EEF1F5;
+		flex-shrink: 0;
 	}
-	.recent {
-		height: auto;
-		flex-wrap: wrap;
+	.pp-img { width: 100%; height: 100%; }
+	.pp-play {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		width: p-px(36);
+		height: p-px(36);
+		border: 2px solid rgba(255,255,255,.9);
+		border-radius: 50%;
+		background: rgba(20,28,40,.2);
 	}
-	.recent-item {
-		min-width: 28vw;
-		height: 10vh;
+	.pp-play::after {
+		content: "";
+		position: absolute;
+		left: 13px;
+		top: 10px;
+		border-left: 12px solid #fff;
+		border-top: 8px solid transparent;
+		border-bottom: 8px solid transparent;
 	}
-	.more-panel {
-		width: 92vw;
+	.pp-dur {
+		position: absolute;
+		left: p-px(8);
+		bottom: p-px(8);
+		color: #fff;
+		font-size: p-px(11);
+		text-shadow: 0 1px 4px rgba(0,0,0,.45);
 	}
-	.more-category-grid {
-		grid-template-columns: repeat(2, 1fr);
-		grid-template-rows: auto;
-		min-height: auto;
-	}
-	.more-category-grid .category-card.c0,
-	.more-category-grid .category-card.c1,
-	.more-category-grid .category-card.c2,
-	.more-category-grid .category-card.c3,
-	.more-category-grid .category-card.c4,
-	.more-category-grid .category-card.c5,
-	.more-category-grid .category-card.c6 {
-		grid-column: span 1;
-		grid-row: span 1;
-		min-height: 14vh;
+	.pp-empty {
+		padding: p-px(32) p-px(40);
+		color: $muted;
+		font-size: p-px(13);
 	}
 }
 </style>

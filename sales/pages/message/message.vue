@@ -316,7 +316,7 @@ export default {
 .empty { color:$muted; text-align:center; padding:40rpx 0; }
 
 /* 1-6 标注稿：主行动区约 1014，右侧消息栏约 254 */
-@media #{$pad-mq-landscape} {
+@include pad-landscape {
 	.searchbar {
 		width: 22vw;
 		height: 5.2vh;
@@ -455,29 +455,90 @@ export default {
 	}
 }
 
-@media #{$pad-mq-portrait} {
+@include pad-portrait {
+	.searchbar {
+		/* 无独立 08 marks；对齐通用搜索高与 05 量级 */
+		width: $p-search-05;
+		max-width: 100%;
+		height: p-px(44);
+		min-height: p-px(44);
+		padding: 0 p-px(14);
+		box-sizing: border-box;
+	}
+	.s-input {
+		font-size: p-px(14);
+	}
+	.done-link {
+		font-size: p-px(13);
+	}
 	.ac {
 		flex-direction: column;
 		overflow-y: auto;
+		gap: p-px(16);
 	}
 	.col-main, .col-side {
 		flex: none;
 		width: 100%;
 	}
 	.col-side {
-		margin-top: 2vh;
+		margin-top: p-px(8);
+	}
+	.todo-head {
+		font-size: p-px(18);
+		margin-bottom: p-px(10);
+	}
+	.th-num {
+		font-size: p-px(18);
 	}
 	.filters {
 		flex-wrap: nowrap;
 		overflow-x: auto;
+		gap: p-px(10);
+		margin-bottom: p-px(12);
+	}
+	.f {
+		padding: p-px(8) p-px(14);
+		font-size: p-px(13);
+		border-radius: 999px;
+		white-space: nowrap;
+	}
+	.a-card {
+		padding: p-px(14) p-px(16);
+		border-radius: $p-radius;
+		margin-bottom: p-px(12);
+		box-sizing: border-box;
+	}
+	.a-thumb {
+		width: p-px(72);
+		height: p-px(72);
+		border-radius: p-px(12);
+	}
+	.a-title {
+		font-size: p-px(15);
+	}
+	.a-meta {
+		font-size: p-px(12);
 	}
 	.msg-card.grow, .sum-card {
 		height: auto;
 		max-height: none;
+		padding: p-px(16) p-px(18);
+		border-radius: $p-radius;
+		box-sizing: border-box;
 	}
 	.a-actions {
 		max-width: none;
 		flex-wrap: wrap;
+		gap: p-px(10);
+	}
+	.a-actions .btn,
+	.ab {
+		height: $p-ctrl-h;
+		min-height: $p-ctrl-h;
+		padding: 0 p-px(16);
+		font-size: p-px(14);
+		border-radius: 999px;
+		box-sizing: border-box;
 	}
 }
 </style>

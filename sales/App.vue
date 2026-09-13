@@ -1,9 +1,12 @@
 <script>
 import materialCache from './utils/materialCache.js'
 import base from './api/base.js'
+import { restoreForcePortrait } from './utils/forcePortrait.js'
 
 export default {
 	onLaunch: function() {
+		// H5 临时：恢复「竖屏预览」状态
+		try { restoreForcePortrait() } catch (e) {}
 		const api = this.$api
 		api.config().then(res => {
 			if (res && res.data) {
@@ -169,7 +172,7 @@ image {
 
 /* 横屏 Pad：卡片边缘和投影统一为轻量层级，不改变原有布局 */
 /* 小米平板 6 Pro 横屏 2880×1800 */
-@media #{$pad-mq-landscape} {
+@include pad-landscape {
 	.card {
 		border-color: rgba(31, 39, 51, .055);
 		box-shadow: 0 3px 12px rgba(31, 39, 51, .028);
@@ -182,10 +185,31 @@ image {
 	}
 }
 
-@media #{$pad-mq-portrait} {
+@include pad-portrait {
 	.card {
 		border-color: rgba(31, 39, 51, .055);
 		box-shadow: 0 3px 12px rgba(31, 39, 51, .028);
 	}
+}
+
+/* H5 临时：竖屏预览时收窄画布，方便对照 Pad 竖屏比例 */
+html.force-portrait {
+	background: #12161f;
+}
+html.force-portrait body {
+	max-width: 900px;
+	margin: 0 auto;
+	min-height: 100%;
+	box-shadow: 0 0 0 1px rgba(255, 255, 255, .06);
+	position: relative;
+}
+/* fixed 底栏要对齐 900 画布，不能拉满整个显示器 */
+html.force-portrait .shell .nav,
+html.force-portrait uni-page-body .nav {
+	left: 50% !important;
+	right: auto !important;
+	width: 900px !important;
+	max-width: 100vw !important;
+	transform: translateX(-50%);
 }
 </style>

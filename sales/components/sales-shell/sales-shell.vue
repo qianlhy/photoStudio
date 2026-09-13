@@ -1,8 +1,11 @@
 <template>
-	<view class="shell">
+	<view class="shell" :class="{ 'shell-center': align === 'center' }">
 		<!-- 顶栏 -->
 		<view class="topbar">
-			<text class="brand">{{ brandName }}</text>
+			<view class="brand-wrap">
+				<view class="brand-mark">合</view>
+				<text class="brand">{{ brandName }}</text>
+			</view>
 			<!-- 居中问候（工作台） -->
 			<view v-if="align==='center'" class="center">
 				<text class="title">{{ title }}</text>
@@ -34,12 +37,15 @@
 				<slot></slot>
 			</view>
 		</view>
+		<dev-portrait-toggle />
 	</view>
 </template>
 
 <script>
+import devPortraitToggle from '@/components/dev-portrait-toggle/dev-portrait-toggle.vue'
 export default {
 	name: 'sales-shell',
+	components: { devPortraitToggle },
 	props: {
 		active: { type: String, default: 'workbench' },
 		title: { type: String, default: '' },
@@ -104,6 +110,14 @@ export default {
 	font-weight: 700;
 	color: $ink;
 	letter-spacing: 2rpx;
+}
+.brand-wrap {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+.brand-mark {
+	display: none;
 }
 .center {
 	flex: 1;
@@ -333,7 +347,7 @@ export default {
 /*
  * Pad 横屏：设计基准 1280×800（16:10）
  */
-@media #{$pad-mq-landscape} {
+@include pad-landscape {
 	.topbar {
 		height: 10vh;
 		padding: 0 2.1vw;
@@ -397,61 +411,124 @@ export default {
 }
 
 /*
- * Pad 竖屏：底栏导航 + 全宽内容
+ * Pad 竖屏：顶栏精简 + 底栏五导航（对齐 1800×2880 设计）
+ * 不改横屏 DOM/业务，仅样式
  */
-@media #{$pad-mq-portrait} {
+@include pad-portrait {
 	.shell {
 		height: 100vh;
+		background: $page-bg;
 	}
 	.topbar {
-		height: 7vh;
-		padding: 0 3vw;
-		flex-wrap: wrap;
+		height: auto;
+		min-height: p-px(52);
+		padding: p-px(12) $p-pad-x p-px(8);
+		flex-wrap: nowrap;
+		align-items: center;
+		background: #fff;
+		border-bottom: 1px solid $line;
+		box-shadow: none;
+	}
+	/* 工作台竖屏：顶栏只留品牌 + 铃铛，问候下沉到页面内容 */
+	.shell-center .topbar {
+		background: transparent;
+		border-bottom: none;
+		padding: p-px(14) $p-pad-x p-px(4);
+		min-height: p-px(48);
+	}
+	.shell-center .center {
+		display: none;
+	}
+	.brand-wrap {
+		gap: p-px(10);
+	}
+	.brand-mark {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: p-px(32);
+		height: p-px(32);
+		border-radius: 50%;
+		background: $brand;
+		color: #fff;
+		font-size: p-px(15);
+		font-weight: 700;
+		letter-spacing: 0;
+		flex-shrink: 0;
 	}
 	.brand {
-		font-size: clamp(18px, 2.4vw, 24px);
+		font-size: p-px(18);
+		font-weight: 700;
+		color: $ink;
+		flex-shrink: 0;
+		letter-spacing: 1px;
 	}
 	.page-title {
-		margin-left: 2vw;
-		max-width: 42vw;
+		margin-left: p-px(16);
+		max-width: p-px(280);
+		flex: 1;
+		min-width: 0;
 	}
 	.page-title .pt-title {
-		font-size: clamp(16px, 2.2vw, 22px);
+		font-size: p-px(18);
+		font-weight: 600;
 	}
 	.page-title .pt-sub {
 		display: none;
 	}
+	.center {
+		flex: 1;
+		min-width: 0;
+		margin-left: p-px(16);
+		align-items: flex-start;
+	}
 	.center .title {
-		font-size: clamp(16px, 2.2vw, 22px);
+		font-size: p-px(20);
+		font-weight: 700;
+		text-align: left;
 	}
 	.center .subtitle {
-		font-size: clamp(11px, 1.4vw, 14px);
+		font-size: p-px(12);
+		color: $muted;
+		text-align: left;
+		margin-top: p-px(2);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: p-px(420);
 	}
 	.search-slot {
-		order: 3;
-		width: 100%;
-		padding: .6vh 0 0;
-		justify-content: flex-start;
+		order: 0;
+		flex: 1;
+		width: auto;
+		max-width: p-px(360);
+		padding: 0;
+		justify-content: flex-end;
+		margin: 0 p-px(16);
 	}
 	.right {
-		gap: 2vw;
+		gap: p-px(16);
+		flex-shrink: 0;
+		margin-left: auto;
 	}
 	.right .date {
 		display: none;
 	}
 	.bell {
-		width: clamp(24px, 3.2vw, 32px);
-		height: clamp(24px, 3.2vw, 32px);
+		width: p-px(28);
+		height: p-px(28);
 	}
 	.avatar {
-		width: clamp(32px, 4.2vw, 42px);
-		height: clamp(32px, 4.2vw, 42px);
+		width: p-px(40);
+		height: p-px(40);
+		border-radius: 50%;
 	}
 	.body {
 		flex-direction: column;
 		position: relative;
-		padding-bottom: 11vh;
+		padding-bottom: calc(#{$p-nav-h} + env(safe-area-inset-bottom));
 		box-sizing: border-box;
+		min-height: 0;
 	}
 	.nav {
 		position: fixed;
@@ -459,34 +536,107 @@ export default {
 		right: 0;
 		bottom: 0;
 		z-index: 100;
-		width: 100%;
-		height: 10vh;
+		width: auto;
+		height: calc(#{$p-nav-h} + env(safe-area-inset-bottom));
 		margin: 0;
-		padding: .8vh 2vw 1.2vh;
-		border-radius: 18px 18px 0 0;
+		padding: p-px(8) $p-pad-x calc(#{p-px(10)} + env(safe-area-inset-bottom));
+		border-radius: p-px(16) p-px(16) 0 0;
 		flex-direction: row;
-		justify-content: space-around;
-		align-items: stretch;
+		justify-content: space-between;
+		align-items: center;
 		gap: 0;
 		box-sizing: border-box;
+		background: #fff;
+		box-shadow: 0 -4px 20px rgba(32, 41, 56, .06);
+		border-top: 1px solid $line;
+		border-left: none;
+		border-right: none;
+		border-bottom: none;
 	}
 	.nav-item {
 		flex: 1;
-		padding: .6vh 0;
-		border-radius: 12px;
+		height: 100%;
+		max-width: $p-nav-gap;
+		padding: 0;
+		margin: 0 auto;
+		border-radius: p-px(10);
+		gap: p-px(4);
+		background: transparent !important;
+		box-shadow: none !important;
+		color: $muted;
+	}
+	.nav-item.active {
+		background: transparent !important;
+		box-shadow: none !important;
+		color: $brand;
+	}
+	.nav-item.active .nav-label {
+		color: $brand !important;
+		font-weight: 600;
+	}
+	.nav-item.active .icon-core,
+	.nav-item.active .nav-icon,
+	.nav-item.active .nav-icon::before,
+	.nav-item.active .nav-icon::after {
+		color: $brand !important;
+	}
+	.right .avatar {
+		display: none;
 	}
 	.nav-item .nav-icon {
-		transform: scale(.82);
+		width: p-px(24);
+		height: p-px(24);
+		transform: none;
+		color: #98A2B3;
 	}
 	.nav-item .nav-label {
-		font-size: clamp(10px, 1.3vw, 13px);
-		margin-top: .4vh;
+		font-size: p-px(12);
+		line-height: 1.2;
+		margin-top: 0;
+		color: $muted;
+	}
+	/* 图标用固定 px，避免 rpx 在宽屏浏览器里被撑乱 */
+	.icon-workbench::before, .icon-workbench::after,
+	.icon-workbench .icon-core::before, .icon-workbench .icon-core::after {
+		width: 8px;
+		height: 8px;
+		border-width: 2px;
+		border-radius: 2px;
+	}
+	.icon-customer::before {
+		left: 7px; top: 0; width: 8px; height: 8px; border-width: 2px;
+	}
+	.icon-customer::after {
+		left: 3px; bottom: 0; width: 16px; height: 10px; border-width: 2px;
+	}
+	.icon-order::before {
+		left: 4px; top: 0; width: 14px; height: 18px; border-width: 2px;
+	}
+	.icon-order::after {
+		left: 7px; top: 5px; width: 8px; height: 2px;
+		box-shadow: 0 4px 0 currentColor, 0 8px 0 currentColor;
+	}
+	.icon-material::before {
+		left: 1px; top: 3px; width: 20px; height: 16px; border-width: 2px;
+	}
+	.icon-material::after {
+		left: 8px; top: 7px;
+		border-left-width: 7px;
+		border-top-width: 4px;
+		border-bottom-width: 4px;
+	}
+	.icon-message::before {
+		left: 1px; top: 2px; width: 20px; height: 15px; border-width: 2px;
+	}
+	.icon-message::after {
+		left: 5px; bottom: 0; width: 6px; height: 6px; border-left-width: 2px;
 	}
 	.content {
 		flex: 1;
 		width: 100%;
-		padding: 1vh 3vw 1.5vh;
+		padding: p-px(12) $p-pad-x p-px(16);
 		overflow-y: auto;
+		box-sizing: border-box;
 	}
 }
 </style>
