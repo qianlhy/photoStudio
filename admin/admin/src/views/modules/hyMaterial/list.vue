@@ -14,6 +14,7 @@
         <span class="tb-sel" v-if="sel.length>0">已选 {{ sel.length }} 项 <a @click="clearSel()">清空</a></span>
       </div>
       <div class="tb-right">
+        <el-button icon="el-icon-folder-opened" @click="openCatMgr()">分类管理</el-button>
         <el-button :type="recycle?'warning':'default'" icon="el-icon-delete" @click="toggleRecycle()">{{ recycle ? '返回素材库' : '回收站' }}</el-button>
         <el-button icon="el-icon-download" @click="exportReport()">导出报表</el-button>
       </div>
@@ -60,7 +61,7 @@
     <div class="mt-body">
       <!-- 左：分类树 -->
       <div class="mt-tree">
-        <div class="tree-head"><span>全部分类</span><a @click="$message.info('分类管理')">管理分类</a></div>
+        <div class="tree-head"><span>全部分类</span><a @click="openCatMgr()">管理分类</a></div>
         <el-tree :data="treeData" node-key="key" :expand-on-click-node="false" default-expand-all
                  :highlight-current="true" @node-click="onTreeClick">
           <span class="tree-node" slot-scope="{ data }">
@@ -68,7 +69,7 @@
             <span class="tree-cnt" v-if="data.count!=null">{{ data.count }}</span>
           </span>
         </el-tree>
-        <el-button class="tree-add" icon="el-icon-plus" @click="$message.info('新建分类')">新建分类</el-button>
+        <el-button class="tree-add" icon="el-icon-plus" @click="openCatForm('big')">新建分类</el-button>
       </div>
 
       <!-- 中：统计卡 + 表格 -->
@@ -154,6 +155,57 @@
         <div slot="footer">
           <el-button size="small" @click="editMeta.visible=false">取消</el-button>
           <el-button type="primary" size="small" :loading="editMeta.saving" @click="saveEditMeta">保存</el-button>
+        </div>
+      </el-dialog>
+
+      <!-- 行业分类管理 -->
+      <el-dialog title="分类管理" :visible.sync="catMgr.visible" width="720px" append-to-body @open="refreshCatMgr">
+        <div class="cat-toolbar">
+          <el-button type="primary" size="small" icon="el-icon-plus" @click="openCatForm('big')">新建行业大类</el-button>
+          <el-button size="small" icon="el-icon-plus" @click="openCatForm('sub')">新建业态分类</el-button>
+          <span class="cat-tip">大类如「餐饮」，业态如「火锅 / 奶茶」。删除前需无下属素材。</span>
+        </div>
+        <el-table :data="catFlatList" border size="small" v-loading="catMgr.loading" max-height="420">
+          <el-table-column label="分类名称" min-width="160">
+            <template slot-scope="s">
+              <span :class="{'cat-indent': s.row.level===2}">{{ s.row.path }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="层级" align="center" width="90">
+            <template slot-scope="s">{{ s.row.level === 1 ? '行业大类' : '业态分类' }}</template>
+          </el-table-column>
+          <el-table-column label="素材数" prop="materialCount" align="center" width="80"></el-table-column>
+          <el-table-column label="排序" prop="sort" align="center" width="70"></el-table-column>
+          <el-table-column label="操作" align="center" width="140">
+            <template slot-scope="s">
+              <el-button type="text" size="small" @click="openCatForm('edit', s.row)">编辑</el-button>
+              <el-button type="text" size="small" style="color:#F56C6C" @click="deleteCat(s.row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div slot="footer">
+          <el-button size="small" @click="catMgr.visible=false">关闭</el-button>
+        </div>
+      </el-dialog>
+
+      <el-dialog :title="catFormTitle" :visible.sync="catForm.visible" width="440px" append-to-body>
+        <el-form label-width="96px" size="small">
+          <el-form-item v-if="catForm.level === 2" label="所属行业" required>
+            <el-select v-model="catForm.parentId" placeholder="请选择行业大类" style="width:100%" :disabled="catForm.mode==='edit'">
+              <el-option v-for="b in bigList" :key="b.id" :label="b.name" :value="b.id"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="分类名称" required>
+            <el-input v-model="catForm.name" maxlength="20" show-word-limit placeholder="如：餐饮、火锅"></el-input>
+          </el-form-item>
+          <el-form-item label="排序">
+            <el-input-number v-model="catForm.sort" :min="0" :max="999" controls-position="right"></el-input-number>
+            <span class="cat-sort-hint">数字越小越靠前</span>
+          </el-form-item>
+        </el-form>
+        <div slot="footer">
+          <el-button size="small" @click="catForm.visible=false">取消</el-button>
+          <el-button type="primary" size="small" :loading="catForm.saving" @click="saveCatForm">保存</el-button>
         </div>
       </el-dialog>
 
@@ -299,12 +351,58 @@ export default {
         batchId: "",
         startedAt: 0,
         folderName: ""
+      },
+      catMgr: { visible: false, loading: false },
+      catForm: {
+        visible: false,
+        saving: false,
+        mode: "add",
+        id: null,
+        level: 1,
+        parentId: null,
+        name: "",
+        sort: 0
       }
     };
   },
   computed: {
     uploadUrl() { return this.$base.url + "file/upload"; },
     uploadHeaders() { return {Token: this.$storage.get("Token")}; },
+    catFormTitle() {
+      if (this.catForm.mode === "edit") return this.catForm.level === 1 ? "编辑行业大类" : "编辑业态分类";
+      return this.catForm.level === 1 ? "新建行业大类" : "新建业态分类";
+    },
+    catFlatList() {
+      const rows = [];
+      const bigs = (this.bigList || []).slice().sort((a, b) => (a.sort || 0) - (b.sort || 0));
+      bigs.forEach(b => {
+        rows.push({
+          id: b.id,
+          name: b.name,
+          level: 1,
+          parentId: 0,
+          parentName: null,
+          sort: b.sort || 0,
+          materialCount: b.materialCount != null ? b.materialCount : (this.treeCounts[b.name] || 0),
+          path: b.name
+        });
+        (this.allIndustry || []).filter(i => i.parentId === b.id)
+          .slice().sort((a, c) => (a.sort || 0) - (c.sort || 0))
+          .forEach(s => {
+            rows.push({
+              id: s.id,
+              name: s.name,
+              level: 2,
+              parentId: b.id,
+              parentName: b.name,
+              sort: s.sort || 0,
+              materialCount: s.materialCount != null ? s.materialCount : (this.treeCounts[b.name + ">" + s.name] || 0),
+              path: b.name + " > " + s.name
+            });
+          });
+      });
+      return rows;
+    },
     treeData() {
       const all = {key: "__all__", label: "全部分类", count: this.stat.total, children: []};
       const bigs = this.bigList.map(b => ({
@@ -354,15 +452,121 @@ export default {
     },
     statPct(n) { return this.stat.total ? Math.round((n || 0) / this.stat.total * 100) + "%" : "0%"; },
     loadIndustry() {
-      this.$http({url: "hyIndustry/list", method: "get"}).then(({data}) => {
+      return this.$http({url: "hyIndustry/list", method: "get"}).then(({data}) => {
         if (data.code === 0) {
           this.allIndustry = data.data || [];
           this.bigList = this.allIndustry.filter(i => i.level === 1);
         }
       });
     },
+    openCatMgr() {
+      this.catMgr.visible = true;
+      this.refreshCatMgr();
+    },
+    refreshCatMgr() {
+      this.catMgr.loading = true;
+      Promise.all([this.loadIndustry(), this.loadStat()]).finally(() => {
+        this.catMgr.loading = false;
+      });
+    },
+    openCatForm(type, row) {
+      if (type === "big") {
+        this.catForm = {
+          visible: true,
+          saving: false,
+          mode: "add",
+          id: null,
+          level: 1,
+          parentId: null,
+          name: "",
+          sort: (this.bigList.length || 0) + 1
+        };
+      } else if (type === "sub") {
+        const parentId = row && row.level === 1 ? row.id : (this.bigList[0] && this.bigList[0].id);
+        this.catForm = {
+          visible: true,
+          saving: false,
+          mode: "add",
+          id: null,
+          level: 2,
+          parentId: parentId || null,
+          name: "",
+          sort: 1
+        };
+        if (!this.bigList.length) {
+          this.$message.warning("请先新建行业大类");
+          this.catForm.visible = false;
+        }
+      } else if (type === "edit" && row) {
+        this.catForm = {
+          visible: true,
+          saving: false,
+          mode: "edit",
+          id: row.id,
+          level: row.level,
+          parentId: row.parentId || null,
+          name: row.name,
+          sort: row.sort || 0
+        };
+      }
+    },
+    saveCatForm() {
+      const name = (this.catForm.name || "").trim();
+      if (!name) {
+        this.$message.warning("请输入分类名称");
+        return;
+      }
+      if (this.catForm.level === 2 && !this.catForm.parentId) {
+        this.$message.warning("请选择所属行业大类");
+        return;
+      }
+      this.catForm.saving = true;
+      const body = {
+        id: this.catForm.id,
+        name,
+        level: this.catForm.level,
+        parentId: this.catForm.level === 2 ? this.catForm.parentId : 0,
+        sort: this.catForm.sort
+      };
+      const url = this.catForm.mode === "edit" ? "hyIndustry/update" : "hyIndustry/save";
+      this.$http({url, method: "post", data: body}).then(({data}) => {
+        this.catForm.saving = false;
+        if (data.code === 0) {
+          this.$message.success("保存成功");
+          this.catForm.visible = false;
+          this.loadIndustry().then(() => {
+            this.loadStat();
+            if (this.searchForm.industryBig) this.onBig(this.searchForm.industryBig);
+          });
+        } else {
+          this.$message.error(data.msg || "保存失败");
+        }
+      }).catch(() => {
+        this.catForm.saving = false;
+      });
+    },
+    deleteCat(row) {
+      const label = row.level === 1 ? row.name : (row.parentName + " > " + row.name);
+      this.$confirm(`确定删除分类「${label}」？`, "提示", {type: "warning"}).then(() => {
+        this.$http({url: "hyIndustry/delete", method: "post", data: [Number(row.id)]}).then(({data}) => {
+          if (data.code === 0) {
+            this.$message.success("已删除");
+            if (this.searchForm.industryBig === row.name || this.searchForm.industrySub === row.name) {
+              this.searchForm.industryBig = "";
+              this.searchForm.industrySub = "";
+            }
+            this.loadIndustry().then(() => {
+              this.loadStat();
+              this.getDataList();
+            });
+          } else {
+            this.$message.error(data.msg || "删除失败");
+          }
+        });
+      }).catch(() => {});
+    },
     loadStat() {
-      this.$http({url: "hyMaterial/page", method: "get", params: {page: 1, limit: 3000}}).then(({data}) => {
+      return this.$http({url: "hyMaterial/page", method: "get", params: {page: 1, limit: 3000}}).then(({data}) => {
         if (data.code !== 0) return;
         const l = data.data.list || [];
         const live = l.filter(m => m.status !== "回收站");
@@ -1179,6 +1383,27 @@ export default {
 .edit-meta-title {
   font-size: 13px; color: #1F2733; line-height: 1.4;
   word-break: break-all; max-height: 40px; overflow: hidden;
+}
+.cat-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.cat-tip {
+  font-size: 12px;
+  color: #8A94A6;
+  margin-left: auto;
+}
+.cat-indent {
+  padding-left: 12px;
+  color: #526071;
+}
+.cat-sort-hint {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #8A94A6;
 }
 </style>
 

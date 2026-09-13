@@ -12,6 +12,12 @@
             <el-option label="未下载" value="未下载"></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="查看状态">
+          <el-select v-model="searchForm.viewed" placeholder="请选择" clearable style="width:120px">
+            <el-option label="已查看" value="已查看"></el-option>
+            <el-option label="未查看" value="未查看"></el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="是否优质作品">
           <el-select v-model="searchForm.quality" placeholder="请选择" clearable style="width:120px">
             <el-option label="是" value="yes"></el-option>
@@ -61,6 +67,20 @@
                 <el-tag size="mini" :type="s.row.downloadStatus==='已下载'?'success':'info'">{{ s.row.downloadStatus||'未下载' }}</el-tag>
               </template>
             </el-table-column>
+            <el-table-column label="查看" align="center" width="90">
+              <template slot-scope="s">
+                <el-tag size="mini" :type="s.row.viewStatus==='已查看'?'success':'info'">{{ s.row.viewStatus||'未查看' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="满意度" align="center" width="110">
+              <template slot-scope="s">
+                <span v-if="s.row.satisfaction">{{ s.row.satisfaction }} 星</span>
+                <span v-else class="small">未评价</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="客户评价" min-width="140" show-overflow-tooltip>
+              <template slot-scope="s">{{ s.row.customerComment || '—' }}</template>
+            </el-table-column>
             <el-table-column label="优质" align="center" width="80">
               <template slot-scope="s"><el-tag v-if="s.row.qualityFlag===1" size="mini" type="warning">优质</el-tag><span v-else>—</span></template>
             </el-table-column>
@@ -94,6 +114,11 @@
             <div class="sec-title">创作归属</div>
             <div class="d-row"><span class="d-l">拍摄人员</span><span class="d-v">{{ detail.shooterName || '—' }}</span></div>
             <div class="d-row"><span class="d-l">剪辑人员</span><span class="d-v">{{ detail.editorName || '—' }}</span></div>
+            <div class="sec-title">客户反馈</div>
+            <div class="d-row"><span class="d-l">查看状态</span><span class="d-v">{{ detail.viewStatus || '未查看' }}</span></div>
+            <div class="d-row"><span class="d-l">下载状态</span><span class="d-v">{{ detail.downloadStatus || '未下载' }}</span></div>
+            <div class="d-row"><span class="d-l">满意度</span><span class="d-v">{{ detail.satisfaction ? (detail.satisfaction + ' 星') : '未评价' }}</span></div>
+            <div class="d-row" style="align-items:flex-start"><span class="d-l">评价</span><span class="d-v" style="max-width:160px;text-align:right;word-break:break-all">{{ detail.customerComment || '—' }}</span></div>
             <div class="sec-title">可复用价值说明</div>
             <el-input type="textarea" :rows="3" v-model="detail.reuseValue" placeholder="如：适合餐饮门店获客"></el-input>
             <div class="sp-label" style="margin:12px 0 6px">适用行业（逗号分隔）</div>
@@ -169,7 +194,7 @@
 export default {
   data() {
     return {
-      searchForm: {customerName: "", orderNo: "", industry: "", download: "", quality: ""},
+      searchForm: {customerName: "", orderNo: "", industry: "", download: "", viewed: "", quality: ""},
       activeTab: "all",
       counts: {all: 0, quality: 0, recycle: 0},
       dataList: [],
@@ -216,7 +241,7 @@ export default {
     search() { this.pageIndex = 1; this.getDataList(); },
     switchTab(t) { this.activeTab = t; this.pageIndex = 1; this.detail = {}; this.getDataList(); },
     reset() {
-      this.searchForm = {customerName: "", orderNo: "", industry: "", download: "", quality: ""};
+      this.searchForm = {customerName: "", orderNo: "", industry: "", download: "", viewed: "", quality: ""};
       this.search();
     },
     loadCustomers() {
@@ -250,6 +275,7 @@ export default {
         let list = (data.code === 0 ? data.data.list : []) || [];
         if (this.activeTab === "recycle") list = list.filter(d => d.downloadStatus !== "已下载");
         if (this.searchForm.download) list = list.filter(d => (d.downloadStatus || "未下载") === this.searchForm.download);
+        if (this.searchForm.viewed) list = list.filter(d => (d.viewStatus || "未查看") === this.searchForm.viewed);
         if (this.searchForm.quality === "yes") list = list.filter(d => d.qualityFlag === 1);
         else if (this.searchForm.quality === "no") list = list.filter(d => d.qualityFlag !== 1);
         this.dataList = list;
@@ -334,8 +360,13 @@ export default {
       }).catch(() => {});
     },
     exportReport() {
-      const head = ["作品名称", "客户", "订单号", "类型", "拍摄", "剪辑", "下载状态"];
-      const rows = this.dataList.map(d => [d.title, d.customerName, d.orderNo, d.contentType, d.shooterName, d.editorName, d.downloadStatus || "未下载"]);
+      const head = ["作品名称", "客户", "订单号", "类型", "拍摄", "剪辑", "查看状态", "下载状态", "满意度", "客户评价", "优质"];
+      const rows = this.dataList.map(d => [
+        d.title, d.customerName, d.orderNo, d.contentType, d.shooterName, d.editorName,
+        d.viewStatus || "未查看", d.downloadStatus || "未下载",
+        d.satisfaction || "", (d.customerComment || "").replace(/,/g, "，"),
+        d.qualityFlag === 1 ? "是" : "否"
+      ]);
       let csv = "\ufeff" + head.join(",") + "\n" + rows.map(r => r.join(",")).join("\n");
       const blob = new Blob([csv], {type: "text/csv"});
       const a = document.createElement("a");

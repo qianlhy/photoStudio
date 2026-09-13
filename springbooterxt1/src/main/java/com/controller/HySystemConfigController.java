@@ -9,6 +9,7 @@ import com.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,8 @@ public class HySystemConfigController {
 
     @Autowired
     private HySystemConfigServiceImpl service;
+    @Autowired
+    private com.service.impl.HyOperationLogServiceImpl operationLogService;
 
     /** 全部配置（品牌等），返回 name->value 映射 */
     @IgnoreAuth
@@ -42,7 +45,7 @@ public class HySystemConfigController {
 
     /** 新增/更新配置 */
     @PostMapping("/set")
-    public R set(@RequestParam("name") String name, @RequestParam("value") String value) {
+    public R set(@RequestParam("name") String name, @RequestParam("value") String value, HttpServletRequest request) {
         HySystemConfigEntity c = service.selectOne(new EntityWrapper<HySystemConfigEntity>().eq("name", name));
         if (c == null) {
             c = new HySystemConfigEntity();
@@ -54,6 +57,7 @@ public class HySystemConfigController {
             c.setValue(value);
             service.updateById(c);
         }
+        operationLogService.record(request, "员工与系统", "基础配置", name + " = " + value);
         return R.ok();
     }
 }

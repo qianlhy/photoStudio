@@ -110,6 +110,10 @@ public class HyCustomerAccountServiceImpl {
         } else {
             entity.setAuditStatus(normalizeAudit(entity.getAuditStatus()));
         }
+        // update 入口会先从旧记录补全 selectTarget；此处兜底新建/非法值
+        if (entity.getSelectTarget() == null || entity.getSelectTarget() < 1) {
+            entity.setSelectTarget(15);
+        }
         if (AUDIT_APPROVED.equals(entity.getAuditStatus())
                 && entity.getPhone() != null && !entity.getPhone().trim().isEmpty()) {
             syncYonghuShell(entity, "是");
@@ -132,6 +136,7 @@ public class HyCustomerAccountServiceImpl {
             customer.setFollowStatus("跟进中");
             customer.setIntention("中");
             customer.setSatisfaction(5);
+            customer.setSelectTarget(15);
         }
         boolean existed = customerService.selectById(customer.getId()) != null;
         if (existed && isCrmActivatedCustomer(customer)) {

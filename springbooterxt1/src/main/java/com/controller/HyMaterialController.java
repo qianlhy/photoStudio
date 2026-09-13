@@ -12,6 +12,7 @@ import com.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
@@ -22,6 +23,8 @@ public class HyMaterialController {
 
     @Autowired
     private HyMaterialServiceImpl service;
+    @Autowired
+    private com.service.impl.HyOperationLogServiceImpl operationLogService;
 
     @IgnoreAuth
     @RequestMapping("/page")
@@ -48,31 +51,39 @@ public class HyMaterialController {
     }
 
     @PostMapping("/save")
-    public R save(@RequestBody HyMaterialEntity entity) {
+    public R save(@RequestBody HyMaterialEntity entity, HttpServletRequest request) {
         entity.setId(HyId.next());
         entity.setAddtime(new Date());
         if (entity.getStatus() == null) entity.setStatus("上架");
         service.insert(entity);
+        operationLogService.record(request, "素材内容", "新增素材",
+                entity.getTitle() != null ? entity.getTitle() : String.valueOf(entity.getId()));
         return R.ok().put("id", entity.getId());
     }
 
     /** 批量上传保存 */
     @PostMapping("/batchSave")
-    public R batchSave(@RequestBody java.util.List<HyMaterialEntity> list) {
+    public R batchSave(@RequestBody java.util.List<HyMaterialEntity> list, HttpServletRequest request) {
+        int n = 0;
         if (list != null) {
             for (HyMaterialEntity e : list) {
                 e.setId(HyId.next());
                 e.setAddtime(new Date());
                 if (e.getStatus() == null) e.setStatus("上架");
                 service.insert(e);
+                n++;
             }
         }
+        operationLogService.record(request, "素材内容", "批量上传", "共 " + n + " 条素材");
         return R.ok();
     }
 
     @RequestMapping("/update")
-    public R update(@RequestBody HyMaterialEntity entity) {
+    public R update(@RequestBody HyMaterialEntity entity, HttpServletRequest request) {
         service.updateById(entity);
+        operationLogService.record(request, "素材内容", "修改素材",
+                (entity.getTitle() != null ? entity.getTitle() : "") + " ID:" + entity.getId()
+                        + (entity.getStatus() != null ? " / " + entity.getStatus() : ""));
         return R.ok();
     }
 
@@ -112,8 +123,10 @@ public class HyMaterialController {
     }
 
     @RequestMapping("/delete")
-    public R delete(@RequestBody Long[] ids) {
+    public R delete(@RequestBody Long[] ids, HttpServletRequest request) {
         service.deleteBatchIds(Arrays.asList(ids));
+        operationLogService.record(request, "素材内容", "删除素材",
+                "素材ID：" + (ids == null ? "" : Arrays.toString(ids)));
         return R.ok();
     }
 }

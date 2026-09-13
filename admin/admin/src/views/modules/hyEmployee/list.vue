@@ -123,8 +123,8 @@
                 <div class="sp-head sm"><span>操作日志（最近 5 条）</span><span class="more-link" @click="tab='log';loadLogs()">更多</span></div>
                 <div class="log-list">
                   <div v-for="l in recentLogs" :key="l.id" class="log-item">
-                    <div class="log-top"><span class="log-op">{{ l.operatorName }}</span><span class="log-time">{{ (l.addtime||'').replace('T',' ').substr(5,11) }}</span></div>
-                    <div class="log-detail">{{ l.detail || (l.module+' '+l.action) }}</div>
+                    <div class="log-top"><span class="log-op">{{ l.operatorName || l.operator || '—' }}</span><span class="log-time">{{ (l.addtime||'').replace('T',' ').substr(5,11) }}</span></div>
+                    <div class="log-detail">{{ l.detail || l.target || ((l.module||'')+' '+(l.action||'')).trim() || '—' }}</div>
                   </div>
                   <div v-if="recentLogs.length===0" class="log-empty">暂无操作日志</div>
                 </div>
@@ -159,10 +159,18 @@
         <!-- 操作日志 -->
         <el-tab-pane label="操作日志" name="log">
           <el-table :data="logs" border v-loading="loading">
-            <el-table-column prop="operatorName" label="操作人" align="center" width="120"></el-table-column>
-            <el-table-column prop="module" label="模块" align="center" width="120"></el-table-column>
-            <el-table-column prop="action" label="动作" align="center" width="120"></el-table-column>
-            <el-table-column prop="detail" label="详情" min-width="240"></el-table-column>
+            <el-table-column prop="operatorName" label="操作人" align="center" width="120">
+              <template slot-scope="s">{{ s.row.operatorName || s.row.operator || '—' }}</template>
+            </el-table-column>
+            <el-table-column prop="module" label="模块" align="center" width="120">
+              <template slot-scope="s">{{ s.row.module || '—' }}</template>
+            </el-table-column>
+            <el-table-column prop="action" label="动作" align="center" width="120">
+              <template slot-scope="s">{{ s.row.action || '—' }}</template>
+            </el-table-column>
+            <el-table-column prop="detail" label="详情" min-width="240">
+              <template slot-scope="s">{{ s.row.detail || s.row.target || '—' }}</template>
+            </el-table-column>
             <el-table-column label="时间" align="center" width="170">
               <template slot-scope="s">{{ (s.row.addtime||'').replace('T',' ').substr(0,16) }}</template>
             </el-table-column>
@@ -288,7 +296,7 @@ export default {
     },
     loadLogs() {
       this.loading = true;
-      this.$http({url: "hyOperationLog/page", method: "get", params: {page: 1, limit: 200}}).then(({data}) => {
+      this.$http({url: "hyOperationLog/page", method: "get", params: {page: 1, limit: 200, sort: "addtime", order: "desc"}}).then(({data}) => {
         this.logs = (data.code === 0 ? data.data.list : []) || []; this.loading = false;
       });
     },

@@ -87,9 +87,20 @@
 					<view class="summary card">
 						<view class="sum-head">
 							<text class="sum-title">跟进摘要预览</text>
-							<text class="sum-edit">编辑摘要</text>
+							<view class="sum-actions">
+								<text v-if="summaryDirty && !summaryEditing" class="sum-reset" @click="resetSummary">恢复自动</text>
+								<text class="sum-edit" @click="toggleSummaryEdit">{{ summaryEditing ? '完成' : '编辑摘要' }}</text>
+							</view>
 						</view>
-						<text class="sum-text">{{ summary }}</text>
+						<textarea
+							v-if="summaryEditing"
+							v-model="summaryManual"
+							class="sum-textarea"
+							auto-height
+							maxlength="500"
+							placeholder="可直接修改跟进摘要"
+						/>
+						<text v-else class="sum-text">{{ displaySummary }}</text>
 					</view>
 					<view class="warn">⚠ 保存后，该客户将进入「待跟进」列表；到期未完成将自动提醒。</view>
 				</view>
@@ -126,7 +137,10 @@ export default {
 				nextTime: '',
 				nextTimeText: '',
 				remark: ''
-			}
+			},
+			summaryEditing: false,
+			summaryDirty: false,
+			summaryManual: ''
 		}
 	},
 	computed: {
@@ -137,7 +151,7 @@ export default {
 			const d = new Date()
 			return `${d.getMonth() + 1}月${d.getDate()}日 ${('0' + d.getHours()).slice(-2)}:${('0' + d.getMinutes()).slice(-2)}`
 		},
-		summary() {
+		autoSummary() {
 			const d = new Date()
 			let s = `${d.getMonth() + 1}月${d.getDate()}日，${this.recorderName}`
 			if (this.form.interactType) s += `通过${this.form.interactType}`
@@ -149,6 +163,9 @@ export default {
 			if (this.form.nextAction) s += `下一步：${this.form.nextAction}，计划${this.form.nextTimeText}再次跟进。`
 			if (this.form.remark) s += `备注：${this.form.remark}`
 			return s
+		},
+		displaySummary() {
+			return this.summaryDirty ? this.summaryManual : this.autoSummary
 		}
 	},
 	onLoad(opt) {
@@ -158,6 +175,26 @@ export default {
 		this.quick(2)
 	},
 	methods: {
+		toggleSummaryEdit() {
+			if (this.summaryEditing) {
+				const t = (this.summaryManual || '').trim()
+				if (!t) {
+					uni.showToast({ title: '摘要不能为空', icon: 'none' })
+					return
+				}
+				this.summaryManual = t
+				this.summaryDirty = true
+				this.summaryEditing = false
+				return
+			}
+			this.summaryManual = this.displaySummary
+			this.summaryEditing = true
+		},
+		resetSummary() {
+			this.summaryDirty = false
+			this.summaryManual = ''
+			this.summaryEditing = false
+		},
 		toggleObjection(o) {
 			const i = this.form.objections.indexOf(o)
 			if (i >= 0) this.form.objections.splice(i, 1)
@@ -189,7 +226,7 @@ export default {
 				contactResult: this.form.contactResult,
 				intention: this.form.intention,
 				remark: this.form.remark,
-				summary: this.summary
+				summary: this.displaySummary
 			}
 			if (withTask) {
 				payload.nextAction = this.form.nextAction
@@ -259,10 +296,25 @@ export default {
 .auto-title { font-size:26rpx; font-weight:700; }
 .auto-item { font-size:24rpx; color:#22B07D; margin-top:14rpx; }
 .summary { padding:22rpx; border:1rpx solid $line; }
-.sum-head { display:flex; justify-content:space-between; }
+.sum-head { display:flex; justify-content:space-between; align-items:center; gap:12rpx; }
 .sum-title { font-size:26rpx; font-weight:700; }
+.sum-actions { display:flex; align-items:center; gap:20rpx; flex-shrink:0; }
 .sum-edit { font-size:24rpx; color:$brand; }
+.sum-reset { font-size:24rpx; color:$muted; }
 .sum-text { font-size:24rpx; color:$ink-2; line-height:1.6; margin-top:14rpx; display:block; }
+.sum-textarea {
+	width:100%;
+	min-height:160rpx;
+	margin-top:14rpx;
+	padding:16rpx;
+	border:1rpx solid $brand;
+	border-radius:12rpx;
+	font-size:24rpx;
+	color:$ink-2;
+	line-height:1.6;
+	box-sizing:border-box;
+	background:#F7F9FC;
+}
 .warn { background:#FFF6E9; color:#B8791F; font-size:23rpx; padding:18rpx; border-radius:14rpx; line-height:1.5; }
 
 .m-foot { display:flex; justify-content:space-between; align-items:center; margin-top:28rpx; padding-top:22rpx; border-top:1rpx solid $line; }
@@ -414,6 +466,19 @@ export default {
 	.summary {
 		padding: p-px(14) p-px(16);
 		border-radius: p-px(12);
+	}
+	.sum-edit,
+	.sum-reset {
+		font-size: p-px(13);
+	}
+	.sum-text,
+	.sum-textarea {
+		font-size: p-px(13);
+	}
+	.sum-textarea {
+		min-height: p-px(96);
+		padding: p-px(10);
+		border-radius: p-px(10);
 	}
 	.m-foot {
 		flex-direction: column;

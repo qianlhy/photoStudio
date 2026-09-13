@@ -82,6 +82,18 @@
                   <el-tag size="mini" :type="auditType(s.row.auditStatus)">{{ auditLabel(s.row.auditStatus) }}</el-tag>
                 </template>
               </el-table-column>
+              <el-table-column label="选片条数" align="center" width="130">
+                <template slot-scope="s">
+                  <el-input-number
+                    v-model="s.row.selectTarget"
+                    :min="1"
+                    :max="99"
+                    size="mini"
+                    controls-position="right"
+                    @change="saveSelectTarget(s.row)"
+                  ></el-input-number>
+                </template>
+              </el-table-column>
               <el-table-column label="最近跟进" align="center" width="140">
                 <template slot-scope="s">{{ (s.row.lastFollowTime||'').replace('T',' ').substr(0,16) }}</template>
               </el-table-column>
@@ -290,9 +302,31 @@ export default {
       if (this.searchForm.auditStatus) params.auditStatus = this.searchForm.auditStatus;
       if (this.searchForm.managerName) params.managerName = this.searchForm.managerName;
       this.$http({url: "hyCustomer/page", method: "get", params}).then(({data}) => {
-        if (data.code === 0) { this.dataList = data.data.list; this.totalPage = data.data.total; }
-        else { this.dataList = []; this.totalPage = 0; }
+        if (data.code === 0) {
+          this.dataList = (data.data.list || []).map(c => ({
+            ...c,
+            selectTarget: c.selectTarget > 0 ? Number(c.selectTarget) : 15
+          }));
+          this.totalPage = data.data.total;
+        } else { this.dataList = []; this.totalPage = 0; }
         this.dataListLoading = false;
+      });
+    },
+    saveSelectTarget(row) {
+      if (!row || !row.id) return;
+      const v = Number(row.selectTarget);
+      if (!v || v < 1) {
+        this.$message.warning("选片条数至少为 1");
+        row.selectTarget = 15;
+        return;
+      }
+      this.$http({
+        url: "hyCustomer/update",
+        method: "post",
+        data: Object.assign({}, row, { selectTarget: v })
+      }).then(({data}) => {
+        if (data.code === 0) this.$message.success("选片条数已保存");
+        else this.$message.error(data.msg || "保存失败");
       });
     },
     sizeChangeHandle(v) { this.pageSize = v; this.pageIndex = 1; this.getDataList(); },
@@ -375,8 +409,8 @@ export default {
       });
     },
     exportReport() {
-      const head = ["客户名称", "行业", "业务", "联系人", "业务经理", "跟进状态", "成交次数", "满意度", "标签"];
-      const rows = this.dataList.map(c => [c.name, c.industry, c.biztype, c.contact, c.managerName, c.followStatus, c.dealCount, c.satisfaction, (c.tags || "").replace(/,/g, " ")]);
+      const head = ["客户名称", "行业", "业务", "联系人", "业务经理", "跟进状态", "选片条数", "成交次数", "满意度", "标签"];
+      const rows = this.dataList.map(c => [c.name, c.industry, c.biztype, c.contact, c.managerName, c.followStatus, c.selectTarget || 15, c.dealCount, c.satisfaction, (c.tags || "").replace(/,/g, " ")]);
       let csv = "\ufeff" + head.join(",") + "\n" + rows.map(r => r.join(",")).join("\n");
       const blob = new Blob([csv], {type: "text/csv"});
       const a = document.createElement("a");

@@ -65,12 +65,20 @@
       </el-row>
       <el-row>
         <el-col :span="12">
+          <el-form-item label="选片条数">
+            <el-input-number v-model="ruleForm.selectTarget" :min="1" :max="99" controls-position="right"></el-input-number>
+            <span style="margin-left:8px;color:#8A94A6;font-size:12px;">Pad 选片目标数</span>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
           <el-form-item label="意向品类">
             <el-select v-model="ruleForm.yixiangPinlei" placeholder="请选择" clearable style="width:100%">
               <el-option v-for="s in ['写真','宣传片','都看看']" :key="s" :label="s" :value="s"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
+      </el-row>
+      <el-row>
         <el-col :span="12">
           <el-form-item label="审核状态">
             <el-tag size="small" :type="({已通过:'success',待审核:'warning',已驳回:'danger'})[ruleForm.auditStatus] || 'info'">
@@ -96,7 +104,7 @@ export default {
       id: "",
       type: "",
       managers: [],
-      ruleForm: {name: "", contact: "", phone: "", industry: "", biztype: "", scale: "", managerId: null, managerName: "", followStatus: "跟进中", intention: "中", satisfaction: 5, tags: "", preference: "", yixiangPinlei: "", auditStatus: "已通过", auditReply: "", avatar: ""},
+      ruleForm: {name: "", contact: "", phone: "", industry: "", biztype: "", scale: "", managerId: null, managerName: "", followStatus: "跟进中", intention: "中", satisfaction: 5, tags: "", preference: "", yixiangPinlei: "", selectTarget: 15, auditStatus: "已通过", auditReply: "", avatar: ""},
       rules: {
         name: [{required: true, message: "客户名称不能为空", trigger: "blur"}],
         phone: [{required: true, message: "手机号不能为空", trigger: "blur"}]
@@ -118,7 +126,8 @@ export default {
         this.ruleForm = {
           name: "", contact: "", phone: "", industry: "", biztype: "", scale: "",
           managerId: null, managerName: "", followStatus: "跟进中", intention: "中",
-          satisfaction: 5, tags: "", preference: "", yixiangPinlei: "", auditStatus: "已通过", auditReply: "", avatar: ""
+          satisfaction: 5, tags: "", preference: "", yixiangPinlei: "", selectTarget: 15,
+          auditStatus: "已通过", auditReply: "", avatar: ""
         };
       }
     },
@@ -133,7 +142,10 @@ export default {
     },
     info(id) {
       this.$http({url: `hyCustomer/info/${id}`, method: "get"}).then(({data}) => {
-        if (data.code === 0) this.ruleForm = data.data;
+        if (data.code === 0) {
+          this.ruleForm = data.data;
+          if (!(this.ruleForm.selectTarget > 0)) this.ruleForm.selectTarget = 15;
+        }
       });
     },
     onManager(val) {

@@ -27,6 +27,8 @@ public class HyAssignmentController {
     private HyAssignmentServiceImpl service;
     @Autowired
     private HyCustomerServiceImpl customerService;
+    @Autowired
+    private com.service.impl.HyOperationLogServiceImpl operationLogService;
 
     @IgnoreAuth
     @RequestMapping("/page")
@@ -52,6 +54,11 @@ public class HyAssignmentController {
         Date now = new Date();
         if (entity.getCustomerId() != null) {
             doTransfer(entity.getCustomerId(), entity, now);
+            operationLogService.record(
+                    entity.getOperator(),
+                    "客户交接",
+                    "划拨",
+                    "客户ID：" + entity.getCustomerId() + " → " + entity.getToManagerName());
         }
         return R.ok();
     }
@@ -64,6 +71,7 @@ public class HyAssignmentController {
                            @RequestParam(value = "operator", required = false) String operator,
                            @RequestParam(value = "remark", required = false) String remark) {
         Date now = new Date();
+        int n = 0;
         if (customerIds != null) {
             for (Long cid : customerIds) {
                 HyAssignmentEntity a = new HyAssignmentEntity();
@@ -72,8 +80,11 @@ public class HyAssignmentController {
                 a.setOperator(operator);
                 a.setRemark(remark);
                 doTransfer(cid, a, now);
+                n++;
             }
         }
+        operationLogService.record(operator, "客户交接", "批量分流",
+                "共 " + n + " 位客户 → " + toManagerName + (remark != null && !remark.isEmpty() ? "；" + remark : ""));
         return R.ok();
     }
 

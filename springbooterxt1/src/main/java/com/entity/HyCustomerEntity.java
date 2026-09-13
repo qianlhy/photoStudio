@@ -53,6 +53,9 @@ public class HyCustomerEntity implements Serializable {
     private Integer publishDays;
     private String publishDeadline;
 
+    /** 选片目标条数（后台按客户配置，Pad 选片读取） */
+    private Integer selectTarget;
+
     /** 小程序登录审核：待审核 / 已通过 / 已驳回 */
     private String auditStatus;
     /** 审核回复（驳回原因等） */

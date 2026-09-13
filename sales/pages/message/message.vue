@@ -88,8 +88,8 @@
 			<!-- 右：客户消息 + 智能摘要 -->
 			<view class="col-side">
 				<view class="card msg-card grow">
-					<view class="msg-head"><text class="chat-ico"></text>客户消息 <text class="m-num">{{ messages.length }}</text> <text class="m-dot"></text></view>
-					<view v-for="m in messages" :key="m.id" class="msg">
+					<view class="msg-head"><text class="chat-ico"></text>客户消息 <text class="m-num">{{ shownMessages.length }}</text> <text class="m-dot"></text></view>
+					<view v-for="m in shownMessages" :key="m.id" class="msg">
 						<image class="msg-av" :src="$img(coverOfMsg(m))" mode="aspectFill"></image>
 						<view class="msg-body">
 							<text class="msg-name">{{ m.customerName }}：</text>
@@ -97,6 +97,7 @@
 							<text class="msg-flag" :class="m.belong==='编导'?'editor':'sales'">{{ m.belong==='编导' ? '已自动分配编导' : '销售处理' }}</text>
 						</view>
 					</view>
+					<view v-if="shownMessages.length===0" class="msg-empty">暂无匹配的客户消息</view>
 					<text class="msg-foot">普通制作作为通自动分流 ⓘ</text>
 				</view>
 
@@ -104,6 +105,40 @@
 					<view class="sum-title">今日智能摘要 <text class="spark">✦</text></view>
 					<text class="sum-text">{{ summary }}</text>
 				</view>
+			</view>
+		</view>
+
+		<!-- 已完成记录（仅覆盖层，不影响待办主列表） -->
+		<view v-if="doneVisible" class="done-mask" @click="closeDone">
+			<view class="done-panel" @click.stop>
+				<view class="done-hd">
+					<text class="done-title">已完成记录</text>
+					<text class="done-count" v-if="!doneLoading">共 {{ doneTotal }} 条</text>
+					<text class="done-close" @click="closeDone">关闭</text>
+				</view>
+				<scroll-view scroll-y class="done-scroll">
+					<view v-if="doneLoading" class="done-empty">加载中…</view>
+					<view v-else-if="doneActions.length===0" class="done-empty">暂无已完成事项</view>
+					<view
+						v-for="a in doneActions"
+						:key="'d'+a.id"
+						class="done-row"
+						@click="openDoneItem(a)"
+					>
+						<view class="done-tags">
+							<text class="a-tag green">已完成</text>
+							<text class="a-tag" :class="tagClass(a.type)">{{ doneTypeLabel(a.type) }}</text>
+						</view>
+						<view class="done-body">
+							<text class="done-name">{{ a.customerName || '客户' }}</text>
+							<text class="done-desc">{{ doneTitle(a) }}</text>
+						</view>
+						<view class="done-meta">
+							<text class="done-time">创建于 {{ formatDoneTime(a.addtime) }}</text>
+							<text class="done-go">查看 ›</text>
+						</view>
+					</view>
+				</scroll-view>
 			</view>
 		</view>
 	</sales-shell>
@@ -126,14 +161,38 @@ export default {
 			],
 			actions: [],
 			messages: [],
-			loopSteps: ['事件分流', '创建责任任务', '达到条件通知销售', '处理完成', '写入客户时间线']
+			loopSteps: ['事件分流', '创建责任任务', '达到条件通知销售', '处理完成', '写入客户时间线'],
+			doneVisible: false,
+			doneLoading: false,
+			doneActions: [],
+			doneTotal: 0
 		}
 	},
 	computed: {
 		shownActions() {
-			if (this.activeFilter === 'all') return this.actions
-			const f = this.filters.find(f => f.key === this.activeFilter)
-			return this.actions.filter(a => a.type === f.type)
+			let list = this.actions
+			if (this.activeFilter !== 'all') {
+				const f = this.filters.find(f => f.key === this.activeFilter)
+				if (f && f.type) list = list.filter(a => a.type === f.type)
+			}
+			const kw = (this.keyword || '').trim().toLowerCase()
+			if (!kw) return list
+			return list.filter(a => {
+				const name = String(a.customerName || '').toLowerCase()
+				const title = String(a.title || '').toLowerCase()
+				const type = String(a.type || '').toLowerCase()
+				return name.indexOf(kw) >= 0 || title.indexOf(kw) >= 0 || type.indexOf(kw) >= 0
+			})
+		},
+		shownMessages() {
+			const kw = (this.keyword || '').trim().toLowerCase()
+			if (!kw) return this.messages
+			return this.messages.filter(m => {
+				const name = String(m.customerName || '').toLowerCase()
+				const title = String(m.title || '').toLowerCase()
+				const content = String(m.content || '').toLowerCase()
+				return name.indexOf(kw) >= 0 || title.indexOf(kw) >= 0 || content.indexOf(kw) >= 0
+			})
 		},
 		summary() {
 			const n = this.actions.length
@@ -226,10 +285,57 @@ export default {
 		viewProgress(a) { uni.navigateTo({ url: `/pages/order/order` }) },
 		viewPref(a) { uni.navigateTo({ url: `/pages/customer/customer?id=${a.customerId}` }) },
 		viewDone() {
-			this.$api.page('hyActionItem', { page: 1, limit: 30, belong: '销售', status: '已完成' }).then(res => {
-				const n = (res.data && res.data.total) || 0
-				uni.showToast({ title: `已完成事项 ${n} 条`, icon: 'none' })
+			this.doneVisible = true
+			this.doneLoading = true
+			this.doneActions = []
+			this.doneTotal = 0
+			this.$api.page('hyActionItem', {
+				page: 1,
+				limit: 50,
+				belong: '销售',
+				status: '已完成',
+				sort: 'addtime',
+				order: 'desc'
+			}).then(res => {
+				this.doneActions = (res.data && res.data.list) || []
+				this.doneTotal = (res.data && res.data.total) || this.doneActions.length
+			}).catch(() => {
+				this.doneActions = []
+				this.doneTotal = 0
+			}).finally(() => {
+				this.doneLoading = false
 			})
+		},
+		closeDone() {
+			this.doneVisible = false
+		},
+		openDoneItem(a) {
+			if (!a || !a.customerId) return
+			this.closeDone()
+			uni.navigateTo({ url: `/pages/customer/customer?id=${a.customerId}` })
+		},
+		formatDoneTime(t) {
+			if (!t) return ''
+			const s = String(t).replace('T', ' ')
+			return s.length >= 16 ? s.substr(0, 16) : s
+		},
+		/** 已完成列表：type 是事项分类，不是当前业务状态 */
+		doneTypeLabel(t) {
+			return ({
+				'待付款': '成交跟进',
+				'制作预警': '制作预警',
+				'客诉': '客户投诉',
+				'库存不足': '续拍跟进'
+			})[t] || t || '事项'
+		},
+		doneTitle(a) {
+			if (!a) return ''
+			if (a.type === '待付款') return '待付款跟进已处理（收款或关闭）'
+			if (a.type === '客诉') return '客诉已受理/关闭'
+			if (a.type === '制作预警') return '制作预警已处理'
+			if (a.type === '库存不足') return '续拍跟进已发起/关闭'
+			const raw = a.title ? String(a.title) : this.tagText(a.type)
+			return raw + '（已处理）'
 		}
 	}
 }
@@ -242,6 +348,55 @@ export default {
 .done-link { font-size:25rpx; color:$ink-2; display:flex; align-items:center; gap:8rpx; }
 .clock-ico { width:22rpx; height:22rpx; border:2rpx solid currentColor; border-radius:50%; position:relative; }
 .clock-ico::before { content:""; position:absolute; left:9rpx; top:4rpx; width:2rpx; height:7rpx; background:currentColor; transform-origin:bottom; transform:rotate(-25deg); }
+
+.done-mask {
+	position: fixed;
+	left: 0; right: 0; top: 0; bottom: 0;
+	background: rgba(15, 23, 42, .42);
+	z-index: 1000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 40rpx;
+	box-sizing: border-box;
+}
+.done-panel {
+	width: min(920rpx, 92vw);
+	max-height: 78vh;
+	background: #fff;
+	border-radius: 20rpx;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	box-shadow: 0 16rpx 48rpx rgba(15, 23, 42, .18);
+}
+.done-hd {
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+	padding: 28rpx 32rpx;
+	border-bottom: 1rpx solid #EEF1F5;
+}
+.done-title { font-size: 32rpx; font-weight: 700; color: $ink; }
+.done-count { flex: 1; font-size: 24rpx; color: $muted; }
+.done-close { font-size: 26rpx; color: $brand; padding: 8rpx 4rpx; }
+.done-scroll { flex: 1; min-height: 240rpx; max-height: 62vh; padding: 8rpx 0 20rpx; box-sizing: border-box; }
+.done-empty { padding: 80rpx 32rpx; text-align: center; color: $muted; font-size: 26rpx; }
+.done-row {
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+	padding: 22rpx 32rpx;
+	border-bottom: 1rpx solid #F3F5F8;
+}
+.done-row:active { background: #F7F9FC; }
+.done-tags { display: flex; flex-direction: column; gap: 8rpx; flex-shrink: 0; }
+.done-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6rpx; }
+.done-name { font-size: 28rpx; font-weight: 600; color: $ink; }
+.done-desc { font-size: 24rpx; color: $ink-2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.done-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6rpx; flex-shrink: 0; }
+.done-time { font-size: 22rpx; color: $muted; }
+.done-go { font-size: 24rpx; color: $brand; }
 
 .ac { flex:1; min-height:0; height:100%; display:flex; gap:24rpx; align-items:stretch; }
 .col-main { flex:2; min-width:0; min-height:0; display:flex; flex-direction:column; }
@@ -308,6 +463,7 @@ export default {
 .msg-flag.sales { background:#FDECEC; color:#FF5A5F; }
 .msg-flag.editor { background:#EAF1FF; color:#2F6BFF; }
 .msg-foot { font-size:21rpx; color:$muted; display:block; margin-top:18rpx; }
+.msg-empty { font-size:24rpx; color:$muted; padding:24rpx 0 8rpx; }
 
 .sum-card { padding:24rpx; }
 .sum-title { font-size:27rpx; font-weight:700; }

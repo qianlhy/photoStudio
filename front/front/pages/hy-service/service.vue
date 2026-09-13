@@ -94,6 +94,7 @@
 <script>
 import clientTabbar from '@/components/client-tabbar/client-tabbar.vue'
 import { ensureCustomerBound } from '@/utils/customerBind.js'
+import http from '@/api/http'
 export default {
 	components: { clientTabbar },
 	data() {
@@ -101,6 +102,7 @@ export default {
 			brandName: '影集',
 			avatar: '',
 			mgrAvatar: '',
+			managerPhone: '',
 			customerId: null,
 			customer: {},
 			order: {},
@@ -179,12 +181,14 @@ export default {
 				this.$api.list('hyCustomer', { id: cid }).then(res => {
 					this.customer = (res.data && res.data[0]) || {}
 					this.syncAvatar()
+					this.loadManagerContact()
 				})
 				this.$api.page('hyOrder', { customerId: cid, page: 1, limit: 20, sort: 'addtime', order: 'desc' }).then(res => {
 					const list = (res.data && res.data.list) || []
 					this.order = list[0] || {}
 					this.orderCount = (res.data && res.data.total) || list.length
 					this.orderVideoTotal = list.reduce((s, o) => s + (o.videoCount || 0), 0)
+					if (!this.managerPhone) this.loadManagerContact()
 				})
 			}
 			this.bindThen(finish)
@@ -197,6 +201,21 @@ export default {
 				uni.showToast({ title: (err && err.msg) || '请先登录', icon: 'none' })
 			})
 		},
+		managerId() {
+			return this.customer.managerId || this.order.managerId || null
+		},
+		loadManagerContact() {
+			const mid = this.managerId()
+			if (!mid) {
+				this.managerPhone = ''
+				return
+			}
+			http.request({ url: `hyEmployee/contact/${mid}`, method: 'GET' }).then(res => {
+				const emp = (res && res.data) || {}
+				this.managerPhone = emp.phone || ''
+				if (emp.avatar) this.mgrAvatar = this.img(emp.avatar)
+			}).catch(() => {})
+		},
 		md(t) {
 			if (!t) return '—'
 			const d = new Date(String(t).replace(/-/g, '/'))
@@ -207,7 +226,45 @@ export default {
 			if (this.order.deliverDate && i >= 4) return this.md(this.order.deliverDate)
 			return ''
 		},
-		callMgr() { uni.showToast({ title: '已通知服务经理', icon: 'none' }) },
+		callMgr() {
+			const mid = this.managerId()
+			if (!mid) {
+				uni.showToast({ title: '暂未分配服务经理', icon: 'none' })
+				return
+			}
+			const dial = (phone) => {
+				const p = String(phone || '').replace(/[^\d+]/g, '')
+				if (!p) {
+					uni.showToast({ title: '经理暂未配置联系电话', icon: 'none' })
+					return
+				}
+				uni.makePhoneCall({
+					phoneNumber: p,
+					fail: () => {
+						uni.showModal({
+							title: '无法拨号',
+							content: `请手动拨打：${p}`,
+							showCancel: false
+						})
+					}
+				})
+			}
+			if (this.managerPhone) {
+				dial(this.managerPhone)
+				return
+			}
+			uni.showLoading({ title: '获取联系方式', mask: true })
+			http.request({ url: `hyEmployee/contact/${mid}`, method: 'GET' }).then(res => {
+				uni.hideLoading()
+				const emp = (res && res.data) || {}
+				this.managerPhone = emp.phone || ''
+				if (emp.avatar) this.mgrAvatar = this.img(emp.avatar)
+				dial(emp.phone)
+			}).catch(() => {
+				uni.hideLoading()
+				uni.showToast({ title: '获取经理联系方式失败', icon: 'none' })
+			})
+		},
 		askQuestion() {
 			uni.showModal({
 				title: '提交问题', editable: true, placeholderText: '请描述您的问题',

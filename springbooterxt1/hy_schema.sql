@@ -81,6 +81,7 @@ CREATE TABLE `hy_customer` (
   `remain_count` int DEFAULT 0 COMMENT '剩余内容/库存',
   `publish_days` int DEFAULT 0 COMMENT '预计可发布天数',
   `publish_deadline` varchar(50) DEFAULT NULL COMMENT '内容预计发布至',
+  `select_target` int DEFAULT 15 COMMENT '选片目标条数(后台配置,Pad读取)',
   `audit_status` varchar(20) DEFAULT '已通过' COMMENT '小程序审核:待审核/已通过/已驳回',
   `audit_reply` varchar(500) DEFAULT NULL COMMENT '审核回复',
   `openid` varchar(100) DEFAULT NULL COMMENT '微信openid',
@@ -342,9 +343,10 @@ DROP TABLE IF EXISTS `hy_operation_log`;
 CREATE TABLE `hy_operation_log` (
   `id` bigint NOT NULL,
   `addtime` datetime DEFAULT NULL,
-  `operator` varchar(100) DEFAULT NULL,
-  `action` varchar(300) DEFAULT NULL,
-  `target` varchar(200) DEFAULT NULL,
+  `operator` varchar(100) DEFAULT NULL COMMENT '操作人',
+  `module` varchar(100) DEFAULT NULL COMMENT '模块',
+  `action` varchar(100) DEFAULT NULL COMMENT '动作',
+  `detail` varchar(500) DEFAULT NULL COMMENT '详情',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='操作日志';
 
@@ -366,6 +368,9 @@ INSERT INTO `hy_system_config` (`id`,`name`,`value`) VALUES
  (1,'brandName','合意传媒'),
  (2,'brandSlogan','短视频·内容·增长'),
  (3,'customerBrandName','影集');
+
+INSERT INTO `hy_operation_log` (`id`,`addtime`,`operator`,`module`,`action`,`detail`) VALUES
+ (19001,'2026-06-20 09:00:00','admin','员工与系统','系统初始化','操作日志已启用：记录后台关键增删改与审核划拨');
 
 -- 员工（密码均 123456 明文，首次登录自动升级为密文）
 INSERT INTO `hy_employee` (`id`,`addtime`,`username`,`password`,`name`,`avatar`,`phone`,`role`,`department`,`status`,`permissions`,`customer_count`,`task_count`,`lastlogin`) VALUES

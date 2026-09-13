@@ -45,6 +45,9 @@ public class HyOperationLogController {
     public R save(@RequestBody HyOperationLogEntity entity) {
         entity.setId(HyId.next());
         entity.setAddtime(new Date());
+        if (entity.getOperatorName() == null || entity.getOperatorName().trim().isEmpty()) {
+            entity.setOperatorName("系统");
+        }
         service.insert(entity);
         return R.ok();
     }

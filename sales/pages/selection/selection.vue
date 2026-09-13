@@ -154,6 +154,7 @@ export default {
 			industry: '',
 			biztype: '',
 			targetCount: 15,
+			customerSelectTarget: null,
 			activeChip: 'all',
 			chips: [],
 			materials: [],
@@ -342,8 +343,8 @@ export default {
 		loadSession() {
 			return this.$api.info('hySelectionSession', this.sessionId).then(res => {
 				if (res.data) this.applySession(res.data)
-				return this.restoreLikedItems()
-			}).then(() => this.loadMaterials())
+				return this.refreshSelectTargetFromCustomer()
+			}).then(() => this.restoreLikedItems()).then(() => this.loadMaterials())
 		},
 		loadCustomer() {
 			return this.$api.info('hyCustomer', this.customerId).then(res => {
@@ -352,9 +353,22 @@ export default {
 					this.customerName = c.name
 					this.industry = c.industry
 					this.biztype = c.biztype
+					this.applyCustomerSelectTarget(c)
 				}
 				return this.tryResumeSession()
 			})
+		},
+		applyCustomerSelectTarget(c) {
+			const t = Number(c && c.selectTarget)
+			this.customerSelectTarget = t > 0 ? t : null
+			if (this.customerSelectTarget) this.targetCount = this.customerSelectTarget
+			else if (!this.targetCount) this.targetCount = 15
+		},
+		refreshSelectTargetFromCustomer() {
+			if (!this.customerId) return Promise.resolve()
+			return this.$api.info('hyCustomer', this.customerId).then(res => {
+				if (res.data) this.applyCustomerSelectTarget(res.data)
+			}).catch(() => {})
 		},
 		tryResumeSession() {
 			if (this.sessionId) return this.loadSession()
@@ -379,7 +393,8 @@ export default {
 			this.customerName = s.customerName
 			this.industry = s.industry
 			this.biztype = s.biztype
-			this.targetCount = s.targetCount || 15
+			// 后台客户配置优先；无配置时回退会话快照 / 默认 15
+			this.targetCount = this.customerSelectTarget || s.targetCount || 15
 			this.liked = s.liked ? String(s.liked).split(',').filter(Boolean) : []
 			this.disliked = s.disliked ? String(s.disliked).split(',').filter(Boolean) : []
 		},

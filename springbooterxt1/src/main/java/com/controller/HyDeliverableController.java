@@ -16,6 +16,7 @@ import com.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -31,6 +32,8 @@ public class HyDeliverableController {
     private HyOrderServiceImpl orderService;
     @Autowired
     private HyCustomerServiceImpl customerService;
+    @Autowired
+    private com.service.impl.HyOperationLogServiceImpl operationLogService;
 
     @IgnoreAuth
     @RequestMapping("/page")
@@ -60,7 +63,7 @@ public class HyDeliverableController {
      * 上传成品：关联客户/订单后，小程序「我的内容」按 customerId 可查可下。
      */
     @PostMapping("/save")
-    public R save(@RequestBody HyDeliverableEntity entity) {
+    public R save(@RequestBody HyDeliverableEntity entity, HttpServletRequest request) {
         if (entity.getVideo() == null || entity.getVideo().trim().isEmpty()) {
             return R.error("请上传成品视频");
         }
@@ -84,15 +87,19 @@ public class HyDeliverableController {
         }
         service.insert(entity);
         syncOrderProgress(entity.getOrderId());
+        operationLogService.record(request, "成品与优质作品", "上传成品",
+                entity.getTitle() + (entity.getCustomerName() != null ? " / " + entity.getCustomerName() : ""));
         return R.ok().put("id", entity.getId());
     }
 
     @RequestMapping("/update")
-    public R update(@RequestBody HyDeliverableEntity entity) {
+    public R update(@RequestBody HyDeliverableEntity entity, HttpServletRequest request) {
         service.updateById(entity);
         if (entity.getOrderId() != null) {
             syncOrderProgress(entity.getOrderId());
         }
+        operationLogService.record(request, "成品与优质作品", "修改成品",
+                (entity.getTitle() != null ? entity.getTitle() : "") + " ID:" + entity.getId());
         return R.ok();
     }
 
@@ -109,8 +116,47 @@ public class HyDeliverableController {
         return R.ok();
     }
 
+    /** 客户播放/查看成品 */
+    @IgnoreAuth
+    @RequestMapping("/view/{id}")
+    public R view(@PathVariable("id") Long id) {
+        HyDeliverableEntity e = service.selectById(id);
+        if (e == null) return R.error("作品不存在");
+        e.setViewStatus("已查看");
+        service.updateById(e);
+        return R.ok();
+    }
+
+    /** 客户评价成品：满意度 1-5 + 可选评语 */
+    @IgnoreAuth
+    @PostMapping("/rate")
+    public R rate(@RequestBody Map<String, Object> body) {
+        if (body == null || body.get("id") == null) return R.error("成品 id 必填");
+        Long id = Long.valueOf(String.valueOf(body.get("id")));
+        HyDeliverableEntity e = service.selectById(id);
+        if (e == null) return R.error("作品不存在");
+        Integer score = null;
+        if (body.get("satisfaction") != null && !"".equals(String.valueOf(body.get("satisfaction")))) {
+            try {
+                score = Integer.valueOf(String.valueOf(body.get("satisfaction")));
+            } catch (Exception ignored) {
+                return R.error("满意度须为 1-5 的整数");
+            }
+        }
+        if (score == null || score < 1 || score > 5) {
+            return R.error("请选择 1-5 星满意度");
+        }
+        String comment = body.get("customerComment") == null ? "" : String.valueOf(body.get("customerComment")).trim();
+        if (comment.length() > 200) comment = comment.substring(0, 200);
+        e.setSatisfaction(score);
+        e.setCustomerComment(comment);
+        e.setViewStatus("已查看");
+        service.updateById(e);
+        return R.ok().put("data", e);
+    }
+
     @RequestMapping("/delete")
-    public R delete(@RequestBody Long[] ids) {
+    public R delete(@RequestBody Long[] ids, HttpServletRequest request) {
         List<HyDeliverableEntity> list = service.selectBatchIds(Arrays.asList(ids));
         service.deleteBatchIds(Arrays.asList(ids));
         if (list != null) {
@@ -118,6 +164,8 @@ public class HyDeliverableController {
                 if (d.getOrderId() != null) syncOrderProgress(d.getOrderId());
             }
         }
+        operationLogService.record(request, "成品与优质作品", "删除成品",
+                "成品ID：" + (ids == null ? "" : Arrays.toString(ids)));
         return R.ok();
     }
 

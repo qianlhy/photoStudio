@@ -42,6 +42,8 @@ public class HyCustomerController {
     private HyFollowTaskServiceImpl followTaskService;
     @Autowired
     private HyCustomerAccountServiceImpl accountService;
+    @Autowired
+    private com.service.impl.HyOperationLogServiceImpl operationLogService;
 
     @IgnoreAuth
     @RequestMapping("/page")
@@ -149,12 +151,14 @@ public class HyCustomerController {
     }
 
     @PostMapping("/save")
-    public R save(@RequestBody HyCustomerEntity entity) {
+    public R save(@RequestBody HyCustomerEntity entity, HttpServletRequest request) {
         entity.setId(HyId.next());
         entity.setAddtime(new Date());
         accountService.onAdminSave(entity);
         service.insert(entity);
         createTodayReceptionTask(entity);
+        operationLogService.record(request, "客户管理", "新增",
+                "客户：" + (entity.getName() == null ? entity.getId() : entity.getName()));
         return R.ok().put("id", entity.getId());
     }
 
@@ -177,7 +181,7 @@ public class HyCustomerController {
     }
 
     @RequestMapping("/update")
-    public R update(@RequestBody HyCustomerEntity entity) {
+    public R update(@RequestBody HyCustomerEntity entity, HttpServletRequest request) {
         HyCustomerEntity old = service.selectById(entity.getId());
         if (old != null && (entity.getAuditStatus() == null || entity.getAuditStatus().trim().isEmpty())) {
             entity.setAuditStatus(old.getAuditStatus());
@@ -186,6 +190,10 @@ public class HyCustomerController {
             if (entity.getOpenid() == null) entity.setOpenid(old.getOpenid());
             if (entity.getYixiangPinlei() == null) entity.setYixiangPinlei(old.getYixiangPinlei());
             if (entity.getPreference() == null) entity.setPreference(old.getPreference());
+            if (entity.getSelectTarget() == null) entity.setSelectTarget(old.getSelectTarget());
+        }
+        if (entity.getSelectTarget() == null || entity.getSelectTarget() < 1) {
+            entity.setSelectTarget(15);
         }
         accountService.onAdminSave(entity);
         service.updateById(entity);
@@ -194,12 +202,14 @@ public class HyCustomerController {
         String sfsh = HyCustomerAccountServiceImpl.AUDIT_APPROVED.equals(audit) ? "是"
                 : HyCustomerAccountServiceImpl.AUDIT_REJECTED.equals(audit) ? "驳回" : "否";
         accountService.syncYonghuShell(entity, sfsh);
+        String name = entity.getName() != null ? entity.getName() : (old != null ? old.getName() : String.valueOf(entity.getId()));
+        operationLogService.record(request, "客户管理", "修改", "客户：" + name);
         return R.ok();
     }
 
     /** 审核小程序注册客户（通过/驳回）；通过时可指定业务经理供 Pad 可见 */
     @PostMapping("/audit")
-    public R audit(@RequestBody Map<String, Object> body) {
+    public R audit(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         Object idObj = body.get("id");
         if (idObj == null) return R.error("客户 id 必填");
         String auditStatus = body.get("auditStatus") == null ? "" : String.valueOf(body.get("auditStatus"));
@@ -210,7 +220,12 @@ public class HyCustomerController {
         }
         String managerName = body.get("managerName") == null ? null : String.valueOf(body.get("managerName"));
         try {
-            accountService.audit(Long.valueOf(String.valueOf(idObj)), auditStatus, auditReply, managerId, managerName);
+            Long cid = Long.valueOf(String.valueOf(idObj));
+            accountService.audit(cid, auditStatus, auditReply, managerId, managerName);
+            HyCustomerEntity c = service.selectById(cid);
+            String nm = c != null && c.getName() != null ? c.getName() : String.valueOf(cid);
+            operationLogService.record(request, "客户管理", "审核",
+                    "客户：" + nm + " → " + auditStatus + (managerName != null ? "，经理：" + managerName : ""));
             return R.ok();
         } catch (IllegalArgumentException e) {
             return R.error(e.getMessage());
@@ -218,8 +233,10 @@ public class HyCustomerController {
     }
 
     @RequestMapping("/delete")
-    public R delete(@RequestBody Long[] ids) {
+    public R delete(@RequestBody Long[] ids, HttpServletRequest request) {
         service.deleteBatchIds(Arrays.asList(ids));
+        operationLogService.record(request, "客户管理", "删除",
+                "客户ID：" + (ids == null ? "" : Arrays.toString(ids)));
         return R.ok();
     }
 }

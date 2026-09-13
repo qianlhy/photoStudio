@@ -14,6 +14,7 @@ import com.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -32,6 +33,8 @@ public class HyOrderController {
     private com.service.impl.HyCustomerServiceImpl customerService;
     @Autowired
     private com.service.impl.HyMaterialServiceImpl materialService;
+    @Autowired
+    private com.service.impl.HyOperationLogServiceImpl operationLogService;
 
     @IgnoreAuth
     @RequestMapping("/page")
@@ -86,7 +89,7 @@ public class HyOrderController {
      * 禁止写入「待付款」状态。
      */
     @PostMapping("/save")
-    public R save(@RequestBody HyOrderEntity entity) {
+    public R save(@RequestBody HyOrderEntity entity, HttpServletRequest request) {
         entity.setId(HyId.next());
         entity.setAddtime(new Date());
         if (entity.getOrderNo() == null || entity.getOrderNo().isEmpty()) {
@@ -100,11 +103,14 @@ public class HyOrderController {
             entity.setStatus("待拍摄");
         }
         service.insert(entity);
+        operationLogService.record(request, "订单管理", "补录订单",
+                (entity.getOrderNo() != null ? entity.getOrderNo() : "") + " / "
+                        + (entity.getCustomerName() != null ? entity.getCustomerName() : ""));
         return R.ok().put("id", entity.getId());
     }
 
     @RequestMapping("/update")
-    public R update(@RequestBody HyOrderEntity entity) {
+    public R update(@RequestBody HyOrderEntity entity, HttpServletRequest request) {
         if (entity == null || entity.getId() == null) {
             return R.error("订单 id 必填");
         }
@@ -143,6 +149,9 @@ public class HyOrderController {
         if (latest != null && latest.getCustomerId() != null) {
             syncCustomerFulfillment(latest);
         }
+        String no = latest != null && latest.getOrderNo() != null ? latest.getOrderNo() : String.valueOf(entity.getId());
+        String st = latest != null ? latest.getStatus() : status;
+        operationLogService.record(request, "订单管理", "更新订单", no + " → " + st);
         return R.ok().put("data", latest);
     }
 

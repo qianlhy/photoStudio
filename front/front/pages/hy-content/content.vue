@@ -49,7 +49,12 @@
 					</view>
 					<view v-if="isDownloaded(m)" class="stamp">已下载</view>
 					<view v-else class="play"><view></view></view>
-					<view class="cell-foot"><text class="type-tag">{{ m.contentType || '成品' }}</text><text class="cell-title">{{ indexText(i) }} {{ m.title || '成品内容' }}</text></view>
+					<view class="cell-foot">
+						<text class="type-tag">{{ m.contentType || '成品' }}</text>
+						<text class="cell-title">{{ indexText(i) }} {{ m.title || '成品内容' }}</text>
+						<text v-if="m.satisfaction" class="rated-tip">已评 {{ m.satisfaction }}★</text>
+						<text v-else class="rate-tip" @tap.stop="openRate(m)">评价 ›</text>
+					</view>
 				</view>
 			</view>
 			<view v-else class="empty-block">
@@ -78,6 +83,28 @@
 			></video>
 			<view class="player-close" @tap.stop="closePlayer">关闭</view>
 		</view>
+
+		<!-- 成品评价 -->
+		<view v-if="rate.show" class="rate-mask" @tap="closeRate">
+			<view class="rate-panel" @tap.stop>
+				<text class="rate-title">评价成品</text>
+				<text class="rate-sub">{{ rate.title || '本条成品' }}</text>
+				<view class="stars">
+					<text
+						v-for="n in 5"
+						:key="n"
+						class="star"
+						:class="{on: rate.score >= n}"
+						@tap="rate.score = n"
+					>★</text>
+				</view>
+				<input class="rate-input" v-model="rate.comment" maxlength="100" placeholder="选填：一句话评价（最多100字）" />
+				<view class="rate-actions">
+					<view class="rate-btn ghost" @tap="closeRate">取消</view>
+					<view class="rate-btn primary" @tap="submitRate">提交评价</view>
+				</view>
+			</view>
+		</view>
 	</view>
 </template>
 
@@ -98,7 +125,8 @@ export default {
 			refCount: 0,
 			activeTab: 'all',
 			types: ['硬广', '晒过程', '教知识', '说观点', '讲故事'],
-			player: { show: false, url: '', poster: '' }
+			player: { show: false, url: '', poster: '', itemId: null },
+			rate: { show: false, id: null, title: '', score: 0, comment: '', saving: false }
 		}
 	},
 	computed: {
@@ -206,10 +234,82 @@ export default {
 				uni.showToast({ title: '暂无视频文件', icon: 'none' })
 				return
 			}
-			this.player = { show: true, url, poster: this.img(m.cover) || '' }
+			this.player = { show: true, url, poster: this.img(m.cover) || '', itemId: m.id }
+			this.markViewed(m)
 		},
 		closePlayer() {
-			this.player = { show: false, url: '', poster: '' }
+			const id = this.player.itemId
+			this.player = { show: false, url: '', poster: '', itemId: null }
+			const m = this.list.find(x => String(x.id) === String(id))
+			if (m && !m.satisfaction) {
+				setTimeout(() => this.openRate(m), 280)
+			}
+		},
+		markViewed(m) {
+			if (!m || !m.id || m.viewStatus === '已查看') return
+			uni.request({
+				url: `${this.$base.url}hyDeliverable/view/${m.id}`,
+				method: 'GET',
+				header: { Token: uni.getStorageSync('token') },
+				success: () => { this.$set(m, 'viewStatus', '已查看') }
+			})
+		},
+		openRate(m) {
+			if (!m || !m.id) return
+			if (m.satisfaction) {
+				uni.showToast({ title: `已评 ${m.satisfaction} 星`, icon: 'none' })
+				return
+			}
+			this.rate = {
+				show: true,
+				id: m.id,
+				title: m.title || '成品内容',
+				score: 0,
+				comment: '',
+				saving: false
+			}
+		},
+		closeRate() {
+			this.rate.show = false
+		},
+		submitRate() {
+			if (!this.rate.id) return
+			if (!this.rate.score || this.rate.score < 1) {
+				uni.showToast({ title: '请先点选星级', icon: 'none' })
+				return
+			}
+			if (this.rate.saving) return
+			this.rate.saving = true
+			uni.request({
+				url: `${this.$base.url}hyDeliverable/rate`,
+				method: 'POST',
+				header: {
+					Token: uni.getStorageSync('token'),
+					'Content-Type': 'application/json'
+				},
+				data: {
+					id: this.rate.id,
+					satisfaction: this.rate.score,
+					customerComment: (this.rate.comment || '').trim()
+				},
+				success: (res) => {
+					const body = res.data || {}
+					if (body.code === 0) {
+						const m = this.list.find(x => String(x.id) === String(this.rate.id))
+						if (m) {
+							this.$set(m, 'satisfaction', this.rate.score)
+							this.$set(m, 'customerComment', (this.rate.comment || '').trim())
+							this.$set(m, 'viewStatus', '已查看')
+						}
+						uni.showToast({ title: '感谢评价', icon: 'success' })
+						this.closeRate()
+					} else {
+						uni.showToast({ title: body.msg || '提交失败', icon: 'none' })
+					}
+				},
+				fail: () => uni.showToast({ title: '网络异常', icon: 'none' }),
+				complete: () => { this.rate.saving = false }
+			})
 		},
 		markDownloaded(m) {
 			if (!m || !m.id) return
@@ -304,7 +404,9 @@ export default {
 .service-link { width:190rpx; height:48rpx; margin-top:30rpx; display:flex; align-items:center; justify-content:center; gap:12rpx; border:1rpx solid #FF8D72; border-radius:26rpx; background:rgba(255,255,255,.42); color:#FF8267; font-size:20rpx; }
 .service-link text { font-size:28rpx; }
 .deliver-art { position:absolute; right:15rpx; top:25rpx; width:230rpx; height:220rpx; pointer-events:none; z-index:1; }
-.cell-mask,.play,.stamp,.cell-foot { pointer-events:none; }
+.cell-mask,.play,.stamp { pointer-events:none; }
+.cell-foot { pointer-events:none; }
+.rate-tip,.rated-tip { pointer-events:auto; }
 .player-mask { position:fixed; z-index:99; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,.86); }
 .player-video { width:100%; height:70vh; background:#000; }
 .player-close { margin-top:28rpx; padding:14rpx 48rpx; border-radius:40rpx; background:rgba(255,255,255,.18); color:#fff; font-size:28rpx; }
@@ -336,6 +438,35 @@ export default {
 .cell-foot { position:absolute; z-index:3; left:8rpx; right:6rpx; bottom:7rpx; }
 .type-tag { padding:2rpx 7rpx; border-radius:4rpx; background:rgba(255,255,255,.34); color:#fff; font-size:13rpx; }
 .cell-title { display:block; margin-top:5rpx; overflow:hidden; color:#fff; font-size:17rpx; white-space:nowrap; text-overflow:ellipsis; text-shadow:0 2rpx 5rpx rgba(0,0,0,.6); }
+.rate-tip,.rated-tip {
+	display:inline-block; margin-top:4rpx; padding:2rpx 8rpx; border-radius:8rpx;
+	font-size:14rpx; color:#fff; background:rgba(0,0,0,.35);
+}
+.rated-tip { color:#FFE08A; }
+.rate-mask {
+	position:fixed; z-index:120; inset:0; display:flex; align-items:center; justify-content:center;
+	background:rgba(15,23,42,.45); padding:40rpx; box-sizing:border-box;
+}
+.rate-panel {
+	width:100%; max-width:620rpx; background:#fff; border-radius:24rpx; padding:36rpx 32rpx 28rpx;
+	box-shadow:0 16rpx 40rpx rgba(31,39,51,.18);
+}
+.rate-title { display:block; font-size:34rpx; font-weight:700; color:#1F2733; }
+.rate-sub { display:block; margin-top:8rpx; font-size:24rpx; color:#8A94A6; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.stars { display:flex; justify-content:center; gap:18rpx; margin:36rpx 0 28rpx; }
+.star { font-size:56rpx; color:#D8DEE8; line-height:1; }
+.star.on { color:#FFB020; }
+.rate-input {
+	height:72rpx; padding:0 20rpx; border:1rpx solid #E7ECF3; border-radius:14rpx;
+	background:#F7F9FC; font-size:26rpx; color:#1F2733;
+}
+.rate-actions { display:flex; gap:16rpx; margin-top:28rpx; }
+.rate-btn {
+	flex:1; height:76rpx; border-radius:14rpx; display:flex; align-items:center; justify-content:center;
+	font-size:28rpx; font-weight:600;
+}
+.rate-btn.ghost { background:#F1F3F6; color:#526071; }
+.rate-btn.primary { background:#2F6BFF; color:#fff; }
 .reference-card { position:relative; height:119rpx; margin-top:18rpx; padding:18rpx 20rpx; display:flex; align-items:center; overflow:hidden; box-sizing:border-box; border:1rpx solid rgba(225,218,248,.7); border-radius:22rpx; background:linear-gradient(100deg,rgba(248,245,255,.9),rgba(238,233,255,.82)); box-shadow:0 8rpx 24rpx rgba(90,76,153,.06); }
 .lock-orb { position:relative; width:70rpx; height:70rpx; margin-right:16rpx; flex-shrink:0; border-radius:20rpx; background:radial-gradient(circle,#C7BBF8,#8F7AE9); box-shadow:0 8rpx 18rpx rgba(126,102,224,.25); }
 .lock-icon { position:absolute; left:22rpx; top:29rpx; width:26rpx; height:23rpx; border-radius:5rpx; background:rgba(255,255,255,.92); }

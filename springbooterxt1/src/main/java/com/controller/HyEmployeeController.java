@@ -31,6 +31,9 @@ public class HyEmployeeController {
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private com.service.impl.HyOperationLogServiceImpl operationLogService;
+
     /** 统一登录（管理端/销售pad端/内容制作） */
     @IgnoreAuth
     @PostMapping("/login")
@@ -87,11 +90,34 @@ public class HyEmployeeController {
 
     @RequestMapping("/info/{id}")
     public R info(@PathVariable("id") Long id) {
-        return R.ok().put("data", service.selectById(id));
+        HyEmployeeEntity emp = service.selectById(id);
+        if (emp != null) {
+            emp.setPassword(null);
+        }
+        return R.ok().put("data", emp);
+    }
+
+    /** 客户小程序：按经理 id 取公开联系方式（姓名/头像/电话） */
+    @IgnoreAuth
+    @GetMapping("/contact/{id}")
+    public R contact(@PathVariable("id") Long id) {
+        HyEmployeeEntity emp = service.selectById(id);
+        if (emp == null) {
+            return R.error("服务经理不存在");
+        }
+        if ("停用".equals(emp.getStatus())) {
+            return R.error("服务经理账号已停用");
+        }
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("id", emp.getId());
+        data.put("name", emp.getName());
+        data.put("avatar", emp.getAvatar());
+        data.put("phone", emp.getPhone());
+        return R.ok().put("data", data);
     }
 
     @PostMapping("/save")
-    public R save(@RequestBody HyEmployeeEntity entity) {
+    public R save(@RequestBody HyEmployeeEntity entity, HttpServletRequest request) {
         if (entity.getUsername() != null) {
             entity.setUsername(entity.getUsername().trim());
         }
@@ -110,30 +136,39 @@ public class HyEmployeeController {
         }
         if (entity.getStatus() == null) entity.setStatus("正常");
         service.insert(entity);
+        operationLogService.record(request, "员工与系统", "新增员工",
+                (entity.getName() != null ? entity.getName() : "") + " / " + entity.getUsername()
+                        + (entity.getRole() != null ? "（" + entity.getRole() + "）" : ""));
         return R.ok();
     }
 
     @RequestMapping("/update")
-    public R update(@RequestBody HyEmployeeEntity entity) {
+    public R update(@RequestBody HyEmployeeEntity entity, HttpServletRequest request) {
         if (entity.getPassword() != null && !entity.getPassword().isEmpty() && !PasswordUtil.isEncoded(entity.getPassword())) {
             entity.setPassword(PasswordUtil.encode(entity.getPassword()));
         }
         service.updateById(entity);
+        operationLogService.record(request, "员工与系统", "修改员工",
+                (entity.getName() != null ? entity.getName() : "") + " ID:" + entity.getId());
         return R.ok();
     }
 
     @RequestMapping("/resetPass/{id}")
-    public R resetPass(@PathVariable("id") Long id) {
+    public R resetPass(@PathVariable("id") Long id, HttpServletRequest request) {
         HyEmployeeEntity emp = service.selectById(id);
         if (emp == null) return R.error("员工不存在");
         emp.setPassword(PasswordUtil.encode("123456"));
         service.updateById(emp);
+        operationLogService.record(request, "员工与系统", "重置密码",
+                (emp.getName() != null ? emp.getName() : "") + " / " + emp.getUsername());
         return R.ok("密码已重置为：123456");
     }
 
     @RequestMapping("/delete")
-    public R delete(@RequestBody Long[] ids) {
+    public R delete(@RequestBody Long[] ids, HttpServletRequest request) {
         service.deleteBatchIds(Arrays.asList(ids));
+        operationLogService.record(request, "员工与系统", "删除员工",
+                "员工ID：" + (ids == null ? "" : Arrays.toString(ids)));
         return R.ok();
     }
 }

@@ -26,7 +26,8 @@
 								<text class="o-pkg">{{ o.packageName }}</text>
 								<text class="o-cnt">{{ o.videoCount }}条视频</text>
 							</view>
-							<text class="o-days">剩 <text class="d-num">{{ daysLeft(o) }}</text> 天</text>
+							<text v-if="o.status==='已完成'" class="o-days done">已完成</text>
+							<text v-else class="o-days">剩 <text class="d-num">{{ daysLeft(o) }}</text> 天</text>
 						</view>
 						<view class="o-bottom">
 							<view class="o-owner">
@@ -63,9 +64,15 @@
 					</view>
 
 					<view class="deliver">
-						<text class="dl-title">距离交付还有 <text class="dl-num">{{ daysLeft(selected) }}</text> 天</text>
-						<text class="dl-sub">已完成 {{ selected.completedCount }}/{{ selected.videoCount }}</text>
-						<view class="o-bar big"><view class="o-bar-in" :style="{width: pct(selected)+'%', background:'linear-gradient(90deg,#FF7A59,#FF4D7E)'}"></view></view>
+						<template v-if="selected.status==='已完成'">
+							<text class="dl-title">订单已完成交付</text>
+							<text class="dl-sub">已完成 {{ selected.completedCount }}/{{ selected.videoCount }} · 不再倒计时</text>
+						</template>
+						<template v-else>
+							<text class="dl-title">距离交付还有 <text class="dl-num">{{ daysLeft(selected) }}</text> 天</text>
+							<text class="dl-sub">已完成 {{ selected.completedCount }}/{{ selected.videoCount }}</text>
+						</template>
+						<view class="o-bar big"><view class="o-bar-in" :style="{width: pct(selected)+'%', background: selected.status==='已完成' ? '#22B07D' : 'linear-gradient(90deg,#FF7A59,#FF4D7E)'}"></view></view>
 					</view>
 				</view>
 
@@ -359,6 +366,7 @@ export default {
 .o-cnt { font-size:22rpx; color:$muted; }
 .o-days { font-size:24rpx; color:$ink-2; }
 .o-days .d-num { color:#FF5A5F; font-size:34rpx; font-weight:800; }
+.o-days.done { color:#22B07D; font-weight:700; }
 .o-bottom { display:flex; justify-content:space-between; align-items:center; margin:16rpx 0 12rpx; }
 .o-owner { display:flex; align-items:center; }
 .ow-av { width:40rpx; height:40rpx; border-radius:50%; background:#eee; margin-right:10rpx; }
